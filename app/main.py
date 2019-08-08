@@ -9,6 +9,7 @@ from kombu import Connection, Exchange, Queue
 from peewee import CharField, FloatField, IntegerField, Model, SqliteDatabase
 from playhouse.shortcuts import model_to_dict
 import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 
 from errors import HTTPError
 
@@ -25,7 +26,10 @@ MEDIA_PLAYER_ID = os.getenv('XOS_MEDIA_PLAYER_ID')
 SENTRY_ID = os.getenv('SENTRY_ID')
 
 # Setup Sentry
-sentry_sdk.init(SENTRY_ID)
+sentry_sdk.init(
+    dsn=SENTRY_ID,
+    integrations=[FlaskIntegration()]
+)
 amqp_url = f'amqp://{RABBITMQ_MEDIA_PLAYER_USER}:{RABBITMQ_MEDIA_PLAYER_PASS}@{RABBITMQ_MQTT_HOST}:{AMQP_PORT}//'
 queue_name = f'mqtt-subscription-playback_{MEDIA_PLAYER_ID}'
 routing_key = f'mediaplayer.{MEDIA_PLAYER_ID}'
