@@ -8,6 +8,8 @@ from flask import Flask, jsonify, render_template, request
 from kombu import Connection, Exchange, Queue
 from peewee import CharField, FloatField, IntegerField, Model, SqliteDatabase
 from playhouse.shortcuts import model_to_dict
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 
 from errors import HTTPError
 
@@ -21,7 +23,13 @@ RABBITMQ_MEDIA_PLAYER_USER = os.getenv('RABBITMQ_MEDIA_PLAYER_USER')
 RABBITMQ_MEDIA_PLAYER_PASS = os.getenv('RABBITMQ_MEDIA_PLAYER_PASS')
 AMQP_PORT = os.getenv('AMQP_PORT')
 MEDIA_PLAYER_ID = os.getenv('XOS_MEDIA_PLAYER_ID')
+SENTRY_ID = os.getenv('SENTRY_ID')
 
+# Setup Sentry
+sentry_sdk.init(
+    dsn=SENTRY_ID,
+    integrations=[FlaskIntegration()]
+)
 amqp_url = f'amqp://{RABBITMQ_MEDIA_PLAYER_USER}:{RABBITMQ_MEDIA_PLAYER_PASS}@{RABBITMQ_MQTT_HOST}:{AMQP_PORT}//'
 queue_name = f'mqtt-subscription-playback_{MEDIA_PLAYER_ID}'
 routing_key = f'mediaplayer.{MEDIA_PLAYER_ID}'
@@ -58,6 +66,7 @@ def download_playlist_label():
 
     except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as e:
         print(f'Error downloading playlist JSON from XOS: {e}')
+        sentry_sdk.capture_exception(e)
 
 
 def process_media(body, message):
@@ -94,6 +103,7 @@ def handle_http_error(error):
     """
     response = jsonify(error.to_dict())
     response.status_code = error.status_code
+    sentry_sdk.capture_exception(error)
     return response
 
 
