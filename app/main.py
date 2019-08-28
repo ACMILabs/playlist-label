@@ -1,5 +1,6 @@
 import json
 import os
+import socket
 import sqlite3
 from threading import Thread
 
@@ -12,6 +13,7 @@ import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 
 from errors import HTTPError
+
 
 XOS_API_ENDPOINT = os.getenv('XOS_API_ENDPOINT')
 AUTH_TOKEN = os.getenv('AUTH_TOKEN')
@@ -74,25 +76,26 @@ def download_playlist_label():
 
 
 def process_media(body, message):
+    Message.create(
+        datetime = body['datetime'],
+        playlist_id = body.get('playlist_id', 0),
+        media_player_id = body.get('media_player_id', 0),
+        label_id = body.get('label_id', 0),
+        playback_position = body.get('playback_position', 0),
+        audio_buffer = body.get('audio_buffer', 0),
+        video_buffer = body.get('video_buffer', 0),
+    )
+    # clear out other messages beyond the last 5
+    delete_records = Message.delete().where(
+        Message.datetime.not_in(Message.select(Message.datetime).order_by(Message.datetime.desc()).limit(5))
+    )
+    delete_records.execute()
+
     try:
-        Message.create(
-            datetime = body['datetime'],
-            playlist_id = body.get('playlist_id', 0),
-            media_player_id = body.get('media_player_id', 0),
-            label_id = body.get('label_id', 0),
-            playback_position = body.get('playback_position', 0),
-            audio_buffer = body.get('audio_buffer', 0),
-            video_buffer = body.get('video_buffer', 0),
-        )
-        # clear out other messages beyond the last 5
-        delete_records = Message.delete().where(
-            Message.datetime.not_in(Message.select(Message.datetime).order_by(Message.datetime.desc()).limit(5))
-        )
-        delete_records.execute()
         message.ack()
 
     except TimeoutError as e:
-        template = 'An exception of type {0} occurred in start_media_player(). Arguments:\n{1!r}'
+        template = 'An exception of type {0} occurred in {self.__name__}. Arguments:\n{1!r}'
         message = template.format(type(e).__name__, e.args)
         print(message)
         sentry_sdk.capture_exception(e)
@@ -122,7 +125,11 @@ def get_events():
         with conn.Consumer(playback_queue, callbacks=[process_media]) as consumer:
             # Process messages and handle events on all channels
             while True:
-                conn.drain_events()    
+                try:
+                    conn.drain_events(timeout=2)
+                except socket.timeout:
+                    # TODO: make robust
+                    pass
 
 
 @app.errorhandler(HTTPError)
