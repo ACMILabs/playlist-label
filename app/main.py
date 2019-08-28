@@ -24,6 +24,10 @@ RABBITMQ_MEDIA_PLAYER_PASS = os.getenv('RABBITMQ_MEDIA_PLAYER_PASS')
 AMQP_PORT = os.getenv('AMQP_PORT')
 MEDIA_PLAYER_ID = os.getenv('XOS_MEDIA_PLAYER_ID')
 SENTRY_ID = os.getenv('SENTRY_ID')
+BALENA_APP_ID = os.getenv('BALENA_APP_ID')
+BALENA_SERVICE_NAME = os.getenv('BALENA_SERVICE_NAME')
+BALENA_SUPERVISOR_ADDRESS = os.getenv('BALENA_SUPERVISOR_ADDRESS')
+BALENA_SUPERVISOR_API_KEY = os.getenv('BALENA_SUPERVISOR_API_KEY')
 
 # Setup Sentry
 sentry_sdk.init(
@@ -70,21 +74,46 @@ def download_playlist_label():
 
 
 def process_media(body, message):
-    Message.create(
-        datetime = body['datetime'],
-        playlist_id = body.get('playlist_id', 0),
-        media_player_id = body.get('media_player_id', 0),
-        label_id = body.get('label_id', 0),
-        playback_position = body.get('playback_position', 0),
-        audio_buffer = body.get('audio_buffer', 0),
-        video_buffer = body.get('video_buffer', 0),       
-    )
-    # clear out other messages beyond the last 5
-    delete_records = Message.delete().where(
-        Message.datetime.not_in(Message.select(Message.datetime).order_by(Message.datetime.desc()).limit(5))
-    )
-    delete_records.execute()
-    message.ack()
+    try:
+        Message.create(
+            datetime = body['datetime'],
+            playlist_id = body.get('playlist_id', 0),
+            media_player_id = body.get('media_player_id', 0),
+            label_id = body.get('label_id', 0),
+            playback_position = body.get('playback_position', 0),
+            audio_buffer = body.get('audio_buffer', 0),
+            video_buffer = body.get('video_buffer', 0),
+        )
+        # clear out other messages beyond the last 5
+        delete_records = Message.delete().where(
+            Message.datetime.not_in(Message.select(Message.datetime).order_by(Message.datetime.desc()).limit(5))
+        )
+        delete_records.execute()
+        message.ack()
+
+    except TimeoutError as e:
+        template = 'An exception of type {0} occurred in start_media_player(). Arguments:\n{1!r}'
+        message = template.format(type(e).__name__, e.args)
+        print(message)
+        sentry_sdk.capture_exception(e)
+
+        # TODO: Do we need to restart the container?
+        # restart_app_container()
+
+
+def restart_app_container(self):
+    try:
+        balena_api_url = f'{BALENA_SUPERVISOR_ADDRESS}/v2/applications/{BALENA_APP_ID}/restart-service?apikey={BALENA_SUPERVISOR_API_KEY}'
+        json = {
+            "serviceName": BALENA_SERVICE_NAME
+        }
+        response = requests.post(balena_api_url, json=json)
+        response.raise_for_status()
+    except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as e:
+        message = f'Failed to restart the Media Player container with error: {e}'
+        print(message)
+        sentry_sdk.capture_exception(e)
+
 
 def get_events():
     # connections
