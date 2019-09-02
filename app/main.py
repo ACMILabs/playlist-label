@@ -95,7 +95,7 @@ def process_media(body, message):
         message.ack()
 
     except TimeoutError as e:
-        template = 'An exception of type {0} occurred in {self.__name__}. Arguments:\n{1!r}'
+        template = 'An exception of type {0} occurred. Arguments:\n{1!r}'
         message = template.format(type(e).__name__, e.args)
         print(message)
         sentry_sdk.capture_exception(e)
