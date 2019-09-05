@@ -127,9 +127,9 @@ def get_events():
             while True:
                 try:
                     conn.drain_events(timeout=2)
-                except socket.timeout:
+                except (socket.timeout, TimeoutError) as exception:
                     # TODO: make robust
-                    pass
+                    sentry_sdk.capture_exception(exception)
 
 
 @app.errorhandler(HTTPError)
