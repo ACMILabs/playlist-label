@@ -11,14 +11,12 @@ export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket
 
 # start desktop manager
 echo "STARTING X"
+sleep 2
 startx &
-
-# TODO: work out how to detect X has started
-sleep 5
+sleep 20
 
 # Hide the cursor
 unclutter -display :0 -idle 0.1 &
-
 
 # Start Flask
 python3 -u app/main.py &
