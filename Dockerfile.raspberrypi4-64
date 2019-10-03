@@ -1,12 +1,13 @@
 # base-image for python on any machine using a template variable,
 # see more about dockerfile templates here: https://www.balena.io/docs/learn/develop/dockerfile/
-FROM balenalib/%%BALENA_MACHINE_NAME%%-python:3.7.2-stretch-run
+FROM balenalib/raspberrypi3:buster
 
 # use `install_packages` if you need to install dependencies,
 # for instance if you need git, just uncomment the line below.
 RUN install_packages \
+  g++ python3-pip python3-setuptools python3-dev build-essential \
   chromium-browser \
-  lsb-release xserver-xorg \
+  lsb-release xserver-xorg-core \
   xinit lxsession desktop-file-utils \
   raspberrypi-ui-mods rpd-icons \
   gtk2-engines-clearlookspix \
@@ -16,18 +17,23 @@ RUN install_packages \
 # disable lxpolkit popup warning
 RUN mv /usr/bin/lxpolkit /usr/bin/lxpolkit.bak
 
+# Set wallpaper
+COPY /conf/desktop-items-0.conf /root/.config/pcmanfm/LXDE-pi/
+
+# Autohide panel
+COPY /conf/panel /root/.config/lxpanel/LXDE-pi/panels/
+
+# Hide panel completely
+COPY /conf/autostart /etc/xdg/lxsession/LXDE-pi/
+COPY /conf/autostart /root/.config/lxsession/LXDE-pi/
+
+# Disable screen from turning it off
 RUN echo "#!/bin/bash" > /etc/X11/xinit/xserverrc \
   && echo "" >> /etc/X11/xinit/xserverrc \
   && echo 'exec /usr/bin/X -s 0 dpms -nolisten tcp "$@"' >> /etc/X11/xinit/xserverrc
 
-ENV PYTHONUNBUFFERED 1
-
 # Enable udevd so that plugged dynamic hardware devices show up in our container.
 ENV UDEV 1
-
-# Set dbus environment variables
-ENV DISPLAY :0
-ENV DBUS_SYSTEM_BUS_ADDRESS unix:path=/host/run/dbus/system_bus_socket
 
 COPY ./requirements.txt /code/requirements.txt
 RUN pip install -Ur /code/requirements.txt
@@ -35,5 +41,5 @@ RUN pip install -Ur /code/requirements.txt
 COPY . /code/
 WORKDIR /code/
 
-# pi.sh will run when container starts up on the device
-CMD ["bash","scripts/pi.sh"]
+# pi4.sh will run when container starts up on the device
+CMD ["bash","scripts/pi4.sh"]
