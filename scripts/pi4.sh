@@ -21,7 +21,7 @@ unclutter -display :0 -idle 0.1 &
 
 
 # Start Flask
-python -u app/main.py &
+python3 -u app/main.py &
 
 sleep 10
 
