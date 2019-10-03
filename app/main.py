@@ -30,6 +30,7 @@ BALENA_APP_ID = os.getenv('BALENA_APP_ID')
 BALENA_SERVICE_NAME = os.getenv('BALENA_SERVICE_NAME')
 BALENA_SUPERVISOR_ADDRESS = os.getenv('BALENA_SUPERVISOR_ADDRESS')
 BALENA_SUPERVISOR_API_KEY = os.getenv('BALENA_SUPERVISOR_API_KEY')
+PLAYLIST_LABEL_PORT = int(os.getenv('PLAYLIST_LABEL_PORT', '8081'))
 
 # Setup Sentry
 sentry_sdk.init(
@@ -194,4 +195,4 @@ if __name__ == '__main__':
     db.create_tables([Message])
     download_playlist_label()
     Thread(target=get_events).start()
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=PLAYLIST_LABEL_PORT)
