@@ -16,20 +16,22 @@ from errors import HTTPError
 
 
 XOS_API_ENDPOINT = os.getenv('XOS_API_ENDPOINT')
+XOS_TAPS_ENDPOINT = os.getenv('XOS_TAPS_ENDPOINT', f'{XOS_API_ENDPOINT}taps/')
 AUTH_TOKEN = os.getenv('AUTH_TOKEN')
 XOS_PLAYLIST_ID = os.getenv('XOS_PLAYLIST_ID', '1')
 XOS_MEDIA_PLAYER_ID = os.getenv('XOS_MEDIA_PLAYER_ID', '1')
+PLAYLIST_LABEL_PORT = int(os.getenv('PLAYLIST_LABEL_PORT', '8081'))
 RABBITMQ_MQTT_HOST = os.getenv('RABBITMQ_MQTT_HOST')
 RABBITMQ_MQTT_PORT = os.getenv('RABBITMQ_MQTT_PORT')
 RABBITMQ_MEDIA_PLAYER_USER = os.getenv('RABBITMQ_MEDIA_PLAYER_USER')
 RABBITMQ_MEDIA_PLAYER_PASS = os.getenv('RABBITMQ_MEDIA_PLAYER_PASS')
 AMQP_PORT = os.getenv('AMQP_PORT')
 SENTRY_ID = os.getenv('SENTRY_ID')
+
 BALENA_APP_ID = os.getenv('BALENA_APP_ID')
 BALENA_SERVICE_NAME = os.getenv('BALENA_SERVICE_NAME')
 BALENA_SUPERVISOR_ADDRESS = os.getenv('BALENA_SUPERVISOR_ADDRESS')
 BALENA_SUPERVISOR_API_KEY = os.getenv('BALENA_SUPERVISOR_API_KEY')
-PLAYLIST_LABEL_PORT = int(os.getenv('PLAYLIST_LABEL_PORT', '8081'))
 
 # Setup Sentry
 sentry_sdk.init(
@@ -165,7 +167,7 @@ def playlist_label():
     )
 
 
-@app.route('/api/playlist_json/')
+@app.route('/api/playlist/')
 def playlist_json():
     # Read in the cached JSON
     with open(cached_playlist_json, encoding='utf-8') as json_file:
@@ -179,13 +181,12 @@ def collect_item():
     """
     Collect a tap and forward it on to XOS with the label ID.
     """
-    xos_tap_endpoint = f'{XOS_API_ENDPOINT}taps/'
     xos_tap = dict(request.get_json())
     record = model_to_dict(Message.select().order_by(Message.datetime.desc()).get())
     xos_tap['label'] = record.pop('label_id', None)
     xos_tap.setdefault('data', {})['playlist_info'] = record
     headers = {'Authorization': 'Token ' + AUTH_TOKEN}
-    response = requests.post(xos_tap_endpoint, json=xos_tap, headers=headers)
+    response = requests.post(XOS_TAPS_ENDPOINT, json=xos_tap, headers=headers)
     if response.status_code != requests.codes['created']:
         raise HTTPError('Could not save tap to XOS.')
     return jsonify(xos_tap), response.status_code

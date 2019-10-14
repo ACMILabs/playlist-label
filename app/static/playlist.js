@@ -31,7 +31,7 @@ export default class PlaylistLabelRenderer {
           : null;
   
       if (id != null) {
-        const url = `/api/playlist_json/`;
+        const url = `/api/playlist/`;
         this.fetchPlaylist(url);
       } else {
         console.error('No valid id could be found on initial pageload.'); // eslint-disable-line no-console
