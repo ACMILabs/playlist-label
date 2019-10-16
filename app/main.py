@@ -11,7 +11,7 @@ from peewee import CharField, FloatField, IntegerField, Model, SqliteDatabase
 from playhouse.shortcuts import model_to_dict
 from sentry_sdk.integrations.flask import FlaskIntegration
 
-from .errors import HTTPError
+from app.errors import HTTPError
 
 XOS_API_ENDPOINT = os.getenv('XOS_API_ENDPOINT')
 XOS_TAPS_ENDPOINT = os.getenv('XOS_TAPS_ENDPOINT', f'{XOS_API_ENDPOINT}taps/')
@@ -47,7 +47,7 @@ PLAYBACK_QUEUE = Queue(QUEUE_NAME, exchange=MEDIA_PLAYER_EXCHANGE, routing_key=R
 APP = Flask(__name__)
 CACHED_PLAYLIST_JSON = f'playlist_{XOS_PLAYLIST_ID}.json'
 # instantiate the peewee database
-DB = SqliteDatabase('message.db')  # pylint: disable=E0001
+DB = SqliteDatabase('message.db')
 
 
 class Message(Model):

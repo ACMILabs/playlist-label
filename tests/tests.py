@@ -2,6 +2,8 @@ import datetime
 import json
 import os
 
+from peewee import SqliteDatabase
+
 from app.main import Message
 
 
@@ -50,6 +52,8 @@ def test_message():
     Test the Message class initialises.
     """
 
+    DB = SqliteDatabase('message.db')
+    DB.create_tables([Message])
     timestamp = datetime.datetime.now().timestamp()
 
     message = Message.create(
