@@ -1,7 +1,7 @@
 import datetime
 import json
 import os
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from peewee import SqliteDatabase
 
@@ -85,3 +85,18 @@ def test_download_playlist_label(mocked_requests_get):
     assert file_exists is True
     assert len(playlist) == 3
     assert playlist[0]['label']['title'] == 'Dracula'
+
+
+def test_process_media():
+    """
+    Test the process_media function creates a valid Message.
+    """
+
+    message_broker_json = json.loads(file_to_string_strip_new_lines('data/message.json'))
+    playlistlabel = PlaylistLabel()
+    mock = MagicMock()
+    playlistlabel.process_media(message_broker_json, mock)
+    saved_message = Message.get(Message.datetime == message_broker_json['datetime'])
+
+    mock.ack.assert_called_once()
+    assert message_broker_json['label_id'] == saved_message.label_id
