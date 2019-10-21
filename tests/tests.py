@@ -1,10 +1,11 @@
 import datetime
 import json
 import os
+from unittest.mock import patch
 
 from peewee import SqliteDatabase
 
-from app.main import Message
+from app.main import Message, PlaylistLabel
 
 
 def file_to_string_strip_new_lines(filename):
@@ -67,3 +68,20 @@ def test_message():
     )
     assert message
     assert message.datetime is timestamp
+
+
+@patch('requests.get', side_effect=mocked_requests_get)
+def test_download_playlist_label(mocked_requests_get):
+    """
+    Test that downloading the playlist from XOS
+    successfully saves it to the filesystem.
+    """
+
+    playlistlabel = PlaylistLabel()
+    playlistlabel.download_playlist_label()
+    file_exists = os.path.isfile('playlist_1.json')
+    playlist = json.loads(file_to_string_strip_new_lines('../playlist_1.json'))['playlist_labels']
+
+    assert file_exists is True
+    assert len(playlist) == 3
+    assert playlist[0]['label']['title'] == 'Dracula'
