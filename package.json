@@ -21,6 +21,16 @@
       "./setupJest.js"
     ]
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ACMILabs/playlist-label-pi.git"
+  },
+  "author": "ACMILabs",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ACMILabs/playlist-label-pi/issues"
+  },
+  "homepage": "https://github.com/ACMILabs/playlist-label-pi#readme",
   "dependencies": {
     "babel-jest": "^24.8.0",
     "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
