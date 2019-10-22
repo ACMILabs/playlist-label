@@ -44,7 +44,7 @@ ROUTING_KEY = f'mediaplayer.{XOS_MEDIA_PLAYER_ID}'
 MEDIA_PLAYER_EXCHANGE = Exchange('amq.topic', 'direct', durable=True)
 PLAYBACK_QUEUE = Queue(QUEUE_NAME, exchange=MEDIA_PLAYER_EXCHANGE, routing_key=ROUTING_KEY)
 
-APP = Flask(__name__)
+app = Flask(__name__)  # pylint: disable=C0103
 CACHED_PLAYLIST_JSON = f'playlist_{XOS_PLAYLIST_ID}.json'
 # instantiate the peewee database
 DB = SqliteDatabase('message.db')
@@ -148,7 +148,7 @@ class PlaylistLabel():
                         sentry_sdk.capture_exception(exception)
 
 
-@APP.errorhandler(HTTPError)
+@app.errorhandler(HTTPError)
 def handle_http_error(error):
     """
     Format error for response.
@@ -159,7 +159,7 @@ def handle_http_error(error):
     return response
 
 
-@APP.route('/')
+@app.route('/')
 def playlist_label():
     # Read in the cached JSON
     with open(CACHED_PLAYLIST_JSON, encoding='utf-8') as json_file:
@@ -181,7 +181,7 @@ def playlist_label():
     )
 
 
-@APP.route('/api/playlist/')
+@app.route('/api/playlist/')
 def playlist_json():
     # Read in the cached JSON
     with open(CACHED_PLAYLIST_JSON, encoding='utf-8') as json_file:
@@ -190,7 +190,7 @@ def playlist_json():
     return jsonify(json_data)
 
 
-@APP.route('/api/taps/', methods=['POST'])
+@app.route('/api/taps/', methods=['POST'])
 def collect_item():
     """
     Collect a tap and forward it on to XOS with the label ID.
@@ -211,4 +211,4 @@ if __name__ == '__main__':
     PLAYLIST_LABEL = PlaylistLabel()
     PLAYLIST_LABEL.download_playlist_label()
     Thread(target=PLAYLIST_LABEL.get_events).start()
-    APP.run(host='0.0.0.0', port=PLAYLIST_LABEL_PORT)
+    app.run(host='0.0.0.0', port=PLAYLIST_LABEL_PORT)
