@@ -203,7 +203,7 @@ def collect_item():
     response = requests.post(XOS_TAPS_ENDPOINT, json=xos_tap, headers=headers)
     if response.status_code != requests.codes['created']:
         raise HTTPError('Could not save tap to XOS.')
-    return jsonify(xos_tap), response.status_code
+    return jsonify(response.content), response.status_code
 
 
 if __name__ == '__main__':
