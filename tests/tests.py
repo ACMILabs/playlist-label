@@ -48,6 +48,27 @@ def mocked_requests_get(*args, **kwargs):
     return MockResponse(None, 404)
 
 
+def mocked_requests_post(*args, **kwargs):
+    """
+    Thanks to https://stackoverflow.com/questions/15753390/how-can-i-mock-requests-and-the-response
+    """
+    class MockResponse:
+        def __init__(self, json_data, status_code):
+            self.content = json.loads(json_data)
+            self.status_code = status_code
+
+        def json(self):
+            return self.content
+
+        def raise_for_status(self):
+            return None
+
+    if args[0].startswith('https://museumos-prod.acmi.net.au/api/taps/'):
+        return MockResponse(file_to_string_strip_new_lines('data/xos_tap.json'), 201)
+
+    return MockResponse(None, 404)
+
+
 def test_message():
     """
     Test the Message class initialises.
@@ -106,12 +127,35 @@ def test_process_media():
 
 def test_route_playlist_label(client):
     """
-    Test that the root route renderes the expected data.
+    Test that the root route renders the expected data.
     """
 
     response = client.get('/')
-    print(response.data)
 
     assert b'"xos_media_player_id": "1"' in response.data
     assert b'"mqtt_host": "track.acmi.net.au"' in response.data
     assert response.status_code == 200
+
+
+def test_route_playlist_json(client):
+    """
+    Test that the playlist route returns the expected data.
+    """
+
+    response = client.get('/api/playlist/')
+
+    assert b'Dracula' in response.data
+    assert response.status_code == 200
+
+
+@patch('requests.post', side_effect=mocked_requests_post)
+def test_route_collect_item(mocked_requests_post, client):
+    """
+    Test that the collect a tap route forwards the expected data to XOS.
+    """
+
+    lens_tap_data = file_to_string_strip_new_lines('data/lens_tap.json')
+    response = client.post('/api/taps/', data=lens_tap_data, headers={'Content-Type': 'application/json'})
+
+    assert b'"short_code":"nbadbb"' in response.data
+    assert response.status_code == 201
