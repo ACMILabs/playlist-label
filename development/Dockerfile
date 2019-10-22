@@ -10,4 +10,3 @@ RUN pip install -Ur /code/requirements/test.txt
 
 COPY . /code/
 WORKDIR /code/
-RUN npm install
