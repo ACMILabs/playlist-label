@@ -92,7 +92,9 @@ def test_process_media():
     Test the process_media function creates a valid Message.
     """
 
+    DATETIME_OF_MESSAGE = datetime.datetime.now()
     message_broker_json = json.loads(file_to_string_strip_new_lines('data/message.json'))
+    message_broker_json['datetime'] = DATETIME_OF_MESSAGE
     playlistlabel = PlaylistLabel()
     mock = MagicMock()
     playlistlabel.process_media(message_broker_json, mock)
@@ -100,3 +102,16 @@ def test_process_media():
 
     mock.ack.assert_called_once()
     assert message_broker_json['label_id'] == saved_message.label_id
+
+
+def test_route_playlist_label(client):
+    """
+    Test that the root route renderes the expected data.
+    """
+
+    response = client.get('/')
+    print(response.data)
+
+    assert b'"xos_media_player_id": "1"' in response.data
+    assert b'"mqtt_host": "track.acmi.net.au"' in response.data
+    assert response.status_code == 200
