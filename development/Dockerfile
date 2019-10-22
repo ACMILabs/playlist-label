@@ -1,6 +1,6 @@
 FROM balenalib/raspberrypi3-python:3.7.2-stretch-run
 
-RUN install_packages apt-utils g++ build-essential
+RUN install_packages apt-utils g++ build-essential nodejs npm
 
 ENV PYTHONUNBUFFERED 1
 
@@ -10,3 +10,4 @@ RUN pip install -Ur /code/requirements/test.txt
 
 COPY . /code/
 WORKDIR /code/
+RUN npm install
