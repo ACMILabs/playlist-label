@@ -7,4 +7,7 @@ WORKDIR /code/
 
 RUN echo 'Installing Node packages'
 
+RUN pwd
+RUN ls
+
 RUN npm install
