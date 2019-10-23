@@ -37,7 +37,7 @@ steps:
     image: '${{javascript_tests_image}}'
     stage: test
     commands:
-      - npm run lint-test
+      - npm install && npm run lint-test
   deploy_to_Balena:
     title: Deploying repository to Balena
     image: acmilabs/balena-cli:arm
