@@ -208,7 +208,7 @@ def collect_item():
 
 if __name__ == '__main__':
     db.create_tables([Message])
-    playlist_label = PlaylistLabel()
-    playlist_label.download_playlist_label()
-    Thread(target=playlist_label.get_events).start()
+    playlistlabel = PlaylistLabel()  # pylint: disable=C0103
+    playlistlabel.download_playlist_label()
+    Thread(target=playlistlabel.get_events).start()
     app.run(host='0.0.0.0', port=PLAYLIST_LABEL_PORT)
