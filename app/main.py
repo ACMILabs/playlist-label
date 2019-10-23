@@ -47,7 +47,7 @@ PLAYBACK_QUEUE = Queue(QUEUE_NAME, exchange=MEDIA_PLAYER_EXCHANGE, routing_key=R
 app = Flask(__name__)  # pylint: disable=C0103
 CACHED_PLAYLIST_JSON = f'playlist_{XOS_PLAYLIST_ID}.json'
 # instantiate the peewee database
-DB = SqliteDatabase('message.db')
+db = SqliteDatabase('message.db')  # pylint: disable=C0103
 
 
 class Message(Model):
@@ -60,7 +60,7 @@ class Message(Model):
     video_buffer = FloatField(null=True)
 
     class Meta:  # pylint: disable=R0903
-        database = DB
+        database = db
 
 
 def download_playlist_label():
@@ -196,7 +196,7 @@ def collect_item():
 
 
 if __name__ == '__main__':
-    DB.create_tables([Message])
+    db.create_tables([Message])
     download_playlist_label()
     Thread(target=get_events).start()
     app.run(host='0.0.0.0', port=PLAYLIST_LABEL_PORT)
