@@ -25,7 +25,7 @@ steps:
     stage: package
     image_name: javascripttests
     tag: ${{CF_BRANCH_TAG_NORMALIZED}}-javascript
-    dockerfile: ./test/Dockerfile.node
+    dockerfile: ./testing/Dockerfile.node
   unit_test:
     title: Running Python Unit tests
     image: '${{playlistlabel_image}}'
