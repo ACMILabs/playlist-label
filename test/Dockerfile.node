@@ -4,10 +4,3 @@ RUN echo 'Setting up Node image'
 
 COPY . /code/
 WORKDIR /code/
-
-RUN echo 'Installing Node packages'
-
-RUN pwd
-RUN ls
-
-RUN npm install
