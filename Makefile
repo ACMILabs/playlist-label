@@ -14,11 +14,14 @@ lint:
 	pylint *
 	flake8
 	isort -rc --check-only .
-	# Lint the javascript code
-	npm run lint
 test:
 	# Run python tests
 	pytest -v
+lintjs:
+	# Lint the javascript code
+	npm run lint
+testjs:
 	# Run javascript tests
 	npm run test
 linttest: lint test
+linttestall: lint test lintjs testjs
