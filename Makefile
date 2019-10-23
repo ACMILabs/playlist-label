@@ -24,5 +24,5 @@ testjs:
 	# Run javascript tests
 	npm run test
 linttest: lint test
-linttestjs: lintjs testjs
+linttestjs: install lintjs testjs
 linttestall: lint test lintjs testjs
