@@ -22,6 +22,7 @@ steps:
   javascript_tests_image:
     title: Building Javascript Test Docker Image
     type: build
+    stage: package
     image_name: javascripttests
     tag: ${{CF_BRANCH_TAG_NORMALIZED}}-javascript
     dockerfile: ./test/Dockerfile.node
