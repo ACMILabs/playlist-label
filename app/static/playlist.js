@@ -97,6 +97,13 @@ export default class PlaylistLabelRenderer {
   onMessageArrived(message) {
     // Check to see if the currently playing label is the same as the currently displayed label
     const messageJson = JSON.parse(message.payloadString);
+
+    // Update the progress bar
+    const videoPlaybackPercentage = messageJson.playback_position * 100;
+    const progressBar = document.getElementsByClassName("progress-bar")[0];
+    progressBar.style.width = `${videoPlaybackPercentage}%`;
+
+    // Update the label if needed
     if (messageJson.label_id !== this.state.currentLabelId) {
       // Update the current state
       this.state.currentLabelId = messageJson.label_id;
