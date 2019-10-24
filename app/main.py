@@ -1,19 +1,17 @@
 import json
 import os
 import socket
-import sqlite3
 from threading import Thread
 
 import requests
+import sentry_sdk
 from flask import Flask, jsonify, render_template, request
 from kombu import Connection, Exchange, Queue
 from peewee import CharField, FloatField, IntegerField, Model, SqliteDatabase
 from playhouse.shortcuts import model_to_dict
-import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 
-from errors import HTTPError
-
+from app.errors import HTTPError
 
 XOS_API_ENDPOINT = os.getenv('XOS_API_ENDPOINT')
 XOS_TAPS_ENDPOINT = os.getenv('XOS_TAPS_ENDPOINT', f'{XOS_API_ENDPOINT}taps/')
@@ -38,17 +36,18 @@ sentry_sdk.init(
     dsn=SENTRY_ID,
     integrations=[FlaskIntegration()]
 )
-amqp_url = f'amqp://{RABBITMQ_MEDIA_PLAYER_USER}:{RABBITMQ_MEDIA_PLAYER_PASS}@{RABBITMQ_MQTT_HOST}:{AMQP_PORT}//'
-queue_name = f'mqtt-subscription-playback_{XOS_MEDIA_PLAYER_ID}'
-routing_key = f'mediaplayer.{XOS_MEDIA_PLAYER_ID}'
+AMQP_URL = f'amqp://{RABBITMQ_MEDIA_PLAYER_USER}:{RABBITMQ_MEDIA_PLAYER_PASS}'\
+           f'@{RABBITMQ_MQTT_HOST}:{AMQP_PORT}//'
+QUEUE_NAME = f'mqtt-subscription-playback_{XOS_MEDIA_PLAYER_ID}'
+ROUTING_KEY = f'mediaplayer.{XOS_MEDIA_PLAYER_ID}'
 
-media_player_exchange = Exchange('amq.topic', 'direct', durable=True)
-playback_queue = Queue(queue_name, exchange=media_player_exchange, routing_key=routing_key)
+MEDIA_PLAYER_EXCHANGE = Exchange('amq.topic', 'direct', durable=True)
+PLAYBACK_QUEUE = Queue(QUEUE_NAME, exchange=MEDIA_PLAYER_EXCHANGE, routing_key=ROUTING_KEY)
 
-app = Flask(__name__)
-cached_playlist_json = f'playlist_{XOS_PLAYLIST_ID}.json'
+app = Flask(__name__)  # pylint: disable=C0103
+CACHED_PLAYLIST_JSON = f'playlist_{XOS_PLAYLIST_ID}.json'
 # instantiate the peewee database
-db = SqliteDatabase('message.db')
+db = SqliteDatabase('message.db')  # pylint: disable=C0103
 
 
 class Message(Model):
@@ -59,7 +58,8 @@ class Message(Model):
     playback_position = FloatField()
     audio_buffer = FloatField(null=True)
     video_buffer = FloatField(null=True)
-    class Meta:
+
+    class Meta:  # pylint: disable=R0903
         database = db
 
 
@@ -69,68 +69,71 @@ def download_playlist_label():
         playlist_label_json = requests.get(f'{XOS_API_ENDPOINT}playlists/{XOS_PLAYLIST_ID}/').json()
 
         # Write it to the file system
-        with open(cached_playlist_json, 'w') as outfile:
+        with open(CACHED_PLAYLIST_JSON, 'w') as outfile:
             json.dump(playlist_label_json, outfile)
 
-    except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as e:
-        print(f'Error downloading playlist JSON from XOS: {e}')
-        sentry_sdk.capture_exception(e)
+    except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as exception:
+        print(f'Error downloading playlist JSON from XOS: {exception}')
+        sentry_sdk.capture_exception(exception)
 
 
 def process_media(body, message):
     Message.create(
-        datetime = body['datetime'],
-        playlist_id = body.get('playlist_id', 0),
-        media_player_id = body.get('media_player_id', 0),
-        label_id = body.get('label_id', 0),
-        playback_position = body.get('playback_position', 0),
-        audio_buffer = body.get('audio_buffer', 0),
-        video_buffer = body.get('video_buffer', 0),
+        datetime=body['datetime'],
+        playlist_id=body.get('playlist_id', 0),
+        media_player_id=body.get('media_player_id', 0),
+        label_id=body.get('label_id', 0),
+        playback_position=body.get('playback_position', 0),
+        audio_buffer=body.get('audio_buffer', 0),
+        video_buffer=body.get('video_buffer', 0),
     )
     # clear out other messages beyond the last 5
     delete_records = Message.delete().where(
-        Message.datetime.not_in(Message.select(Message.datetime).order_by(Message.datetime.desc()).limit(5))
+        Message.datetime.not_in(
+            Message.select(Message.datetime).order_by(Message.datetime.desc()).limit(5)
+        )
     )
     delete_records.execute()
 
     try:
         message.ack()
 
-    except TimeoutError as e:
+    except TimeoutError as exception:
         template = 'An exception of type {0} occurred. Arguments:\n{1!r}'
-        message = template.format(type(e).__name__, e.args)
+        message = template.format(type(exception).__name__, exception.args)
         print(message)
-        sentry_sdk.capture_exception(e)
+        sentry_sdk.capture_exception(exception)
 
-        # TODO: Do we need to restart the container?
+        # TODO: Do we need to restart the container?  # pylint: disable=W0511
         # restart_app_container()
 
 
-def restart_app_container(self):
+def restart_app_container():
     try:
-        balena_api_url = f'{BALENA_SUPERVISOR_ADDRESS}/v2/applications/{BALENA_APP_ID}/restart-service?apikey={BALENA_SUPERVISOR_API_KEY}'
-        json = {
+        balena_api_url = f'{BALENA_SUPERVISOR_ADDRESS}/v2/applications/{BALENA_APP_ID}'\
+                         f'/restart-service?apikey={BALENA_SUPERVISOR_API_KEY}'
+        post_data = {
             "serviceName": BALENA_SERVICE_NAME
         }
-        response = requests.post(balena_api_url, json=json)
+        response = requests.post(balena_api_url, json=post_data)
         response.raise_for_status()
-    except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as e:
-        message = f'Failed to restart the Media Player container with error: {e}'
+    except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as exception:
+        message = f'Failed to restart the Media Player container with error: {exception}'
         print(message)
-        sentry_sdk.capture_exception(e)
+        sentry_sdk.capture_exception(exception)
 
 
 def get_events():
     # connections
-    with Connection(amqp_url) as conn:
+    with Connection(AMQP_URL) as conn:
         # consume
-        with conn.Consumer(playback_queue, callbacks=[process_media]) as consumer:
+        with conn.Consumer(PLAYBACK_QUEUE, callbacks=[process_media]):
             # Process messages and handle events on all channels
             while True:
                 try:
                     conn.drain_events(timeout=2)
                 except (socket.timeout, TimeoutError) as exception:
-                    # TODO: make robust
+                    # TODO: make robust  # pylint: disable=W0511
                     sentry_sdk.capture_exception(exception)
 
 
@@ -148,7 +151,7 @@ def handle_http_error(error):
 @app.route('/')
 def playlist_label():
     # Read in the cached JSON
-    with open(cached_playlist_json, encoding='utf-8') as json_file:
+    with open(CACHED_PLAYLIST_JSON, encoding='utf-8') as json_file:
         json_data = json.load(json_file)
 
     return render_template(
@@ -170,9 +173,9 @@ def playlist_label():
 @app.route('/api/playlist/')
 def playlist_json():
     # Read in the cached JSON
-    with open(cached_playlist_json, encoding='utf-8') as json_file:
+    with open(CACHED_PLAYLIST_JSON, encoding='utf-8') as json_file:
         json_data = json.load(json_file)
-    
+
     return jsonify(json_data)
 
 
@@ -190,6 +193,7 @@ def collect_item():
     if response.status_code != requests.codes['created']:
         raise HTTPError('Could not save tap to XOS.')
     return jsonify(xos_tap), response.status_code
+
 
 if __name__ == '__main__':
     db.create_tables([Message])
