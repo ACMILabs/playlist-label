@@ -40,6 +40,9 @@ describe("PlaylistLabelRenderer", () => {
                                 <h3></h3>
                                 <h4></h4>
                                 <h5></h5>
+                              </div>
+                              <div class="progress-bar-container">
+                                <div class="progress-bar"></div>
                               </div>`;
   });
 
@@ -59,6 +62,8 @@ describe("PlaylistLabelRenderer", () => {
     renderer.onMessageArrived(messageData);
     const mainElem = document.getElementById("playlist-label-js-hook");
     expect(messageJson.label_id).toBeDefined();
+    expect(messageJson.duration).toBeDefined();
+    expect(messageJson.playback_position).toBeDefined();
     expect(renderer.state.currentLabelId).toStrictEqual(messageJson.label_id);
     const element = renderer.state.playlistJson.playlist_labels.find(label => {
       return label.label.id === renderer.state.currentLabelId;
