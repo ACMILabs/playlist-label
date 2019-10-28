@@ -10,8 +10,10 @@ export default class PlaylistLabelRenderer {
     this.state = {
       currentLabelId: null,
       nextLabelId: null,
-      playlistJson: null
+      playlistJson: null,
+      startTime: null,
     };
+    this.updateProgress = this.updateProgress.bind(this)
   }
 
   /**
@@ -36,6 +38,7 @@ export default class PlaylistLabelRenderer {
     } else {
       console.error("No valid id could be found on initial pageload."); // eslint-disable-line no-console
     }
+    requestAnimationFrame(this.updateProgress)
   }
 
   /**
@@ -98,15 +101,17 @@ export default class PlaylistLabelRenderer {
     // Check to see if the currently playing label is the same as the currently displayed label
     const messageJson = JSON.parse(message.payloadString);
 
-    // Update the progress bar
-    const videoPlaybackPercentage = messageJson.playback_position * 100;
-    const progressBar = document.getElementsByClassName("progress-bar")[0];
-    progressBar.style.width = `${videoPlaybackPercentage}%`;
-
     // Update the label if needed
     if (messageJson.label_id !== this.state.currentLabelId) {
       // Update the current state
       this.state.currentLabelId = messageJson.label_id;
+      this.state.duration = messageJson.duration;
+      if (!this.state.startTime) {
+        this.state.startTime = Date.now() - messageJson.playback_position * this.state.duration * 1000
+      }
+      else {
+        this.state.startTime = Date.now();
+      }
       const labels = this.state.playlistJson.playlist_labels;
       for (let index = 0; index < labels.length; index++) {
         const element = labels[index];
@@ -139,6 +144,16 @@ export default class PlaylistLabelRenderer {
         }
       }
     }
+  }
+
+  updateProgress() {
+    if (this.state.duration) {
+      // Update the progress bar
+      const videoPlaybackPercentage = (Date.now() - this.state.startTime) / this.state.duration / 1000;
+      const progressBar = document.getElementsByClassName("progress-bar")[0];
+      progressBar.style.transform = `scaleX(${videoPlaybackPercentage})`;
+    }
+    requestAnimationFrame(this.updateProgress)
   }
 
   truncate(str, max) {
