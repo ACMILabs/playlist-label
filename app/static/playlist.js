@@ -11,9 +11,9 @@ export default class PlaylistLabelRenderer {
       currentLabelId: null,
       nextLabelId: null,
       playlistJson: null,
-      startTime: null,
+      startTime: null
     };
-    this.updateProgress = this.updateProgress.bind(this)
+    this.updateProgress = this.updateProgress.bind(this);
   }
 
   /**
@@ -38,7 +38,7 @@ export default class PlaylistLabelRenderer {
     } else {
       console.error("No valid id could be found on initial pageload."); // eslint-disable-line no-console
     }
-    requestAnimationFrame(this.updateProgress)
+    requestAnimationFrame(this.updateProgress);
   }
 
   /**
@@ -107,9 +107,10 @@ export default class PlaylistLabelRenderer {
       this.state.currentLabelId = messageJson.label_id;
       this.state.duration = messageJson.duration;
       if (!this.state.startTime) {
-        this.state.startTime = Date.now() - messageJson.playback_position * this.state.duration * 1000
-      }
-      else {
+        this.state.startTime =
+          Date.now() -
+          messageJson.playback_position * this.state.duration * 1000;
+      } else {
         this.state.startTime = Date.now();
       }
       const labels = this.state.playlistJson.playlist_labels;
@@ -149,11 +150,12 @@ export default class PlaylistLabelRenderer {
   updateProgress() {
     if (this.state.duration) {
       // Update the progress bar
-      const videoPlaybackPercentage = (Date.now() - this.state.startTime) / this.state.duration / 1000;
+      const videoPlaybackPercentage =
+        (Date.now() - this.state.startTime) / this.state.duration / 1000;
       const progressBar = document.getElementsByClassName("progress-bar")[0];
       progressBar.style.transform = `scaleX(${videoPlaybackPercentage})`;
     }
-    requestAnimationFrame(this.updateProgress)
+    requestAnimationFrame(this.updateProgress);
   }
 
   truncate(str, max) {
