@@ -12,6 +12,9 @@ from app.main import Message, PlaylistLabel
 
 @pytest.fixture
 def database():
+    """
+    Setup the test database.
+    """
     test_db = SqliteDatabase(':memory:')
     test_db.bind([Message], bind_refs=False, bind_backrefs=False)
     test_db.connect()
@@ -138,11 +141,9 @@ def test_route_playlist_label(client):
     Test that the root route renders the expected data.
     """
 
-    main.XOS_MEDIA_PLAYER_ID = '1'
-    main.XOS_PLAYLIST_ID = '1'
     response = client.get('/')
 
-    assert b'"xos_media_player_id": "1"' in response.data
+    assert b'"xos_media_player_id": "%s"' % main.XOS_MEDIA_PLAYER_ID.encode() in response.data
     assert b'"mqtt_host": "track.acmi.net.au"' in response.data
     assert response.status_code == 200
 
