@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from peewee import SqliteDatabase
 
+from app import main
 from app.main import Message, PlaylistLabel
 
 
@@ -137,6 +138,8 @@ def test_route_playlist_label(client):
     Test that the root route renders the expected data.
     """
 
+    main.XOS_MEDIA_PLAYER_ID = '1'
+    main.XOS_PLAYLIST_ID = '1'
     response = client.get('/')
 
     assert b'"xos_media_player_id": "1"' in response.data
