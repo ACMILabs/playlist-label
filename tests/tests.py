@@ -3,9 +3,18 @@ import json
 import os
 from unittest.mock import MagicMock, patch
 
+import pytest
 from peewee import SqliteDatabase
 
 from app.main import Message, PlaylistLabel
+
+
+@pytest.fixture
+def database():
+    test_db = SqliteDatabase(':memory:')
+    test_db.bind([Message], bind_refs=False, bind_backrefs=False)
+    test_db.connect()
+    test_db.create_tables([Message])
 
 
 def file_to_string_strip_new_lines(filename):
@@ -69,13 +78,11 @@ def mocked_requests_post(*args, **kwargs):
     return MockResponse(None, 404)
 
 
-def test_message():
+def test_message(database):
     """
     Test the Message class initialises.
     """
 
-    DB = SqliteDatabase('message.db')
-    DB.create_tables([Message])
     timestamp = datetime.datetime.now().timestamp()
 
     message = Message.create(
@@ -108,7 +115,7 @@ def test_download_playlist_label(mocked_requests_get):
     assert playlist[0]['label']['title'] == 'Dracula'
 
 
-def test_process_media():
+def test_process_media(database):
     """
     Test the process_media function creates a valid Message.
     """
