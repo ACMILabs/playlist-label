@@ -3,6 +3,24 @@ Playlist label
 
 A playlist label prototype running on a Raspberry Pi connected to a 12.3" screen.
 
+## Run the development container
+
+To run the development container:
+
+`$ cd development` and `$ docker-compose up --build`
+
+You should then be able to see the Flask server running at: http://localhost:8081
+
+## Run tests locally
+
+To run the python tests:
+
+`$ cd development` and `$ docker-compose up --build` and `$ docker exec -it playlistlabel make linttest`
+
+To run the javascript tests:
+
+`$ cd testing` and `$ docker-compose up --build` and `$ docker exec -it javascripttests make linttestjs`
+
 ## Installation on Raspbian
 
 To install and run on a Raspbian OS Raspberry Pi for prototyping:
