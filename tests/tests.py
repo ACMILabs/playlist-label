@@ -55,7 +55,7 @@ def mocked_requests_get(*args, **kwargs):
         def raise_for_status(self):
             return None
 
-    if args[0].startswith('https://museumos-prod.acmi.net.au/api/playlists/'):
+    if args[0].startswith('https://xos.acmi.net.au/api/playlists/'):
         return MockResponse(file_to_string_strip_new_lines('data/playlist.json'), 200)
 
     return MockResponse(None, 404)
@@ -76,7 +76,7 @@ def mocked_requests_post(*args, **kwargs):
         def raise_for_status(self):
             return None
 
-    if args[0].startswith('https://museumos-prod.acmi.net.au/api/taps/'):
+    if args[0].startswith('https://xos.acmi.net.au/api/taps/'):
         return MockResponse(file_to_string_strip_new_lines('data/xos_tap.json'), 201)
 
     return MockResponse(None, 404)
