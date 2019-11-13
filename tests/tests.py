@@ -55,7 +55,9 @@ def mocked_requests_get(*args, **kwargs):
         def raise_for_status(self):
             return None
 
-    if args[0].startswith('https://xos.acmi.net.au/api/playlists/'):
+    if args[0].startswith('https://xos.acmi.net.au/api/playlists/2/'):
+        return MockResponse(file_to_string_strip_new_lines('data/playlist_no_label.json'), 200)
+    elif args[0].startswith('https://xos.acmi.net.au/api/playlists/'):
         return MockResponse(file_to_string_strip_new_lines('data/playlist.json'), 200)
 
     return MockResponse(None, 404)
@@ -148,11 +150,32 @@ def test_route_playlist_label(client):
     assert response.status_code == 200
 
 
-def test_route_playlist_json(client):
+@patch('requests.get', side_effect=mocked_requests_get)
+def test_route_playlist_label_with_no_label(mocked_requests_get, client):
+    """
+    Test that the playlist route returns the expected data
+    when a playlist item doesn't have a label.
+    """
+
+    main.XOS_PLAYLIST_ID = 2
+    playlistlabel = PlaylistLabel()
+    playlistlabel.download_playlist_label()
+    response = client.get('/')
+    response_data = response.data.decode('utf-8')
+
+    assert 'resource' not in response_data
+    assert response.status_code == 200
+
+
+@patch('requests.get', side_effect=mocked_requests_get)
+def test_route_playlist_json(mocked_requests_get, client):
     """
     Test that the playlist route returns the expected data.
     """
 
+    main.XOS_PLAYLIST_ID = 1
+    playlistlabel = PlaylistLabel()
+    playlistlabel.download_playlist_label()
     response = client.get('/api/playlist/')
 
     assert b'Dracula' in response.data
