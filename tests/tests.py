@@ -9,6 +9,8 @@ from peewee import SqliteDatabase
 from app import main
 from app.main import Message, PlaylistLabel
 
+XOS_PLAYLIST_ID = os.environ['XOS_PLAYLIST_ID']
+
 
 @pytest.fixture
 def database():
@@ -111,8 +113,8 @@ def test_download_playlist_label(mocked_requests_get):
 
     playlistlabel = PlaylistLabel()
     playlistlabel.download_playlist_label()
-    file_exists = os.path.isfile('playlist_1.json')
-    playlist = json.loads(file_to_string_strip_new_lines('../playlist_1.json'))['playlist_labels']
+    file_exists = os.path.isfile('playlist_'+XOS_PLAYLIST_ID+'.json')
+    playlist = json.loads(file_to_string_strip_new_lines('../playlist_'+XOS_PLAYLIST_ID+'.json'))['playlist_labels']
 
     assert file_exists is True
     assert len(playlist) == 3
@@ -168,5 +170,5 @@ def test_route_collect_item(mocked_requests_post, client):
     lens_tap_data = file_to_string_strip_new_lines('data/lens_tap.json')
     response = client.post('/api/taps/', data=lens_tap_data, headers={'Content-Type': 'application/json'})
 
-    assert b'"short_code":"nbadbb"' in response.data
+    assert response.json["nfc_tag"]["short_code"] == "nbadbb"
     assert response.status_code == 201
