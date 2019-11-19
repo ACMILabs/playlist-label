@@ -64,8 +64,8 @@
 <script>
     window.playlistLabelData = {
         "id": "{{ playlist_json.id }}",
-        "current_label_id": "{% if playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% else %}1{% endif %}",
-        "next_label_id": "{% if playlist_json.playlist_labels|length > 1 %}{{ playlist_json.playlist_labels.1.label.id }}{% elif playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% else %}1{% endif %}",
+        "current_label_id": "{% if playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %}",
+        "next_label_id": "{% if playlist_json.playlist_labels|length > 1 %}{{ playlist_json.playlist_labels.1.label.id }}{% elif playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %}",
         "mqtt_host": "{{ mqtt.host }}",
         "mqtt_port": "{{ mqtt.port }}",
         "mqtt_username": "{{ mqtt.username }}",
