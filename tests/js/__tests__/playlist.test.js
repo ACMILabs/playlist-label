@@ -80,4 +80,19 @@ describe("PlaylistLabelRenderer", () => {
     expect(mainElem.innerHTML).toContain(elementNext.label.title);
     expect(mainElem.innerHTML).toContain(elementNext.label.publication);
   });
+
+
+  it("should update progress", () => {
+    const renderer = new PlaylistLabelRenderer();
+    renderer.state.playlistJson = playlistJson;
+    renderer.init();
+    renderer.onMessageArrived({
+      payloadString: JSON.stringify(messageJson)
+    });
+    renderer.updateProgress();
+    const progressBar = document.getElementsByClassName("progress-bar")[0];
+    expect(progressBar.style.transform.indexOf("scaleX(0.") === 0);
+  });
+
+
 });
