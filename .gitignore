@@ -2,6 +2,7 @@ config.env
 .DS_Store
 .venv
 playlist_*.json
+/tests/*.json
 *.db
 *.db-journal
 
