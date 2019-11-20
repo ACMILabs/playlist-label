@@ -81,7 +81,6 @@ describe("PlaylistLabelRenderer", () => {
     expect(mainElem.innerHTML).toContain(elementNext.label.publication);
   });
 
-
   it("should update progress", () => {
     const renderer = new PlaylistLabelRenderer();
     renderer.state.playlistJson = playlistJson;
@@ -93,6 +92,4 @@ describe("PlaylistLabelRenderer", () => {
     const progressBar = document.getElementsByClassName("progress-bar")[0];
     expect(progressBar.style.transform.indexOf("scaleX(0.") === 0);
   });
-
-
 });
