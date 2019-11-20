@@ -19,6 +19,7 @@ def database():
     test_db.connect()
     test_db.create_tables([Message])
 
+
 class MockResponse:
     def __init__(self, json_data, status_code):
         self.content = json.loads(json_data)
