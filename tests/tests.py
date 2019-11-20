@@ -1,6 +1,5 @@
 import datetime
 import json
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -8,8 +7,6 @@ from peewee import SqliteDatabase
 
 from app import main
 from app.main import Message, PlaylistLabel
-
-XOS_PLAYLIST_ID = os.environ['XOS_PLAYLIST_ID']
 
 
 @pytest.fixture
@@ -35,7 +32,7 @@ class MockResponse:
 
 
 def mocked_requests_get(*args, **kwargs):
-    if 'https://' in args[0] and '/api/playlists/' in args[0]:
+    if args[0] == 'https://xos.acmi.net.au/api/playlists/1/':
         with open('tests/data/playlist.json', 'r') as f:
             return MockResponse(f.read(), 200)
 
@@ -43,7 +40,7 @@ def mocked_requests_get(*args, **kwargs):
 
 
 def mocked_requests_post(*args, **kwargs):
-    if 'https://' in args[0] and '/api/taps/' in args[0]:
+    if args[0] == 'https://xos.acmi.net.au/api/taps/':
         with open('tests/data/xos_tap.json', 'r') as f:
             return MockResponse(f.read(), 201)
 
@@ -79,12 +76,10 @@ def test_download_playlist_label(mocked_requests_get):
 
     playlistlabel = PlaylistLabel()
     playlistlabel.download_playlist_label()
-    file_exists = os.path.isfile('playlist_'+XOS_PLAYLIST_ID+'.json')
 
-    with open('playlist_'+XOS_PLAYLIST_ID+'.json', 'r') as f:
+    with open('playlist_1.json', 'r') as f:
         playlist = json.loads(f.read())['playlist_labels']
 
-    assert file_exists is True
     assert len(playlist) == 3
     assert playlist[0]['label']['title'] == 'Dracula'
 
