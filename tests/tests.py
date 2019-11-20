@@ -45,7 +45,7 @@ def mocked_requests_get(*args, **kwargs):
     if 'http' in args[0] and '/api/playlists/' in args[0]:
         return MockResponse(file_to_string_strip_new_lines('data/playlist.json'), 200)
 
-    raise Exception("No mocked_requests_get for url:"+args[0] )
+    raise Exception("No mocked_requests_get for url:"+args[0])
 
 
 def mocked_requests_post(*args, **kwargs):
@@ -66,7 +66,7 @@ def mocked_requests_post(*args, **kwargs):
     if 'http' in args[0] and '/api/taps/' in args[0]:
         return MockResponse(file_to_string_strip_new_lines('data/xos_tap.json'), 201)
 
-    raise Exception("No mocked_requests_post for url:"+args[0] )
+    raise Exception("No mocked_requests_post for url:"+args[0])
 
 
 def test_message():
