@@ -110,7 +110,7 @@ export default class PlaylistLabelRenderer {
       const labels = this.state.playlistJson.playlist_labels;
       for (let index = 0; index < labels.length; index++) {
         const element = labels[index];
-        if (element.label.id === this.state.currentLabelId) {
+        if (element.label && element.label.id === this.state.currentLabelId) {
           this.state.nextLabelId = labels[(index + 1) % labels.length].label.id;
 
           // Update the label fields with the currently playing data
