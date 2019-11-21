@@ -68,8 +68,9 @@ html, body {
 
 .progress-bar-container {
   width: 100%;
-  position: absolute;
+  position: fixed;
   bottom: 0px;
+  left: 0px;
   z-index: 1000;
   background-color: lightgray;
 }
@@ -78,6 +79,7 @@ html, body {
   width: 100%;
   height: 20px;
   background-color: grey;
+  transform-origin: left;
 }
 
 /* Extra small devices (less than 768px) */

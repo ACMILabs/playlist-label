@@ -42,10 +42,10 @@ def mocked_requests_get(*args, **kwargs):
         def raise_for_status(self):
             return None
 
-    if args[0].startswith('https://museumos-prod.acmi.net.au/api/playlists/'):
+    if 'http' in args[0] and '/api/playlists/' in args[0]:
         return MockResponse(file_to_string_strip_new_lines('data/playlist.json'), 200)
 
-    return MockResponse(None, 404)
+    raise Exception("No mocked_requests_get for url:"+args[0])
 
 
 def mocked_requests_post(*args, **kwargs):
@@ -63,10 +63,10 @@ def mocked_requests_post(*args, **kwargs):
         def raise_for_status(self):
             return None
 
-    if args[0].startswith('https://museumos-prod.acmi.net.au/api/taps/'):
+    if 'http' in args[0] and '/api/taps/' in args[0]:
         return MockResponse(file_to_string_strip_new_lines('data/xos_tap.json'), 201)
 
-    return MockResponse(None, 404)
+    raise Exception("No mocked_requests_post for url:"+args[0])
 
 
 def test_message():
@@ -157,5 +157,5 @@ def test_route_collect_item(mocked_requests_post, client):
     lens_tap_data = file_to_string_strip_new_lines('data/lens_tap.json')
     response = client.post('/api/taps/', data=lens_tap_data, headers={'Content-Type': 'application/json'})
 
-    assert b'"short_code":"nbadbb"' in response.data
+    assert json.loads(response.data)['nfc_tag']['short_code'] == "nbadbb"
     assert response.status_code == 201
