@@ -4,21 +4,9 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
-from peewee import SqliteDatabase
 
 from app import main
 from app.main import Message, PlaylistLabel
-
-
-@pytest.fixture
-def database():
-    """
-    Setup the test database.
-    """
-    test_db = SqliteDatabase(':memory:')
-    test_db.bind([Message], bind_refs=False, bind_backrefs=False)
-    test_db.connect()
-    test_db.create_tables([Message])
 
 
 def file_to_string_strip_new_lines(filename):
@@ -57,7 +45,7 @@ def mocked_requests_get(*args, **kwargs):
 
     if args[0].startswith('https://xos.acmi.net.au/api/playlists/2/'):
         return MockResponse(file_to_string_strip_new_lines('data/playlist_no_label.json'), 200)
-    elif args[0].startswith('https://xos.acmi.net.au/api/playlists/'):
+    if args[0].startswith('https://xos.acmi.net.au/api/playlists/'):
         return MockResponse(file_to_string_strip_new_lines('data/playlist.json'), 200)
 
     return MockResponse(None, 404)
@@ -84,7 +72,8 @@ def mocked_requests_post(*args, **kwargs):
     return MockResponse(None, 404)
 
 
-def test_message(database):
+@pytest.mark.usefixtures('database')
+def test_message():
     """
     Test the Message class initialises.
     """
@@ -104,8 +93,8 @@ def test_message(database):
     assert message.datetime is timestamp
 
 
-@patch('requests.get', side_effect=mocked_requests_get)
-def test_download_playlist_label(mocked_requests_get):
+@patch('requests.get', MagicMock(side_effect=mocked_requests_get))
+def test_download_playlist_label():
     """
     Test that downloading the playlist from XOS
     successfully saves it to the filesystem.
@@ -121,14 +110,14 @@ def test_download_playlist_label(mocked_requests_get):
     assert playlist[0]['label']['title'] == 'Dracula'
 
 
-def test_process_media(database):
+@pytest.mark.usefixtures('database')
+def test_process_media():
     """
     Test the process_media function creates a valid Message.
     """
 
-    DATETIME_OF_MESSAGE = datetime.datetime.now()
     message_broker_json = json.loads(file_to_string_strip_new_lines('data/message.json'))
-    message_broker_json['datetime'] = DATETIME_OF_MESSAGE
+    message_broker_json['datetime'] = datetime.datetime.now()
     playlistlabel = PlaylistLabel()
     mock = MagicMock()
     playlistlabel.process_media(message_broker_json, mock)
@@ -150,8 +139,8 @@ def test_route_playlist_label(client):
     assert response.status_code == 200
 
 
-@patch('requests.get', side_effect=mocked_requests_get)
-def test_route_playlist_label_with_no_label(mocked_requests_get, client):
+@patch('requests.get', MagicMock(side_effect=mocked_requests_get))
+def test_route_playlist_label_with_no_label(client):
     """
     Test that the playlist route returns the expected data
     when a playlist item doesn't have a label.
@@ -167,8 +156,8 @@ def test_route_playlist_label_with_no_label(mocked_requests_get, client):
     assert response.status_code == 200
 
 
-@patch('requests.get', side_effect=mocked_requests_get)
-def test_route_playlist_json(mocked_requests_get, client):
+@patch('requests.get', MagicMock(side_effect=mocked_requests_get))
+def test_route_playlist_json(client):
     """
     Test that the playlist route returns the expected data.
     """
@@ -182,14 +171,18 @@ def test_route_playlist_json(mocked_requests_get, client):
     assert response.status_code == 200
 
 
-@patch('requests.post', side_effect=mocked_requests_post)
-def test_route_collect_item(mocked_requests_post, client):
+@patch('requests.post', MagicMock(side_effect=mocked_requests_post))
+def test_route_collect_item(client):
     """
     Test that the collect a tap route forwards the expected data to XOS.
     """
 
     lens_tap_data = file_to_string_strip_new_lines('data/lens_tap.json')
-    response = client.post('/api/taps/', data=lens_tap_data, headers={'Content-Type': 'application/json'})
+    response = client.post(
+        '/api/taps/',
+        data=lens_tap_data,
+        headers={'Content-Type': 'application/json'}
+    )
 
     assert b'"short_code":"nbadbb"' in response.data
     assert response.status_code == 201
