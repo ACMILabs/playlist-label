@@ -3,7 +3,6 @@ import json
 from unittest.mock import MagicMock, patch
 
 import pytest
-from peewee import SqliteDatabase
 
 from app import main
 from app.main import Message, PlaylistLabel
@@ -51,7 +50,8 @@ def mocked_requests_post(*args, **kwargs):
     raise Exception("No mocked sample data for request: "+args[0])
 
 
-def test_message(database):
+@pytest.mark.usefixtures('database')
+def test_message():
     """
     Test the Message class initialises.
     """
@@ -71,8 +71,8 @@ def test_message(database):
     assert message.datetime is timestamp
 
 
-@patch('requests.get', side_effect=mocked_requests_get)
-def test_download_playlist_label(mocked_requests_get):
+@patch('requests.get', MagicMock(side_effect=mocked_requests_get))
+def test_download_playlist_label():
     """
     Test that downloading the playlist from XOS
     successfully saves it to the filesystem.
@@ -88,17 +88,16 @@ def test_download_playlist_label(mocked_requests_get):
     assert playlist[0]['label']['title'] == 'Dracula'
 
 
-def test_process_media(database):
+@pytest.mark.usefixtures('database')
+def test_process_media():
     """
     Test the process_media function creates a valid Message.
     """
 
-    DATETIME_OF_MESSAGE = datetime.datetime.now()
-
     with open('tests/data/message.json', 'r') as f:
         message_broker_json = json.loads(f.read())
 
-    message_broker_json['datetime'] = DATETIME_OF_MESSAGE
+    message_broker_json['datetime'] = datetime.datetime.now()
     playlistlabel = PlaylistLabel()
     mock = MagicMock()
     playlistlabel.process_media(message_broker_json, mock)
@@ -120,8 +119,8 @@ def test_route_playlist_label(client):
     assert response.status_code == 200
 
 
-@patch('requests.get', side_effect=mocked_requests_get)
-def test_route_playlist_label_with_no_label(mocked_requests_get, client):
+@patch('requests.get', MagicMock(side_effect=mocked_requests_get))
+def test_route_playlist_label_with_no_label(client):
     """
     Test that the playlist route returns the expected data
     when a playlist item doesn't have a label.
@@ -137,8 +136,8 @@ def test_route_playlist_label_with_no_label(mocked_requests_get, client):
     assert response.status_code == 200
 
 
-@patch('requests.get', side_effect=mocked_requests_get)
-def test_route_playlist_json(mocked_requests_get, client):
+@patch('requests.get', MagicMock(side_effect=mocked_requests_get))
+def test_route_playlist_json(client):
     """
     Test that the playlist route returns the expected data.
     """
@@ -152,8 +151,8 @@ def test_route_playlist_json(mocked_requests_get, client):
     assert response.status_code == 200
 
 
-@patch('requests.post', side_effect=mocked_requests_post)
-def test_route_collect_item(mocked_requests_post, client):
+@patch('requests.post', MagicMock(side_effect=mocked_requests_post))
+def test_route_collect_item(client):
     """
     Test that the collect a tap route forwards the expected data to XOS.
     """
