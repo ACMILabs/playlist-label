@@ -8,17 +8,6 @@ from app import main
 from app.main import Message, PlaylistLabel
 
 
-@pytest.fixture
-def database():
-    """
-    Setup the test database.
-    """
-    test_db = SqliteDatabase(':memory:')
-    test_db.bind([Message], bind_refs=False, bind_backrefs=False)
-    test_db.connect()
-    test_db.create_tables([Message])
-
-
 class MockResponse:
     def __init__(self, json_data, status_code):
         self.content = json.loads(json_data)
@@ -33,19 +22,19 @@ class MockResponse:
 
 def mocked_requests_get(*args, **kwargs):
     if args[0] == 'https://xos.acmi.net.au/api/playlists/1/':
-        with open('tests/data/playlist.json', 'r') as f:
-            return MockResponse(f.read(), 200)
+        with open('tests/data/playlist.json', 'r') as the_file:
+            return MockResponse(the_file.read(), 200)
     if args[0] == 'https://xos.acmi.net.au/api/playlists/2/':
-        with open('tests/data/playlist_no_label.json', 'r') as f:
-            return MockResponse(f.read(), 200)
+        with open('tests/data/playlist_no_label.json', 'r') as the_file:
+            return MockResponse(the_file.read(), 200)
 
     raise Exception("No mocked sample data for request: "+args[0])
 
 
 def mocked_requests_post(*args, **kwargs):
     if args[0] == 'https://xos.acmi.net.au/api/taps/':
-        with open('tests/data/xos_tap.json', 'r') as f:
-            return MockResponse(f.read(), 201)
+        with open('tests/data/xos_tap.json', 'r') as the_file:
+            return MockResponse(the_file.read(), 201)
 
     raise Exception("No mocked sample data for request: "+args[0])
 
@@ -81,8 +70,8 @@ def test_download_playlist_label():
     playlistlabel = PlaylistLabel()
     playlistlabel.download_playlist_label()
 
-    with open('playlist_1.json', 'r') as f:
-        playlist = json.loads(f.read())['playlist_labels']
+    with open('playlist_1.json', 'r') as the_file:
+        playlist = json.loads(the_file.read())['playlist_labels']
 
     assert len(playlist) == 3
     assert playlist[0]['label']['title'] == 'Dracula'
@@ -94,8 +83,8 @@ def test_process_media():
     Test the process_media function creates a valid Message.
     """
 
-    with open('tests/data/message.json', 'r') as f:
-        message_broker_json = json.loads(f.read())
+    with open('tests/data/message.json', 'r') as the_file:
+        message_broker_json = json.loads(the_file.read())
 
     message_broker_json['datetime'] = datetime.datetime.now()
     playlistlabel = PlaylistLabel()
@@ -157,10 +146,14 @@ def test_route_collect_item(client):
     Test that the collect a tap route forwards the expected data to XOS.
     """
 
-    with open('tests/data/lens_tap.json', 'r') as f:
-        lens_tap_data = f.read()
+    with open('tests/data/lens_tap.json', 'r') as the_file:
+        lens_tap_data = the_file.read()
 
-    response = client.post('/api/taps/', data=lens_tap_data, headers={'Content-Type': 'application/json'})
+    response = client.post(
+        '/api/taps/',
+        data=lens_tap_data,
+        headers={'Content-Type': 'application/json'}
+    )
 
     assert response.json["nfc_tag"]["short_code"] == "nbadbb"
     assert response.status_code == 201
