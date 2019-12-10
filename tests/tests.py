@@ -1,6 +1,5 @@
 import datetime
 import json
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -9,67 +8,35 @@ from app import main
 from app.main import Message, PlaylistLabel
 
 
-def file_to_string_strip_new_lines(filename):
-    """
-    Read file and return as string with new line characters stripped
-    :param filename: a filename relative to the current working directory.
-    e.g. 'xml_files/example.xml' or 'example.xml'
-    :return: a string representation of the contents of filename, with new line characters removed
-    """
-    # get current working directory
-    cwd = os.path.dirname(__file__)
-    file_as_string = ""
+class MockResponse:
+    def __init__(self, json_data, status_code):
+        self.content = json.loads(json_data)
+        self.status_code = status_code
 
-    # open filename assuming filename is relative to current working directory
-    with open(os.path.join(cwd, filename), 'r') as file_obj:
-        # strip new line characters
-        file_as_string = file_obj.read().replace('\n', '')
-    # return string
-    return file_as_string
+    def json(self):
+        return self.content
+
+    def raise_for_status(self):
+        return None
 
 
 def mocked_requests_get(*args, **kwargs):
-    """
-    Thanks to https://stackoverflow.com/questions/15753390/how-can-i-mock-requests-and-the-response
-    """
-    class MockResponse:
-        def __init__(self, json_data, status_code):
-            self.content = json.loads(json_data)
-            self.status_code = status_code
+    if args[0] == 'https://xos.acmi.net.au/api/playlists/1/':
+        with open('tests/data/playlist.json', 'r') as the_file:
+            return MockResponse(the_file.read(), 200)
+    if args[0] == 'https://xos.acmi.net.au/api/playlists/2/':
+        with open('tests/data/playlist_no_label.json', 'r') as the_file:
+            return MockResponse(the_file.read(), 200)
 
-        def json(self):
-            return self.content
-
-        def raise_for_status(self):
-            return None
-
-    if args[0].startswith('https://xos.acmi.net.au/api/playlists/2/'):
-        return MockResponse(file_to_string_strip_new_lines('data/playlist_no_label.json'), 200)
-    if args[0].startswith('https://xos.acmi.net.au/api/playlists/'):
-        return MockResponse(file_to_string_strip_new_lines('data/playlist.json'), 200)
-
-    return MockResponse(None, 404)
+    raise Exception("No mocked sample data for request: "+args[0])
 
 
 def mocked_requests_post(*args, **kwargs):
-    """
-    Thanks to https://stackoverflow.com/questions/15753390/how-can-i-mock-requests-and-the-response
-    """
-    class MockResponse:
-        def __init__(self, json_data, status_code):
-            self.content = json.loads(json_data)
-            self.status_code = status_code
+    if args[0] == 'https://xos.acmi.net.au/api/taps/':
+        with open('tests/data/xos_tap.json', 'r') as the_file:
+            return MockResponse(the_file.read(), 201)
 
-        def json(self):
-            return self.content
-
-        def raise_for_status(self):
-            return None
-
-    if args[0].startswith('https://xos.acmi.net.au/api/taps/'):
-        return MockResponse(file_to_string_strip_new_lines('data/xos_tap.json'), 201)
-
-    return MockResponse(None, 404)
+    raise Exception("No mocked sample data for request: "+args[0])
 
 
 @pytest.mark.usefixtures('database')
@@ -102,10 +69,10 @@ def test_download_playlist_label():
 
     playlistlabel = PlaylistLabel()
     playlistlabel.download_playlist_label()
-    file_exists = os.path.isfile('playlist_1.json')
-    playlist = json.loads(file_to_string_strip_new_lines('../playlist_1.json'))['playlist_labels']
 
-    assert file_exists is True
+    with open('playlist_1.json', 'r') as the_file:
+        playlist = json.loads(the_file.read())['playlist_labels']
+
     assert len(playlist) == 3
     assert playlist[0]['label']['title'] == 'Dracula'
 
@@ -116,7 +83,9 @@ def test_process_media():
     Test the process_media function creates a valid Message.
     """
 
-    message_broker_json = json.loads(file_to_string_strip_new_lines('data/message.json'))
+    with open('tests/data/message.json', 'r') as the_file:
+        message_broker_json = json.loads(the_file.read())
+
     message_broker_json['datetime'] = datetime.datetime.now()
     playlistlabel = PlaylistLabel()
     mock = MagicMock()
@@ -177,12 +146,14 @@ def test_route_collect_item(client):
     Test that the collect a tap route forwards the expected data to XOS.
     """
 
-    lens_tap_data = file_to_string_strip_new_lines('data/lens_tap.json')
+    with open('tests/data/lens_tap.json', 'r') as the_file:
+        lens_tap_data = the_file.read()
+
     response = client.post(
         '/api/taps/',
         data=lens_tap_data,
         headers={'Content-Type': 'application/json'}
     )
 
-    assert b'"short_code":"nbadbb"' in response.data
+    assert response.json["nfc_tag"]["short_code"] == "nbadbb"
     assert response.status_code == 201
