@@ -23,6 +23,17 @@ python3 -u -m app.main &
 
 sleep 10
 
+# Rotate the display if needed
+ROTATE_SCREEN="${ROTATE_SCREEN:-false}"
+if [ "$ROTATE_SCREEN" == left ]
+then
+xrandr -o left
+fi
+if [ "$ROTATE_SCREEN" == right ]
+then
+xrandr -o right
+fi
+
 # Launch chromium browser in fullscreen on that page
 SCREEN_SCALE="${SCREEN_SCALE:-1.0}"
 chromium-browser --app=http://localhost:8081 --start-fullscreen --no-sandbox --user-data-dir --kiosk --force-device-scale-factor=$SCREEN_SCALE
