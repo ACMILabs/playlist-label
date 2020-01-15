@@ -83,7 +83,7 @@ html, body {
 /* Extra small devices (less than 768px) */
 @media (max-width: 48rem) {
   .playlist-label {
-    padding: 1rem;
+    padding: 0;
   }
   
   .playlist-label .image-container {
