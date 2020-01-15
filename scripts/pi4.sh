@@ -28,10 +28,18 @@ ROTATE_SCREEN="${ROTATE_SCREEN:-false}"
 if [ "$ROTATE_SCREEN" == left ]
 then
 xrandr -o left
+# Rotate Raspberry Pi screen touch interface
+xinput set-prop "FT5406 memory based driver" --type=float "Coordinate Transformation Matrix" 0 -1 1 1 0 0 0 0 1
+# Rotate 12.3" screen touch interface
+xinput set-prop "ILITEK ILITEK-TP" --type=float "Coordinate Transformation Matrix" 0 -1 1 1 0 0 0 0 1
 fi
 if [ "$ROTATE_SCREEN" == right ]
 then
 xrandr -o right
+# Rotate Raspberry Pi screen touch interface
+xinput set-prop "FT5406 memory based driver" --type=float "Coordinate Transformation Matrix" 0 1 0 -1 0 1 0 0 1
+# Rotate 12.3" screen touch interface
+xinput set-prop "ILITEK ILITEK-TP" --type=float "Coordinate Transformation Matrix" 0 1 0 -1 0 1 0 0 1
 fi
 
 # Launch chromium browser in fullscreen on that page
