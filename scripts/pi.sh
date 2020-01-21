@@ -1,5 +1,12 @@
 #!/bin/bash
 
+rm /tmp/.X0-lock &>/dev/null || true
+
+echo "Starting X in 2 seconds"
+sleep 2
+startx &
+sleep 20
+
 # Set the display to use
 export DISPLAY=:0
 
@@ -11,13 +18,6 @@ xrandr --newmode "1920x720_60.00"  100.98  1920 2008 2052 2200  720 724 729 765 
 xrandr --addmode HDMI-1 "1920x720_60.00"
 xrandr --output HDMI-1 --mode "1920x720_60.00"
 fi
-
-rm /tmp/.X0-lock &>/dev/null || true
-
-echo "Starting X in 2 seconds"
-sleep 2
-startx &
-sleep 20
 
 # Hide the cursor
 unclutter -display :0 -idle 0.1 &
