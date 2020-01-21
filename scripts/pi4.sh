@@ -1,10 +1,19 @@
 #!/bin/bash
 
-# Remove the X server lock file so ours starts cleanly
-rm /tmp/.X0-lock &>/dev/null || true
-
 # Set the display to use
 export DISPLAY=:0
+
+# Set the screen resolution to 1920x720 if it's a Playlist Label 12.3" screen
+ROTATE_SCREEN="${PLAYLIST_LABEL_SCREEN:-true}"
+if [ "$PLAYLIST_LABEL_SCREEN" == true ]
+then
+xrandr --newmode "1920x720_60.00"  100.98  1920 2008 2052 2200  720 724 729 765  +HSync +Vsync
+xrandr --addmode HDMI-1 "1920x720_60.00"
+xrandr --output HDMI-1 --mode "1920x720_60.00"
+fi
+
+# Remove the X server lock file so ours starts cleanly
+rm /tmp/.X0-lock &>/dev/null || true
 
 # Set the DBUS address for sending around system messages
 export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket
