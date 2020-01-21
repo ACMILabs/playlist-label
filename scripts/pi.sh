@@ -10,23 +10,6 @@ sleep 20
 # Set the display to use
 export DISPLAY=:0
 
-# Set the screen resolution to 1920x720 if it's a Playlist Label 12.3" screen
-PLAYLIST_LABEL_SCREEN="${PLAYLIST_LABEL_SCREEN:-true}"
-if [ "$PLAYLIST_LABEL_SCREEN" == true ]
-then
-xrandr --newmode "1920x720_60.00"  100.98  1920 2008 2052 2200  720 724 729 765  +HSync +Vsync
-xrandr --addmode HDMI-1 "1920x720_60.00"
-xrandr --output HDMI-1 --mode "1920x720_60.00"
-fi
-
-# Hide the cursor
-unclutter -display :0 -idle 0.1 &
-
-# Start Flask
-python -u -m app.main &
-
-sleep 10
-
 # Rotate the display if needed
 ROTATE_SCREEN="${ROTATE_SCREEN:-false}"
 if [ "$ROTATE_SCREEN" == left ]
@@ -45,6 +28,23 @@ xinput set-prop "FT5406 memory based driver" --type=float "Coordinate Transforma
 # Rotate 12.3" screen touch interface
 xinput set-prop "ILITEK ILITEK-TP" --type=float "Coordinate Transformation Matrix" 0 1 0 -1 0 1 0 0 1
 fi
+
+# Set the screen resolution to 1920x720 if it's a Playlist Label 12.3" screen
+PLAYLIST_LABEL_SCREEN="${PLAYLIST_LABEL_SCREEN:-true}"
+if [ "$PLAYLIST_LABEL_SCREEN" == true ]
+then
+xrandr --newmode "1920x720_60.00"  100.98  1920 2008 2052 2200  720 724 729 765  +HSync +Vsync
+xrandr --addmode HDMI-1 "1920x720_60.00"
+xrandr --output HDMI-1 --mode "1920x720_60.00"
+fi
+
+# Hide the cursor
+unclutter -display :0 -idle 0.1 &
+
+# Start Flask
+python -u -m app.main &
+
+sleep 10
 
 # Launch chromium browser in fullscreen on that page
 SCREEN_SCALE="${SCREEN_SCALE:-1.0}"
