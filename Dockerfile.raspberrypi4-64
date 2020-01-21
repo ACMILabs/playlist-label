@@ -12,6 +12,7 @@ RUN install_packages \
   raspberrypi-ui-mods rpd-icons \
   gtk2-engines-clearlookspix \
   matchbox-keyboard \
+  unclutter \
   xinput
 
 # disable lxpolkit popup warning
