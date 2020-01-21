@@ -119,7 +119,7 @@ export default class PlaylistLabelRenderer {
             element.label.title;
           mainElem.getElementsByTagName("h2")[0].textContent =
             element.label.publication;
-          mainElem.getElementsByTagName("p")[0].textContent = this.truncate(
+          mainElem.getElementsByTagName("p")[0].innerHTML = this.truncate(
             element.label.columns[0].content,
             400
           );
