@@ -120,7 +120,7 @@ export default class PlaylistLabelRenderer {
           mainElem.getElementsByTagName("h2")[0].textContent =
             element.label.publication;
           mainElem.getElementsByTagName("p")[0].textContent = this.truncate(
-            element.label.description,
+            element.label.columns[0].content,
             400
           );
           mainElem.getElementsByTagName("img")[0].src =

@@ -70,7 +70,7 @@ describe("PlaylistLabelRenderer", () => {
     });
     expect(mainElem.innerHTML).toContain(element.label.title);
     expect(mainElem.innerHTML).toContain(element.label.publication);
-    expect(mainElem.innerHTML).toContain(element.label.description);
+    expect(mainElem.innerHTML).toContain(element.label.columns[0].content);
     expect(mainElem.innerHTML).toContain(element.label.works[0].image);
     const elementNext = renderer.state.playlistJson.playlist_labels.find(
       label => {

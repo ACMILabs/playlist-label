@@ -6,7 +6,12 @@
       "label": {
         "id": 17,
         "title": "Dracula",
-        "description": "When Dracula leaves the captive Jonathan Harker and Transylvania for London in search of Mina Harkerâ€”the spitting image of Dracula's long-dead wife, Elisabetaâ€”obsessed vampire hunter, Dr. Van Helsing sets out to end the madness.",
+        "columns": [
+          {
+            "content": "When Dracula leaves the captive Jonathan Harker and Transylvania for London in search of Mina Harkerâ€”the spitting image of Dracula's long-dead wife, Elisabetaâ€”obsessed vampire hunter, Dr. Van Helsing sets out to end the madness.",
+            "style": "standard"
+          }
+        ],
         "publication": "1992, Dir. Francis Ford Coppola",
         "rights": "",
         "works": [
@@ -27,7 +32,12 @@
       "label": {
         "id": 18,
         "title": "Jurassic Park",
-        "description": "A wealthy entrepreneur secretly creates a theme park featuring living dinosaurs drawn from prehistoric DNA. Before opening day, he invites a team of experts and his two eager grandchildren to experience the park and help calm anxious investors. However, the park is anything but amusing as the security systems go off-line and the dinosaurs escape.",
+        "columns": [
+          {
+            "content": "A wealthy entrepreneur secretly creates a theme park featuring living dinosaurs drawn from prehistoric DNA. Before opening day, he invites a team of experts and his two eager grandchildren to experience the park and help calm anxious investors. However, the park is anything but amusing as the security systems go off-line and the dinosaurs escape.",
+            "style": "standard"
+          }
+        ],
         "publication": "1993, Dir. Steven Spielberg",
         "rights": "",
         "works": [
@@ -48,7 +58,12 @@
       "label": {
         "id": 19,
         "title": "Kiki's Delivery Service",
-        "description": "A young witch, on her mandatory year of independent life, finds fitting into a new community difficult while she supports herself by running an air courier service.",
+        "columns": [
+          {
+            "content": "A young witch, on her mandatory year of independent life, finds fitting into a new community difficult while she supports herself by running an air courier service.",
+            "style": "standard"
+          }
+        ],
         "publication": "1989, Dir. Hayao Miyazaki",
         "rights": "",
         "works": [
