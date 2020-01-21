@@ -9,7 +9,7 @@ export DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket
 # start desktop manager
 echo "STARTING X"
 sleep 2
-startx &
+startx -- -nocursor &
 sleep 20
 
 # Set the display to use
@@ -42,9 +42,6 @@ xrandr --newmode "1920x720_60.00"  100.98  1920 2008 2052 2200  720 724 729 765 
 xrandr --addmode HDMI-1 "1920x720_60.00"
 xrandr --output HDMI-1 --mode "1920x720_60.00"
 fi
-
-# Hide the cursor
-unclutter -display :0 -idle 0.1 &
 
 # Start Flask
 python3 -u -m app.main &
