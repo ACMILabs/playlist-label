@@ -118,7 +118,7 @@ export default class PlaylistLabelRenderer {
           mainElem.getElementsByTagName("h1")[0].textContent =
             element.label.title;
           mainElem.getElementsByTagName("h2")[0].textContent =
-            element.label.publication;
+            element.label.subtitles;
           mainElem.getElementsByTagName("p")[0].innerHTML = this.truncate(
             element.label.columns[0].content,
             400
@@ -135,7 +135,7 @@ export default class PlaylistLabelRenderer {
           mainElem.getElementsByTagName("h4")[0].textContent =
             elementNext.label.title;
           mainElem.getElementsByTagName("h5")[0].textContent =
-            elementNext.label.publication;
+            elementNext.label.subtitles;
         }
       }
     }

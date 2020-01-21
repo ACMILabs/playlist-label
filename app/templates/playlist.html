@@ -15,7 +15,7 @@
                         <div class="row">
                             <div class="col-sm">
                                 <h1>{{ item.label.title }}</h1>
-                                <h2>{{ item.label.publication }}</h2>
+                                <h2>{{ item.label.subtitles }}</h2>
                             </div>
                             <div class="col-sm label-description">
                                 {{ item.label.columns[0].content|safe }}
@@ -37,7 +37,7 @@
                     {% if loop.index == 2 %}
                         <h3>Next</h3>
                         <h4>{{ item.label.title }}</h4>
-                        <h5>{{ item.label.publication }}</h5>
+                        <h5>{{ item.label.subtitles }}</h5>
                     {% endif %}
                 {% endfor %}
                 {% if not playlist_json %}
