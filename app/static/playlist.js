@@ -119,10 +119,13 @@ export default class PlaylistLabelRenderer {
             element.label.title;
           mainElem.getElementsByTagName("h2")[0].textContent =
             element.label.subtitles;
-          mainElem.getElementsByTagName("p")[0].innerHTML = this.truncate(
-            element.label.columns[0].content,
-            400
-          );
+          mainElem.getElementById("content0").innerHTML =
+            element.label.columns[0].content;
+          mainElem.getElementById("content1").innerHTML =
+            element.label.columns[1].content;
+          mainElem.getElementById("content2").innerHTML =
+            element.label.columns[2].content;
+
           mainElem.getElementsByTagName("img")[0].src =
             element.label.works[0].image;
           mainElem.getElementsByTagName("img")[0].alt = element.label.title;

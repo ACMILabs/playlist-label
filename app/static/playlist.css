@@ -91,3 +91,7 @@ html, body {
     margin: 1rem 0 2rem 0;
   }
 }
+
+.content_smaller {
+  font-size: 18px;
+}

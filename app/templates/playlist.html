@@ -18,9 +18,15 @@
                                 <h2>{{ item.label.subtitles }}</h2>
                             </div>
                             <div class="col-sm label-description">
-                                {{ item.label.columns[0].content|safe }}
-                                {{ item.label.columns[1].content|safe }}
-                                {{ item.label.columns[2].content|safe }}
+                                <div id='content0' class="content {{ 'content_smaller' if item.label.columns[0].style == 'smaller' else 'standard' }}">
+                                  {{ item.label.columns[0].content|safe }}
+                                </div>
+                                <div id='content1' class="content {{ 'content_smaller' if item.label.columns[1].style == 'smaller' else 'standard' }}">
+                                  {{ item.label.columns[1].content|safe }}
+                                </div>
+                                <div id='content2' class="content {{ 'content_smaller' if item.label.columns[2].style == 'smaller' else 'standard' }}">
+                                  {{ item.label.columns[2].content|safe }}
+                                </div>
                                 <div class="btn-group" role="group" aria-label="Font size">
                                     <button type="button" class="btn btn-sm btn-outline-light" id="font-size-smaller">Smaller</button>
                                     <button type="button" class="btn btn-sm btn-outline-light" id="current-font-size">20pt (26.7px)</button>
