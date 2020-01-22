@@ -11,7 +11,7 @@ from peewee import CharField, FloatField, IntegerField, Model, SqliteDatabase
 from playhouse.shortcuts import model_to_dict
 from sentry_sdk.integrations.flask import FlaskIntegration
 
-from errors import HTTPError
+from app.errors import HTTPError
 
 XOS_API_ENDPOINT = os.getenv('XOS_API_ENDPOINT')
 XOS_TAPS_ENDPOINT = os.getenv('XOS_TAPS_ENDPOINT', f'{XOS_API_ENDPOINT}taps/')
