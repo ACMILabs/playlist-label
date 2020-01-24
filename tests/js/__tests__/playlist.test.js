@@ -31,7 +31,9 @@ describe("PlaylistLabelRenderer", () => {
                                     <h2></h2>
                                   </div>
                                   <div class="col-sm">
-                                    <p></p>
+                                    <div id='content0'></div>
+                                    <div id='content1'></div>
+                                    <div id='content2'></div>
                                   </div>
                                   <div class="col-sm image-container">
                                     <img src="" alt="" title="">
