@@ -118,11 +118,14 @@ export default class PlaylistLabelRenderer {
           mainElem.getElementsByTagName("h1")[0].textContent =
             element.label.title;
           mainElem.getElementsByTagName("h2")[0].textContent =
-            element.label.publication;
-          mainElem.getElementsByTagName("p")[0].textContent = this.truncate(
-            element.label.description,
-            400
-          );
+            element.label.subtitles;
+          document.getElementById("content0").innerHTML =
+            element.label.columns[0].content;
+          document.getElementById("content1").innerHTML =
+            element.label.columns[1].content;
+          document.getElementById("content2").innerHTML =
+            element.label.columns[2].content;
+
           mainElem.getElementsByTagName("img")[0].src =
             element.label.works[0].image;
           mainElem.getElementsByTagName("img")[0].alt = element.label.title;
@@ -135,7 +138,7 @@ export default class PlaylistLabelRenderer {
           mainElem.getElementsByTagName("h4")[0].textContent =
             elementNext.label.title;
           mainElem.getElementsByTagName("h5")[0].textContent =
-            elementNext.label.publication;
+            elementNext.label.subtitles;
         }
       }
     }

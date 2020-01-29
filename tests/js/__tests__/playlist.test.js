@@ -31,7 +31,9 @@ describe("PlaylistLabelRenderer", () => {
                                     <h2></h2>
                                   </div>
                                   <div class="col-sm">
-                                    <p></p>
+                                    <div id='content0'></div>
+                                    <div id='content1'></div>
+                                    <div id='content2'></div>
                                   </div>
                                   <div class="col-sm image-container">
                                     <img src="" alt="" title="">
@@ -69,8 +71,8 @@ describe("PlaylistLabelRenderer", () => {
       return label.label.id === renderer.state.currentLabelId;
     });
     expect(mainElem.innerHTML).toContain(element.label.title);
-    expect(mainElem.innerHTML).toContain(element.label.publication);
-    expect(mainElem.innerHTML).toContain(element.label.description);
+    expect(mainElem.innerHTML).toContain(element.label.subtitles);
+    expect(mainElem.innerHTML).toContain(element.label.columns[0].content);
     expect(mainElem.innerHTML).toContain(element.label.works[0].image);
     const elementNext = renderer.state.playlistJson.playlist_labels.find(
       label => {
@@ -78,6 +80,6 @@ describe("PlaylistLabelRenderer", () => {
       }
     );
     expect(mainElem.innerHTML).toContain(elementNext.label.title);
-    expect(mainElem.innerHTML).toContain(elementNext.label.publication);
+    expect(mainElem.innerHTML).toContain(elementNext.label.subtitles);
   });
 });
