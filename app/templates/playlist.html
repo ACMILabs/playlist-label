@@ -15,10 +15,18 @@
                         <div class="row">
                             <div class="col-sm">
                                 <h1>{{ item.label.title }}</h1>
-                                <h2>{{ item.label.publication }}</h2>
+                                <h2>{{ item.label.subtitles }}</h2>
                             </div>
                             <div class="col-sm label-description">
-                                <p>{{ item.label.description }}</p>
+                                <div id='content0' class="content {{ 'content_smaller' if item.label.columns[0].style == 'smaller' else 'standard' }}">
+                                  {{ item.label.columns[0].content|safe }}
+                                </div>
+                                <div id='content1' class="content {{ 'content_smaller' if item.label.columns[1].style == 'smaller' else 'standard' }}">
+                                  {{ item.label.columns[1].content|safe }}
+                                </div>
+                                <div id='content2' class="content {{ 'content_smaller' if item.label.columns[2].style == 'smaller' else 'standard' }}">
+                                  {{ item.label.columns[2].content|safe }}
+                                </div>
                                 <div class="btn-group" role="group" aria-label="Font size">
                                     <button type="button" class="btn btn-sm btn-outline-light" id="font-size-smaller">Smaller</button>
                                     <button type="button" class="btn btn-sm btn-outline-light" id="current-font-size">20pt (26.7px)</button>
@@ -35,7 +43,7 @@
                     {% if loop.index == 2 %}
                         <h3>Next</h3>
                         <h4>{{ item.label.title }}</h4>
-                        <h5>{{ item.label.publication }}</h5>
+                        <h5>{{ item.label.subtitles }}</h5>
                     {% endif %}
                 {% endfor %}
                 {% if not playlist_json %}
