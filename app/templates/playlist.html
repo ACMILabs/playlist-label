@@ -35,7 +35,7 @@
                             </div>
                             <div class="col-sm image-container">
                                 {% if item.label.works|length > 0 %}
-                                    <img src="{{ item.label.works.0.image }}" alt="{{ item.label.title }}" title="{{ item.label.title }}">
+                                    <img src="{{ item.label.works.0.public_images.0.image_file }}" alt="{{ item.label.title }}" title="{{ item.label.title }}">
                                 {% endif %}
                             </div>
                         </div>

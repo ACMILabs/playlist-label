@@ -127,7 +127,7 @@ export default class PlaylistLabelRenderer {
             element.label.columns[2].content;
 
           mainElem.getElementsByTagName("img")[0].src =
-            element.label.works[0].image;
+            element.label.works[0].public_images[0].image_file;
           mainElem.getElementsByTagName("img")[0].alt = element.label.title;
           mainElem.getElementsByTagName("img")[0].title = element.label.title;
 
