@@ -73,7 +73,9 @@ describe("PlaylistLabelRenderer", () => {
     expect(mainElem.innerHTML).toContain(element.label.title);
     expect(mainElem.innerHTML).toContain(element.label.subtitles);
     expect(mainElem.innerHTML).toContain(element.label.columns[0].content);
-    expect(mainElem.innerHTML).toContain(element.label.works[0].image);
+    expect(mainElem.innerHTML).toContain(
+      element.label.works[0].public_images[0].image_file
+    );
     const elementNext = renderer.state.playlistJson.playlist_labels.find(
       label => {
         return label.label.id === renderer.state.nextLabelId;
