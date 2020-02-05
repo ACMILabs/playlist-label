@@ -243,4 +243,4 @@ if __name__ == '__main__':
     playlistlabel = PlaylistLabel()  # pylint: disable=C0103
     playlistlabel.download_playlist_label()
     Thread(target=playlistlabel.get_events).start()
-    app.run(host='0.0.0.0', port=PLAYLIST_LABEL_PORT)
+    app.run(host='0.0.0.0', port=PLAYLIST_LABEL_PORT, threaded=True)
