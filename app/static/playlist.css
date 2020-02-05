@@ -131,14 +131,14 @@ body {
 
 .next_left {
   float: left;
-  width: calc(20% - 110px);
+  width: 70px;
   margin-left: 75px;
   margin-right: 35px;
 }
 
 .next_right {
   float: left;
-  width: calc(80% - 50px);
+  width: calc(100% - 255px);
 }
 
 p:first-child {
