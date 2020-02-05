@@ -4,6 +4,7 @@
       <title>Playlist: {{ playlist_json.title }}</title>
       <link rel="stylesheet" type="text/css" href="/static/playlist.css">
       <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+      <meta charset="UTF-8">
   </head>
 
   <body>
@@ -43,7 +44,6 @@
                           </div>
                           <div class='next_right'>
                             <div id='next_title'>{{ playlist_json.playlist_labels[1].label.title }}</div>
-                            <div id='next_subtitles'>{{ playlist_json.playlist_labels[1].label.subtitles }}</div>
                           </div>
                       {% endif %}
                   </div>

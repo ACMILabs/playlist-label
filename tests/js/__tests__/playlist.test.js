@@ -38,7 +38,6 @@ describe("PlaylistLabelRenderer", () => {
                                 </div>
                                 <div></div>
                                 <div id='next_title'></div>
-                                <div id='next_subtitles'></div>
                               </div>
                               <div class="progress-bar-container">
                                 <div id="progress-bar" class="progress-bar"></div>
@@ -75,6 +74,5 @@ describe("PlaylistLabelRenderer", () => {
       }
     );
     expect(document.body.innerHTML).toContain(elementNext.label.title);
-    expect(document.body.innerHTML).toContain(elementNext.label.subtitles);
   });
 });

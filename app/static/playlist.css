@@ -131,14 +131,14 @@ body {
 
 .next_left {
   float: left;
-  width: calc(20% - 25px);
-  margin-right: 25px;
-  text-align: right;
+  width: calc(20% - 110px);
+  margin-left: 75px;
+  margin-right: 35px;
 }
 
 .next_right {
   float: left;
-  width: 80%;
+  width: calc(80% - 50px);
 }
 
 p:first-child {
@@ -147,9 +147,8 @@ p:first-child {
 
 .collect {
   color: #000;
-  margin-left: 35px;
   margin-top: 39px;
-  padding: 30px 40px 24px;
+  padding: 30px 40px 24px 75px;
   font-family: PxGrotesk;
   font-size: 23px;
   transition: background 1s, color 1s;
@@ -157,8 +156,8 @@ p:first-child {
 }
 
 .collect:before {
-  width: 18px;
-  height: 24px;
+  width: 20px;
+  height: 25px;
   display: inline-block;
   background: url('down.svg') center/contain no-repeat;
   content: " ";
@@ -176,8 +175,9 @@ p:first-child {
 
 .collect.active:before  {
   background: url('tick.svg') center/contain no-repeat;
-  width: 18px;
-  height: 14px;
+  transform: rotate(0deg);
+  width: 21px;
+  height: 17px;
   vertical-align: 0px;
 }
 .collect.active.hidden,

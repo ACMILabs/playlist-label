@@ -136,8 +136,6 @@ export default class PlaylistLabelRenderer {
             });
             document.getElementById("next_title").innerHTML =
               elementNext.label.title;
-            document.getElementById("next_subtitles").innerHTML =
-              elementNext.label.subtitles;
           }
         }
       }
