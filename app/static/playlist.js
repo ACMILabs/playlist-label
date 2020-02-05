@@ -148,7 +148,6 @@ export default class PlaylistLabelRenderer {
     return str.length > max ? `${str.substr(0, max - 3)}...` : str;
   }
 
-
   handleTapMessage() {
     // UPDATE 'COLLECTED' UI
     if (!this.state.isAnimatingCollect) {
@@ -156,7 +155,7 @@ export default class PlaylistLabelRenderer {
       this.state.isAnimatingCollect = true;
 
       // Animation plays: collect -> hidden -> collected -> hidden -> collect
-      const collectElement = document.getElementById('collect')
+      const collectElement = document.getElementById("collect");
       collectElement.className = "collect hidden";
       window.setTimeout(function timeout1() {
         collectElement.innerHTML = "COLLECTED";
@@ -165,11 +164,14 @@ export default class PlaylistLabelRenderer {
       window.setTimeout(function timeout2() {
         collectElement.className = "collect active hidden";
       }, 3000);
-      window.setTimeout((function timeout3() {
-        collectElement.className = "collect";
-        collectElement.innerHTML = "COLLECT";
-        this.state.isAnimatingCollect = false;
-      }).bind(this), 4000);
+      window.setTimeout(
+        function timeout3() {
+          collectElement.className = "collect";
+          collectElement.innerHTML = "COLLECT";
+          this.state.isAnimatingCollect = false;
+        }.bind(this),
+        4000
+      );
     }
   }
 }
