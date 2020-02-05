@@ -33,10 +33,11 @@
   src: url("PxGrotesk-BoldIta.otf") format("opentype");
 }
 
-html, body {
-  height: 100%;
+body {
   font-family: FaktPro;
   margin: 0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .progress-bar-container {
@@ -112,7 +113,7 @@ html, body {
   font-size: 28px;
   line-height: 39px;
   width: calc(50% - 75px);
-  padding: 50px 75px;
+  padding: 50px 0;
   box-sizing: border-box;
   display: inline-block;
   position: fixed;
@@ -126,6 +127,18 @@ html, body {
     display: block;
     right: 0;
   }
+}
+
+.next_left {
+  float: left;
+  width: calc(20% - 25px);
+  margin-right: 25px;
+  text-align: right;
+}
+
+.next_right {
+  float: left;
+  width: 80%;
 }
 
 p:first-child {
