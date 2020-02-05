@@ -158,32 +158,26 @@ p:first-child {
 }
 
 .collect:before {
-  width: 20px;
-  height: 25px;
+  width: 30px;
+  height: 41px;
   display: inline-block;
   background: url('down.svg') center/contain no-repeat;
   content: " ";
   margin-right: 10px;
-  vertical-align: -4px;
   transition: opacity 1s;
   transform: rotate(90deg);
+  vertical-align: -12px;
 }
 
 @media (max-width: 720px) {
   .collect:before {
     transform: none;
-    width: 30px;
-    height: 41px;
-    vertical-align: -12px;
   }
 }
 
 .collect.active:before  {
   background: url('tick.svg') center/contain no-repeat;
   transform: rotate(0deg);
-  width: 21px;
-  height: 17px;
-  vertical-align: 0px;
 }
 .collect.active.hidden,
 .collect.hidden {
