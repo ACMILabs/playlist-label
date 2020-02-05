@@ -89,6 +89,8 @@ body {
   padding-right: 75px;
   padding-top: 75px;
   box-sizing: border-box;
+  /* Must be higher than the title_cont, or .collect float will break */
+  min-height: 220px;
 }
 
 @media (max-width: 720px) {
@@ -170,6 +172,9 @@ p:first-child {
 @media (max-width: 720px) {
   .collect:before {
     transform: none;
+    width: 30px;
+    height: 41px;
+    vertical-align: -12px;
   }
 }
 
