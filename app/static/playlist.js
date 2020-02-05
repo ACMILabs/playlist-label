@@ -100,7 +100,7 @@ export default class PlaylistLabelRenderer {
 
     // Update the progress bar
     const videoPlaybackPercentage = messageJson.playback_position * 100;
-    const progressBar = document.getElementsByClassName("progress-bar")[0];
+    const progressBar = document.getElementById("progress-bar");
     progressBar.style.width = `${videoPlaybackPercentage}%`;
 
     // Update the label if needed
@@ -114,10 +114,8 @@ export default class PlaylistLabelRenderer {
           this.state.nextLabelId = labels[(index + 1) % labels.length].label.id;
 
           // Update the label fields with the currently playing data
-          const mainElem = document.getElementById("playlist-label-js-hook");
-          mainElem.getElementsByTagName("h1")[0].textContent =
-            element.label.title;
-          mainElem.getElementsByTagName("h2")[0].textContent =
+          document.getElementById("title").innerHTML = element.label.title;
+          document.getElementById("subtitles").innerHTML =
             element.label.subtitles;
           document.getElementById("content0").innerHTML =
             element.label.columns[0].content;
@@ -126,19 +124,16 @@ export default class PlaylistLabelRenderer {
           document.getElementById("content2").innerHTML =
             element.label.columns[2].content;
 
-          mainElem.getElementsByTagName("img")[0].src =
-            element.label.works[0].public_images[0].image_file;
-          mainElem.getElementsByTagName("img")[0].alt = element.label.title;
-          mainElem.getElementsByTagName("img")[0].title = element.label.title;
-
-          // Update up next label
-          const elementNext = labels.find(label => {
-            return label.label.id === this.state.nextLabelId;
-          });
-          mainElem.getElementsByTagName("h4")[0].textContent =
-            elementNext.label.title;
-          mainElem.getElementsByTagName("h5")[0].textContent =
-            elementNext.label.subtitles;
+          if (labels.length > 1) {
+            // Update up next label
+            const elementNext = labels.find(label => {
+              return label.label.id === this.state.nextLabelId;
+            });
+            document.getElementById("next_title").innerHTML =
+              elementNext.label.title;
+            document.getElementById("next_subtitles").innerHTML =
+              elementNext.label.subtitles;
+          }
         }
       }
     }

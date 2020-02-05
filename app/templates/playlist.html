@@ -2,61 +2,55 @@
 <html>
   <head>
       <title>Playlist: {{ playlist_json.title }}</title>
-      <link rel="stylesheet" href="{{ url_for('static', filename='playlist.css') }}">
+      <link rel="stylesheet" type="text/css" href="/static/playlist.css">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
   </head>
 
-  <body class="container playlist-label-body">
-      <main>
-          <article class="playlist-label">
-              <div class="playlist-label-container" id="playlist-label-js-hook">
-                  {% for item in playlist_json.playlist_labels %}
-                      {% if loop.index == 1 %}
-                          <div class="row">
-                              <div class="col-sm">
-                                  <h1>{{ item.label.title }}</h1>
-                                  <h2>{{ item.label.subtitles }}</h2>
-                              </div>
-                              <div class="col-sm label-description">
-                                  <div id='content0' class="content {{ 'content_smaller' if item.label.columns[0].style == 'smaller' else 'standard' }}">
-                                    {{ item.label.columns[0].content|safe }}
-                                  </div>
-                                  <div id='content1' class="content {{ 'content_smaller' if item.label.columns[1].style == 'smaller' else 'standard' }}">
-                                    {{ item.label.columns[1].content|safe }}
-                                  </div>
-                                  <div id='content2' class="content {{ 'content_smaller' if item.label.columns[2].style == 'smaller' else 'standard' }}">
-                                    {{ item.label.columns[2].content|safe }}
-                                  </div>
-                              </div>
-                              <div class="col-sm image-container">
-                                  {% if item.label.works|length > 0 %}
-                                      <img src="{{ item.label.works.0.public_images.0.image_file }}" alt="{{ item.label.title }}" title="{{ item.label.title }}">
-                                  {% endif %}
-                              </div>
-                          </div>
-                      {% endif %}
-                      {% if loop.index == 2 %}
-                          <h3>Next</h3>
-                          <h4>{{ item.label.title }}</h4>
-                          <h5>{{ item.label.subtitles }}</h5>
-                      {% endif %}
-                  {% endfor %}
-                  {% if not playlist_json %}
-                  <div class="row">
-                      <div class="col-sm">
-                          <h1>Playlist not found 😭</h1>
-                          <h2>Sorry, there isn't a playist for that id.</h2>
+  <body>
+      <div>
+          <div>
+              {% for item in playlist_json.playlist_labels %}
+                  {% if loop.index == 1 %}
+                      <div class="title_cont">
+                          <div id='title' class='title'>{{ item.label.title }}</div>
+                          <div id='subtitles' class='subtitles'>{{ item.label.subtitles }}</div>
                       </div>
-                  </div>
+                      <div class="content">
+                          <div id='content0' class="{{ 'content_smaller' if item.label.columns[0].style == 'smaller' else 'standard' }}">
+                            {{ item.label.columns[0].content|safe }}
+                          </div>
+                          <div id='content1' class="{{ 'content_smaller' if item.label.columns[1].style == 'smaller' else 'standard' }}">
+                            {{ item.label.columns[1].content|safe }}
+                          </div>
+                          <div id='content2' class="{{ 'content_smaller' if item.label.columns[2].style == 'smaller' else 'standard' }}">
+                            {{ item.label.columns[2].content|safe }}
+                          </div>
+                      </div>
                   {% endif %}
+                  <div class='next'>
+                      <div class="progress-bar-container">
+                          <div id="progress-bar" class="progress-bar"></div>
+                      </div>
+                      {% if loop.index == 2 %}
+                          <div>Next</div>
+                          <div id='next_title'>{{ item.label.title }}</div>
+                          <div id='next_subtitles'>{{ item.label.subtitles }}</div>
+                      {% endif %}
+                  </div>
+              {% endfor %}
+              {% if not playlist_json %}
+              <div class="">
+                  <div class="">
+                      <div>Playlist not found 😭</div>
+                      <div>Sorry, there isn't a playist for that id.</div>
+                  </div>
               </div>
-              <div class="progress-bar-container">
-                  <div class="progress-bar"></div>
-              </div>
-          </article>
-      </main>
+              {% endif %}
+          </div>
+      </div>
 
       <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
-      <script src="{{ url_for('static', filename='playlist.js') }}" type="module"></script>
+      <script src="/static/playlist.js" type="module"></script>
   </body>
 
   <script>
