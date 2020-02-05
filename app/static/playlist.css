@@ -131,3 +131,54 @@ html, body {
 p:first-child {
   margin-top: 0;
 }
+
+.collect {
+  color: #000;
+  margin-left: 35px;
+  margin-top: 39px;
+  padding: 30px 40px 24px;
+  font-family: PxGrotesk;
+  font-size: 23px;
+  transition: background 1s, color 1s;
+  display: inline-block;
+}
+
+.collect:before {
+  width: 18px;
+  height: 24px;
+  display: inline-block;
+  background: url('down.svg') center/contain no-repeat;
+  content: " ";
+  margin-right: 10px;
+  vertical-align: -4px;
+  transition: opacity 1s;
+  transform: rotate(90deg);
+}
+
+@media (max-width: 720px) {
+  .collect:before {
+    transform: none;
+  }
+}
+
+.collect.active:before  {
+  background: url('tick.svg') center/contain no-repeat;
+  width: 18px;
+  height: 14px;
+  vertical-align: 0px;
+}
+.collect.active.hidden,
+.collect.hidden {
+  color: rgba(255,255,255,0);
+  background: rgba(255,255,255,0);
+}
+
+.collect.active.hidden:before,
+.collect.hidden:before {
+  opacity: 0;
+}
+
+.collect.active {
+  background: #000;
+  color: #fff;
+}

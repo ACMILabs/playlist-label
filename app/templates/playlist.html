@@ -11,11 +11,11 @@
           <div>
               {% for item in playlist_json.playlist_labels %}
                   {% if loop.index == 1 %}
-                      <div class="title_cont">
+                      <div class='title_cont'>
                           <div id='title' class='title'>{{ item.label.title }}</div>
                           <div id='subtitles' class='subtitles'>{{ item.label.subtitles }}</div>
                       </div>
-                      <div class="content">
+                      <div class='content'>
                           <div id='content0' class="{{ 'content_smaller' if item.label.columns[0].style == 'smaller' else 'standard' }}">
                             {{ item.label.columns[0].content|safe }}
                           </div>
@@ -26,10 +26,13 @@
                             {{ item.label.columns[2].content|safe }}
                           </div>
                       </div>
+                      <div class='collect' id='collect'>
+                        COLLECT
+                      </div>
                   {% endif %}
                   <div class='next'>
-                      <div class="progress-bar-container">
-                          <div id="progress-bar" class="progress-bar"></div>
+                      <div class='progress-bar-container'>
+                          <div id='progress-bar' class='progress-bar'></div>
                       </div>
                       {% if loop.index == 2 %}
                           <div>Next</div>
@@ -39,8 +42,8 @@
                   </div>
               {% endfor %}
               {% if not playlist_json %}
-              <div class="">
-                  <div class="">
+              <div class=''>
+                  <div class=''>
                       <div>Playlist not found 😭</div>
                       <div>Sorry, there isn't a playist for that id.</div>
                   </div>

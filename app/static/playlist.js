@@ -10,7 +10,8 @@ export default class PlaylistLabelRenderer {
     this.state = {
       currentLabelId: null,
       nextLabelId: null,
-      playlistJson: null
+      playlistJson: null,
+      isAnimatingCollect: false
     };
   }
 
@@ -36,6 +37,10 @@ export default class PlaylistLabelRenderer {
     } else {
       console.error("No valid id could be found on initial pageload."); // eslint-disable-line no-console
     }
+
+    this.handleTapMessage = this.handleTapMessage.bind(this);
+    const tapSource = new EventSource("/api/tap-source");
+    tapSource.onmessage = this.handleTapMessage;
   }
 
   /**
@@ -141,6 +146,31 @@ export default class PlaylistLabelRenderer {
 
   truncate(str, max) {
     return str.length > max ? `${str.substr(0, max - 3)}...` : str;
+  }
+
+
+  handleTapMessage() {
+    // UPDATE 'COLLECTED' UI
+    if (!this.state.isAnimatingCollect) {
+      // Debounced with isAnimatingCollect
+      this.state.isAnimatingCollect = true;
+
+      // Animation plays: collect -> hidden -> collected -> hidden -> collect
+      const collectElement = document.getElementById('collect')
+      collectElement.className = "collect hidden";
+      window.setTimeout(function timeout1() {
+        collectElement.innerHTML = "COLLECTED";
+        collectElement.className = "collect active";
+      }, 1000);
+      window.setTimeout(function timeout2() {
+        collectElement.className = "collect active hidden";
+      }, 3000);
+      window.setTimeout((function timeout3() {
+        collectElement.className = "collect";
+        collectElement.innerHTML = "COLLECT";
+        this.state.isAnimatingCollect = false;
+      }).bind(this), 4000);
+    }
   }
 }
 

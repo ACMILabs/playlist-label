@@ -1,11 +1,12 @@
 import json
 import os
+import time
 import socket
 from threading import Thread
 
 import requests
 import sentry_sdk
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, Response, jsonify, render_template, request
 from kombu import Connection, Exchange, Queue
 from peewee import CharField, FloatField, IntegerField, Model, SqliteDatabase
 from playhouse.shortcuts import model_to_dict
@@ -159,6 +160,13 @@ def handle_http_error(error):
     return response
 
 
+class HasTapped(Model):
+    has_tapped = IntegerField()
+
+    class Meta:  # pylint: disable=R0903
+        database = db
+
+
 @app.route('/')
 def playlist_label():
     # Read in the cached JSON
@@ -200,6 +208,9 @@ def collect_item():
     """
     Collect a tap and forward it on to XOS with the label ID.
     """
+    has_tapped = HasTapped.get_or_none(has_tapped=0)
+    has_tapped.has_tapped = 1
+    has_tapped.save()
     xos_tap = dict(request.get_json())
     record = model_to_dict(Message.select().order_by(Message.datetime.desc()).get())
     xos_tap['label'] = record.pop('label_id', None)
@@ -211,8 +222,24 @@ def collect_item():
     return jsonify(response.content), response.status_code
 
 
+def event_stream():
+    while True:
+        time.sleep(0.1)
+        has_tapped = HasTapped.get_or_none(has_tapped=1)
+        if has_tapped:
+            has_tapped.has_tapped = 0
+            has_tapped.save()
+            yield 'data: {}\n\n'
+
+
+@app.route('/api/tap-source/')
+def tap_source():
+    return Response(event_stream(), mimetype="text/event-stream")
+
+
 if __name__ == '__main__':
-    db.create_tables([Message])
+    db.create_tables([Message, HasTapped])
+    HasTapped.create(has_tapped=0)
     playlistlabel = PlaylistLabel()  # pylint: disable=C0103
     playlistlabel.download_playlist_label()
     Thread(target=playlistlabel.get_events).start()
