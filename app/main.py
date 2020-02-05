@@ -1,7 +1,7 @@
 import json
 import os
-import time
 import socket
+import time
 from threading import Thread
 
 import requests
