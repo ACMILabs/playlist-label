@@ -36,7 +36,7 @@ describe("PlaylistLabelRenderer", () => {
                                     <div id='content2'></div>
                                   </div>
                                 </div>
-                                <div></div>
+                                <div class='collect' id='collect'>COLLECT</div>
                                 <div id='next_title'></div>
                               </div>
                               <div class="progress-bar-container">
@@ -74,5 +74,12 @@ describe("PlaylistLabelRenderer", () => {
       }
     );
     expect(document.body.innerHTML).toContain(elementNext.label.title);
+  });
+
+  it("should handle tap events", () => {
+    const renderer = new PlaylistLabelRenderer();
+    renderer.init();
+    renderer.handleTapMessage()
+    expect(renderer.state.isAnimatingCollect).toBeTruthy()
   });
 });
