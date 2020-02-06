@@ -48,6 +48,11 @@ body {
   z-index: 1000;
 }
 
+.progress-bar-container.full-width-progress {
+  top: auto;
+  bottom: 0;
+}
+
 .progress-bar {
   width: 100%;
   height: 10px;
