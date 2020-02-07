@@ -79,7 +79,7 @@ describe("PlaylistLabelRenderer", () => {
   it("should handle tap events", () => {
     const renderer = new PlaylistLabelRenderer();
     renderer.init();
-    renderer.handleTapMessage()
-    expect(renderer.state.isAnimatingCollect).toBeTruthy()
+    renderer.handleTapMessage();
+    expect(renderer.state.isAnimatingCollect).toBeTruthy();
   });
 });
