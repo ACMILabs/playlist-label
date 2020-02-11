@@ -5,6 +5,7 @@ playlist_*.json
 !/tests/*.json
 *.db
 *.db-journal
+*.swp
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

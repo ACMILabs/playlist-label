@@ -24,27 +24,23 @@ describe("PlaylistLabelRenderer", () => {
     };
 
     // Set up our document body
-    document.body.innerHTML = `<div class="playlist-label-container" id="playlist-label-js-hook"> 
-                                <div class="row">
-                                  <div class="col-sm">
-                                    <h1></h1>
-                                    <h2></h2>
+    document.body.innerHTML = `<div> 
+                                <div>
+                                  <div>
+                                    <div id='title'></div>
+                                    <div id='subtitles'></div>
                                   </div>
-                                  <div class="col-sm">
+                                  <div>
                                     <div id='content0'></div>
                                     <div id='content1'></div>
                                     <div id='content2'></div>
                                   </div>
-                                  <div class="col-sm image-container">
-                                    <img src="" alt="" title="">
-                                  </div>
                                 </div>
-                                <h3></h3>
-                                <h4></h4>
-                                <h5></h5>
+                                <div class='collect' id='collect'>COLLECT</div>
+                                <div id='next_title'></div>
                               </div>
                               <div class="progress-bar-container">
-                                <div class="progress-bar"></div>
+                                <div id="progress-bar" class="progress-bar"></div>
                               </div>`;
   });
 
@@ -62,7 +58,6 @@ describe("PlaylistLabelRenderer", () => {
     renderer.state.playlistJson = playlistJson;
     renderer.init();
     renderer.onMessageArrived(messageData);
-    const mainElem = document.getElementById("playlist-label-js-hook");
     expect(messageJson.label_id).toBeDefined();
     expect(messageJson.duration).toBeDefined();
     expect(messageJson.playback_position).toBeDefined();
@@ -70,18 +65,21 @@ describe("PlaylistLabelRenderer", () => {
     const element = renderer.state.playlistJson.playlist_labels.find(label => {
       return label.label.id === renderer.state.currentLabelId;
     });
-    expect(mainElem.innerHTML).toContain(element.label.title);
-    expect(mainElem.innerHTML).toContain(element.label.subtitles);
-    expect(mainElem.innerHTML).toContain(element.label.columns[0].content);
-    expect(mainElem.innerHTML).toContain(
-      element.label.works[0].public_images[0].image_file
-    );
+    expect(document.body.innerHTML).toContain(element.label.title);
+    expect(document.body.innerHTML).toContain(element.label.subtitles);
+    expect(document.body.innerHTML).toContain(element.label.columns[0].content);
     const elementNext = renderer.state.playlistJson.playlist_labels.find(
       label => {
         return label.label.id === renderer.state.nextLabelId;
       }
     );
-    expect(mainElem.innerHTML).toContain(elementNext.label.title);
-    expect(mainElem.innerHTML).toContain(elementNext.label.subtitles);
+    expect(document.body.innerHTML).toContain(elementNext.label.title);
+  });
+
+  it("should handle tap events", () => {
+    const renderer = new PlaylistLabelRenderer();
+    renderer.init();
+    renderer.handleTapMessage();
+    expect(renderer.state.isAnimatingCollect).toBeTruthy();
   });
 });

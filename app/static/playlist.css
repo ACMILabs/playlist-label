@@ -1,97 +1,201 @@
-html, body {
-  height: 100%;
-  font-size: 20pt;
+@font-face {
+  font-family: FaktPro;
+  src: url("FaktPro-Normal.otf") format("opentype");
 }
 
-.container {
-  max-width: 100%;
-  padding: 0;
+@font-face {
+  font-family: FaktPro;
+  font-style: italic;
+  src: url("FaktPro-NormalItalic.otf") format("opentype");
 }
 
-.playlist-label-body main {
-  display: table;
-  height: 100%;
-  width: 100%;
+@font-face {
+  font-family: FaktPro;
+  font-weight: bold;
+  src: url("FaktPro-Bold.otf") format("opentype");
 }
 
-.playlist-label {
-  display: table-cell;
-  height: 100%;
-  vertical-align: middle;
+@font-face {
+  font-family: FaktPro;
+  font-weight: bold;
+  font-style: italic;
+  src: url("FaktPro-BoldItalic.otf") format("opentype");
 }
 
-.playlist-label-container {
-  padding: 2rem;
+@font-face {
+  font-family: PxGrotesk;
+  src: url("PxGrotesk-Bold.otf") format("opentype");
 }
 
-.playlist-label h1 {
-  font-size: 2rem;
-  font-weight: 700;
+@font-face {
+  font-family: PxGrotesk;
+  font-style: italic;
+  src: url("PxGrotesk-BoldIta.otf") format("opentype");
 }
 
-.playlist-label h2 {
-  font-size: 1rem;
-  font-weight: normal;
-}
-
-.playlist-label h3 {
-  font-size: 0.8rem;
-  letter-spacing: 0.1rem;
-  text-transform: uppercase;
-}
-
-.playlist-label h3, .playlist-label h4, .playlist-label h5 {
-  opacity: 0.7;
-}
-
-.playlist-label h4 {
-  font-size: 1.3rem;
-  font-weight: 700;
-}
-
-.playlist-label h5 {
-  font-size: 0.8rem;
-}
-
-.playlist-label img {
-  max-width: 70%;
-  max-height: 18rem;
-}
-
-.playlist-label .image-container {
-  text-align: right;
-}
-
-.playlist-label .label-description {
-  font-size: 1rem;
+body {
+  font-family: FaktPro;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .progress-bar-container {
   width: 100%;
   position: absolute;
-  bottom: 0px;
+  top: -10px;
+  left: 0;
   z-index: 1000;
-  background-color: lightgray;
+}
+
+.progress-bar-container.full-width-progress {
+  top: auto;
+  bottom: 0;
 }
 
 .progress-bar {
   width: 100%;
-  height: 20px;
-  background-color: grey;
+  height: 10px;
+  background-color: #757575;
 }
 
-/* Extra small devices (less than 768px) */
-@media (max-width: 48rem) {
-  .playlist-label {
-    padding: 0;
+.title_cont {
+  float: left;
+  width: 50%;
+  padding: 75px 75px 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 720px) {
+  .title_cont {
+    width: auto;
+    float: none;
   }
-  
-  .playlist-label .image-container {
-    text-align: center;
-    margin: 1rem 0 2rem 0;
+}
+
+.title {
+  font-family: PxGrotesk;
+  font-weight: bold;
+  font-size: 56px;
+  line-height: 65px;
+}
+
+.subtitles {
+  font-size: 28px;
+  line-height: 39px;
+  margin-top: 39px;
+}
+
+.content {
+  float: right;
+  width: 50%;
+  font-size: 42px;
+  line-height: 58px;
+  padding-right: 75px;
+  padding-top: 75px;
+  box-sizing: border-box;
+  /* Must be higher than the title_cont, or .collect float will break */
+  min-height: 220px;
+}
+
+@media (max-width: 720px) {
+  .content {
+    width: auto;
+    float: none;
+    padding: 0 75px;
+    margin-top: 39px;
   }
 }
 
 .content_smaller {
-  font-size: 18px;
+  font-size: 28px;
+  line-height: 39px;
+}
+
+.next {
+  background: #000;
+  color: #fff;
+  font-family: PxGrotesk;
+  font-weight: bold;
+  font-size: 28px;
+  line-height: 39px;
+  width: calc(50% - 75px);
+  padding: 50px 0;
+  box-sizing: border-box;
+  display: inline-block;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+}
+
+@media (max-width: 720px) {
+  .next {
+    width: auto;
+    display: block;
+    right: 0;
+  }
+}
+
+.next_left {
+  float: left;
+  width: 70px;
+  margin-left: 75px;
+  margin-right: 35px;
+}
+
+.next_right {
+  float: left;
+  width: calc(100% - 255px);
+}
+
+p:first-child {
+  margin-top: 0;
+}
+
+.collect {
+  color: #000;
+  margin-top: 39px;
+  padding: 30px 40px 24px 75px;
+  font-family: PxGrotesk;
+  font-size: 23px;
+  transition: background 1s, color 1s;
+  display: inline-block;
+}
+
+.collect:before {
+  width: 30px;
+  height: 41px;
+  display: inline-block;
+  background: url('down.svg') center/contain no-repeat;
+  content: " ";
+  margin-right: 10px;
+  transition: opacity 1s;
+  transform: rotate(90deg);
+  vertical-align: -12px;
+}
+
+@media (max-width: 720px) {
+  .collect:before {
+    transform: none;
+  }
+}
+
+.collect.active:before  {
+  background: url('tick.svg') center/contain no-repeat;
+  transform: rotate(0deg);
+}
+.collect.active.hidden,
+.collect.hidden {
+  color: rgba(255,255,255,0);
+  background: rgba(255,255,255,0);
+}
+
+.collect.active.hidden:before,
+.collect.hidden:before {
+  opacity: 0;
+}
+
+.collect.active {
+  background: #000;
+  color: #fff;
 }

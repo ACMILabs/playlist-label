@@ -10,7 +10,8 @@ export default class PlaylistLabelRenderer {
     this.state = {
       currentLabelId: null,
       nextLabelId: null,
-      playlistJson: null
+      playlistJson: null,
+      isAnimatingCollect: false
     };
   }
 
@@ -36,6 +37,10 @@ export default class PlaylistLabelRenderer {
     } else {
       console.error("No valid id could be found on initial pageload."); // eslint-disable-line no-console
     }
+
+    this.handleTapMessage = this.handleTapMessage.bind(this);
+    const tapSource = new EventSource("/api/tap-source");
+    tapSource.onmessage = this.handleTapMessage;
   }
 
   /**
@@ -100,7 +105,7 @@ export default class PlaylistLabelRenderer {
 
     // Update the progress bar
     const videoPlaybackPercentage = messageJson.playback_position * 100;
-    const progressBar = document.getElementsByClassName("progress-bar")[0];
+    const progressBar = document.getElementById("progress-bar");
     progressBar.style.width = `${videoPlaybackPercentage}%`;
 
     // Update the label if needed
@@ -114,10 +119,8 @@ export default class PlaylistLabelRenderer {
           this.state.nextLabelId = labels[(index + 1) % labels.length].label.id;
 
           // Update the label fields with the currently playing data
-          const mainElem = document.getElementById("playlist-label-js-hook");
-          mainElem.getElementsByTagName("h1")[0].textContent =
-            element.label.title;
-          mainElem.getElementsByTagName("h2")[0].textContent =
+          document.getElementById("title").innerHTML = element.label.title;
+          document.getElementById("subtitles").innerHTML =
             element.label.subtitles;
           document.getElementById("content0").innerHTML =
             element.label.columns[0].content;
@@ -126,19 +129,14 @@ export default class PlaylistLabelRenderer {
           document.getElementById("content2").innerHTML =
             element.label.columns[2].content;
 
-          mainElem.getElementsByTagName("img")[0].src =
-            element.label.works[0].public_images[0].image_file;
-          mainElem.getElementsByTagName("img")[0].alt = element.label.title;
-          mainElem.getElementsByTagName("img")[0].title = element.label.title;
-
-          // Update up next label
-          const elementNext = labels.find(label => {
-            return label.label.id === this.state.nextLabelId;
-          });
-          mainElem.getElementsByTagName("h4")[0].textContent =
-            elementNext.label.title;
-          mainElem.getElementsByTagName("h5")[0].textContent =
-            elementNext.label.subtitles;
+          if (labels.length > 1) {
+            // Update up next label
+            const elementNext = labels.find(label => {
+              return label.label.id === this.state.nextLabelId;
+            });
+            document.getElementById("next_title").innerHTML =
+              elementNext.label.title;
+          }
         }
       }
     }
@@ -146,6 +144,33 @@ export default class PlaylistLabelRenderer {
 
   truncate(str, max) {
     return str.length > max ? `${str.substr(0, max - 3)}...` : str;
+  }
+
+  handleTapMessage() {
+    // UPDATE 'COLLECTED' UI
+    if (!this.state.isAnimatingCollect) {
+      // Debounced with isAnimatingCollect
+      this.state.isAnimatingCollect = true;
+
+      // Animation plays: collect -> hidden -> collected -> hidden -> collect
+      const collectElement = document.getElementById("collect");
+      collectElement.className = "collect hidden";
+      window.setTimeout(function timeout1() {
+        collectElement.innerHTML = "COLLECTED";
+        collectElement.className = "collect active";
+      }, 1000);
+      window.setTimeout(function timeout2() {
+        collectElement.className = "collect active hidden";
+      }, 3000);
+      window.setTimeout(
+        function timeout3() {
+          collectElement.className = "collect";
+          collectElement.innerHTML = "COLLECT";
+          this.state.isAnimatingCollect = false;
+        }.bind(this),
+        4000
+      );
+    }
   }
 }
 
