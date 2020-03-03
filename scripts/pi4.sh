@@ -60,7 +60,7 @@ sleep 10
 
 # Launch chromium browser in fullscreen on that page
 SCREEN_SCALE="${SCREEN_SCALE:-1.0}"
-chromium-browser --app=http://localhost:8081 --start-fullscreen --no-sandbox --user-data-dir --kiosk --disable-dev-shm-usage --disable-backing-store-limit --force-device-scale-factor=$SCREEN_SCALE --disable-component-update
+chromium-browser --app=http://localhost:8081 --start-fullscreen --no-sandbox --user-data-dir --kiosk --disable-dev-shm-usage --disable-backing-store-limit --force-device-scale-factor=$SCREEN_SCALE --check-for-update-interval=31449600 --simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT'
 
 # For debugging
 echo "Chromium browser exited unexpectedly."
