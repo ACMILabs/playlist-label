@@ -2,12 +2,17 @@
 # see more about dockerfile templates here: https://www.balena.io/docs/learn/develop/dockerfile/
 FROM balenalib/raspberrypi3:buster
 
+RUN apt update && apt dist-upgrade -y
+
 # use `install_packages` if you need to install dependencies,
 # for instance if you need git, just uncomment the line below.
 RUN install_packages \
   g++ python3-pip python3-setuptools python3-dev build-essential \
   chromium-browser \
-  lsb-release xserver-xorg-core \
+  rpi-chromium-mods \
+  libgles2-mesa \
+  libsdl2-dev \
+  lsb-release \xserver-xorg \
   xinit lxsession desktop-file-utils \
   raspberrypi-ui-mods rpd-icons \
   gtk2-engines-clearlookspix \
