@@ -32,6 +32,7 @@ BALENA_APP_ID = os.getenv('BALENA_APP_ID')
 BALENA_SERVICE_NAME = os.getenv('BALENA_SERVICE_NAME')
 BALENA_SUPERVISOR_ADDRESS = os.getenv('BALENA_SUPERVISOR_ADDRESS')
 BALENA_SUPERVISOR_API_KEY = os.getenv('BALENA_SUPERVISOR_API_KEY')
+DEBUG = os.getenv('DEBUG', 'false').lower() == "true"
 
 # Setup Sentry
 sentry_sdk.init(
@@ -237,7 +238,8 @@ def event_stream():
             template = 'An exception of type {0} {1!r} occurred in event_stream '\
                        'trying to update HasTapped.'
             message = template.format(type(exception).__name__, exception.args)
-            print(message)
+            if DEBUG:
+                print(message)
 
 
 @app.route('/api/tap-source/')
