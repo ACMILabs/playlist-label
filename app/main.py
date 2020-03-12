@@ -8,7 +8,8 @@ import requests
 import sentry_sdk
 from flask import Flask, Response, jsonify, render_template, request
 from kombu import Connection, Exchange, Queue
-from peewee import CharField, FloatField, IntegerField, Model, OperationalError, SqliteDatabase
+from peewee import (CharField, FloatField, IntegerField, Model,
+                    OperationalError, SqliteDatabase)
 from playhouse.shortcuts import model_to_dict
 from sentry_sdk.integrations.flask import FlaskIntegration
 
