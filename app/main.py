@@ -8,7 +8,7 @@ import requests
 import sentry_sdk
 from flask import Flask, Response, jsonify, render_template, request
 from kombu import Connection, Exchange, Queue
-from peewee import CharField, FloatField, IntegerField, Model, SqliteDatabase
+from peewee import CharField, FloatField, IntegerField, Model, OperationalError, SqliteDatabase
 from playhouse.shortcuts import model_to_dict
 from sentry_sdk.integrations.flask import FlaskIntegration
 
@@ -226,11 +226,17 @@ def collect_item():
 def event_stream():
     while True:
         time.sleep(0.1)
-        has_tapped = HasTapped.get_or_none(has_tapped=1)
-        if has_tapped:
-            has_tapped.has_tapped = 0
-            has_tapped.save()
-            yield 'data: {}\n\n'
+        try:
+            has_tapped = HasTapped.get_or_none(has_tapped=1)
+            if has_tapped:
+                has_tapped.has_tapped = 0
+                has_tapped.save()
+                yield 'data: {}\n\n'
+        except OperationalError as exception:
+            template = 'An exception of type {0} {1!r} occurred in event_stream '\
+                       'trying to update HasTapped.'
+            message = template.format(type(exception).__name__, exception.args)
+            print(message)
 
 
 @app.route('/api/tap-source/')
