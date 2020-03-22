@@ -8,7 +8,8 @@ import requests
 import sentry_sdk
 from flask import Flask, Response, jsonify, render_template, request
 from kombu import Connection, Exchange, Queue
-from peewee import CharField, FloatField, IntegerField, Model, SqliteDatabase
+from peewee import (CharField, FloatField, IntegerField, Model,
+                    OperationalError, SqliteDatabase)
 from playhouse.shortcuts import model_to_dict
 from sentry_sdk.integrations.flask import FlaskIntegration
 
@@ -31,6 +32,7 @@ BALENA_APP_ID = os.getenv('BALENA_APP_ID')
 BALENA_SERVICE_NAME = os.getenv('BALENA_SERVICE_NAME')
 BALENA_SUPERVISOR_ADDRESS = os.getenv('BALENA_SUPERVISOR_ADDRESS')
 BALENA_SUPERVISOR_API_KEY = os.getenv('BALENA_SUPERVISOR_API_KEY')
+DEBUG = os.getenv('DEBUG', 'false').lower() == "true"
 
 # Setup Sentry
 sentry_sdk.init(
@@ -209,8 +211,9 @@ def collect_item():
     Collect a tap and forward it on to XOS with the label ID.
     """
     has_tapped = HasTapped.get_or_none(has_tapped=0)
-    has_tapped.has_tapped = 1
-    has_tapped.save()
+    if has_tapped:
+        has_tapped.has_tapped = 1
+        has_tapped.save()
     xos_tap = dict(request.get_json())
     record = model_to_dict(Message.select().order_by(Message.datetime.desc()).get())
     xos_tap['label'] = record.pop('label_id', None)
@@ -219,17 +222,24 @@ def collect_item():
     response = requests.post(XOS_TAPS_ENDPOINT, json=xos_tap, headers=headers)
     if response.status_code != requests.codes['created']:
         raise HTTPError('Could not save tap to XOS.')
-    return jsonify(response.content), response.status_code
+    return response.json(), response.status_code
 
 
 def event_stream():
     while True:
         time.sleep(0.1)
-        has_tapped = HasTapped.get_or_none(has_tapped=1)
-        if has_tapped:
-            has_tapped.has_tapped = 0
-            has_tapped.save()
-            yield 'data: {}\n\n'
+        try:
+            has_tapped = HasTapped.get_or_none(has_tapped=1)
+            if has_tapped:
+                has_tapped.has_tapped = 0
+                has_tapped.save()
+                yield 'data: {}\n\n'
+        except OperationalError as exception:
+            template = 'An exception of type {0} {1!r} occurred in event_stream '\
+                       'trying to update HasTapped.'
+            message = template.format(type(exception).__name__, exception.args)
+            if DEBUG:
+                print(message)
 
 
 @app.route('/api/tap-source/')
@@ -243,4 +253,4 @@ if __name__ == '__main__':
     playlistlabel = PlaylistLabel()  # pylint: disable=C0103
     playlistlabel.download_playlist_label()
     Thread(target=playlistlabel.get_events).start()
-    app.run(host='0.0.0.0', port=PLAYLIST_LABEL_PORT, threaded=True)
+    app.run(host='0.0.0.0', port=PLAYLIST_LABEL_PORT)

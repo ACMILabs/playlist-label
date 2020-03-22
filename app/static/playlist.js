@@ -39,7 +39,7 @@ export default class PlaylistLabelRenderer {
     }
 
     this.handleTapMessage = this.handleTapMessage.bind(this);
-    const tapSource = new EventSource("/api/tap-source");
+    const tapSource = new EventSource("/api/tap-source/");
     tapSource.onmessage = this.handleTapMessage;
   }
 
