@@ -158,7 +158,7 @@ export default class PlaylistLabelRenderer {
       window.setTimeout(function timeout1() {
         collectElement.innerHTML = "COLLECTED";
         collectElement.className = "collect active";
-      }, 1000);
+      }, 500);
       window.setTimeout(function timeout2() {
         collectElement.className = "collect active hidden";
       }, 3000);
@@ -168,7 +168,7 @@ export default class PlaylistLabelRenderer {
           collectElement.innerHTML = "COLLECT";
           this.state.isAnimatingCollect = false;
         }.bind(this),
-        4000
+        3500
       );
     }
   }
