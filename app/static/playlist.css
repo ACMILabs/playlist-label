@@ -158,7 +158,7 @@ p:first-child {
   padding: 30px 40px 24px 75px;
   font-family: PxGrotesk;
   font-size: 23px;
-  transition: background 1s, color 1s;
+  transition: background 500ms, color 500ms;
   display: inline-block;
 }
 
@@ -169,7 +169,7 @@ p:first-child {
   background: url('down.svg') center/contain no-repeat;
   content: " ";
   margin-right: 10px;
-  transition: opacity 1s;
+  transition: opacity 500ms;
   transform: rotate(90deg);
   vertical-align: -12px;
 }
