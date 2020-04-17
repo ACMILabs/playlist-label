@@ -5,6 +5,7 @@ import socket
 import time
 from threading import Thread
 
+import kombu
 import requests
 import sentry_sdk
 from flask import Flask, Response, jsonify, render_template, request
@@ -130,6 +131,7 @@ class PlaylistLabel():
         Try to consume from RabbitMQ queue and store the received message.
         """
         try:
+            conn.ensure_connection(max_retries=3)
             with conn.Consumer(PLAYBACK_QUEUE, callbacks=[self.process_media]):
                 # Process messages and handle events on all channels
                 while True:
@@ -139,12 +141,12 @@ class PlaylistLabel():
                         self.clear_error_history('rabbitmq_conn_error')
                     except socket.timeout as exception:
                         print(f'Stopped receiving messages from media player {XOS_MEDIA_PLAYER_ID}')
-                        self.send_error('media_player_timeout', exception)
+                        self.send_error('media_player_timeout', exception, every=3600)
                         conn.heartbeat_check()
-        except conn.connection_errors as conn_error:
+        except conn.connection_errors + (kombu.exceptions.OperationalError,) as conn_error:
             # error with the connection, wait and try to connect again
             print(f'Error connecting to RabbitMQ server: {conn_error}')
-            self.send_error('rabbitmq_conn_error', conn_error)
+            self.send_error('rabbitmq_conn_error', conn_error, on_rep=3, every=3600)
             print(f'Retrying in {RABBITMQ_RETRY_SECONDS} seconds')
             time.sleep(RABBITMQ_RETRY_SECONDS)
 
@@ -153,7 +155,7 @@ class PlaylistLabel():
         Create a connection to RabbitMQ server and try to consume.
         """
         while True:
-            with Connection(AMQP_URL, heartbeat=5) as conn:
+            with Connection(AMQP_URL, heartbeat=5, connect_timeout=5) as conn:
                 self.consume(conn)
 
     def send_error(self, error_name, error, on_rep=5, every=100, units='seconds'):
@@ -161,11 +163,23 @@ class PlaylistLabel():
         """
         Attempt to send an error to sentry.
         Send to Sentry for the first time when calling send_error for the `on_rep`th time.
-        Subsequently, send to Sentry on every `every` `units` (e.g every 100 seconds).
+        Subsequently, send to Sentry on every `every` `units` (e.g every 100 seconds)
+        if the error has not been fixed.
 
         This function helps to not report sporadic connection errors that are automatically
         resolved.
         Also, if an error is persistent, this function helps to not flood Sentry.
+
+        :param error_name: The name of the error used to keep a history
+        :type error_name: str
+        :param error: The error that is being sent to Sentry
+        :type error: :class:`Exception`
+        :param on_rep: The repetition when the error is actually sent for the first time to Sentry
+        :type on_rep: int
+        :param every: The number of instances or seconds a error is re-sent to Sentry
+        :type every: int
+        :param units: Either 'instances' or 'seconds' to be used alonside the `every` arg
+        :type units: str
         """
         try:
             error_history = self.errors_history[error_name]
