@@ -130,6 +130,7 @@ class PlaylistLabel():
         """
         Try to consume from RabbitMQ queue and store the received message.
         """
+        connection_errors = conn.connection_errors + (kombu.exceptions.OperationalError,)
         try:
             conn.ensure_connection(max_retries=3)
             with conn.Consumer(PLAYBACK_QUEUE, callbacks=[self.process_media]):
@@ -143,7 +144,7 @@ class PlaylistLabel():
                         print(f'Stopped receiving messages from media player {XOS_MEDIA_PLAYER_ID}')
                         self.send_error('media_player_timeout', exception, every=3600)
                         conn.heartbeat_check()
-        except conn.connection_errors + (kombu.exceptions.OperationalError,) as conn_error:
+        except connection_errors as conn_error:
             # error with the connection, wait and try to connect again
             print(f'Error connecting to RabbitMQ server: {conn_error}')
             self.send_error('rabbitmq_conn_error', conn_error, on_rep=3, every=3600)
