@@ -1,5 +1,6 @@
 import datetime
 import json
+import time
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -157,3 +158,59 @@ def test_route_collect_item(client):
 
     assert response.json["nfc_tag"]["short_code"] == "nbadbb"
     assert response.status_code == 201
+
+
+@patch('sentry_sdk.capture_exception', side_effect=MagicMock())
+def test_send_error_sends_on_repetition_and_repeat_every(capture_exception):
+    """
+    Test that the send_error function only sends the error
+    on repetition 5 and every 20 times.
+    """
+    playlist_label = PlaylistLabel()
+
+    # call send_error 4 times and assert it doesn't send the error
+    for _ in range(4):
+        playlist_label.send_error('rmq_conn', None, on_rep=5, every=20, units='instances')
+    assert capture_exception.call_count == 0
+
+    # make sure the error is sent on the 5th time
+    playlist_label.send_error('rmq_conn', None, on_rep=5, every=20, units='instances')
+    assert capture_exception.call_count == 1
+
+    # make sure the error is not sent before another 20 times
+    for _ in range(19):
+        playlist_label.send_error('rmq_conn', None, on_rep=5, every=20, units='instances')
+    assert capture_exception.call_count == 1
+
+    # make sure the error is sent on the next 20th time
+    playlist_label.send_error('rmq_conn', None, on_rep=5, every=20, units='instances')
+    assert capture_exception.call_count == 2
+
+
+@patch('sentry_sdk.capture_exception', side_effect=MagicMock())
+def test_send_error_sends_on_repetition_and_repeat_every_1_second(capture_exception):
+    """
+    Test that the send_error function only sends the error
+    on repetition 5 and every second.
+    """
+    playlist_label = PlaylistLabel()
+
+    # call send_error 4 times and assert it doesn't send the error
+    for _ in range(4):
+        playlist_label.send_error('rmq_conn', None, on_rep=5, every=1, units='seconds')
+    assert capture_exception.call_count == 0
+
+    # make sure the error is sent on the 5th time
+    playlist_label.send_error('rmq_conn', None, on_rep=5, every=1, units='seconds')
+    assert capture_exception.call_count == 1
+
+    # make sure the error is not sent before 1 second has passed
+    for _ in range(10):
+        playlist_label.send_error('rmq_conn', None, on_rep=5, every=1, units='seconds')
+    assert capture_exception.call_count == 1
+
+    time.sleep(1.5)
+
+    # make sure the error is sent after 1 second
+    playlist_label.send_error('rmq_conn', None, on_rep=5, every=1, units='seconds')
+    assert capture_exception.call_count == 2
