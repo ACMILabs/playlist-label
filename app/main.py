@@ -218,6 +218,11 @@ class PlaylistLabel():
     def clear_error_history(self, error_name):
         """
         Remove the history of an error.
+        This method should be called whenever a problem (e.g. network disruption)
+        has been resolved.
+
+        :param error_name: The name given to the error in `send_error`.
+        :type error_name: str
         """
         try:
             del self.errors_history[error_name]
