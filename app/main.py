@@ -138,8 +138,14 @@ class PlaylistLabel():
                 while True:
                     try:
                         conn.drain_events(timeout=2)
-                        self.clear_error_history('media_player_timeout')
-                        self.clear_error_history('rabbitmq_conn_error')
+                        resolved_timeout = self.clear_error_history('media_player_timeout')
+                        if resolved_timeout:
+                            print(f'Automatically resolved: {resolved_timeout}. '
+                                  'Now receiving messages.')
+                        resolved_conn = self.clear_error_history('rabbitmq_conn_error')
+                        if resolved_conn:
+                            print(f'Automatically resolved: {resolved_conn}. '
+                                  'Connection reestablished.')
                     except socket.timeout as exception:
                         print(f'Stopped receiving messages from media player {XOS_MEDIA_PLAYER_ID}')
                         self.send_error('media_player_timeout', exception, every=3600)
@@ -223,11 +229,13 @@ class PlaylistLabel():
 
         :param error_name: The name given to the error in `send_error`.
         :type error_name: str
+        :return: The error whose history was deleted.
+        :rtype: :class:`Exception`
         """
         try:
-            del self.errors_history[error_name]
+            return self.errors_history.pop(error_name)['error']
         except KeyError:
-            pass
+            return None
 
 
 @app.errorhandler(HTTPError)

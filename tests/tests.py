@@ -209,7 +209,7 @@ def test_send_error_sends_on_repetition_and_repeat_every_1_second(capture_except
         playlist_label.send_error('rmq_conn', None, on_rep=5, every=1, units='seconds')
     assert capture_exception.call_count == 1
 
-    time.sleep(1)
+    time.sleep(1.5)
 
     # make sure the error is sent after 1 second
     playlist_label.send_error('rmq_conn', None, on_rep=5, every=1, units='seconds')
