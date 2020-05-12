@@ -3,6 +3,18 @@ Playlist label
 
 A playlist label prototype running on a Raspberry Pi connected to a 12.3" screen.
 
+
+## Features
+
+* Downloads playlist data (including labels data) from an API endpoint
+* Subscribes to playback status originating from a [media player](https://github.com/ACMILabs/media-player), via a message broker
+* Displays applicable label in response to playback status using a fullscreen Chromium window.
+* When combined with a Lens reader, receives tap data from a Lens reader and attaches the appropriate label metadata, before forwarding a `POST /taps/` message to a central API
+* Can display in portrait or landscape
+
+## Hardware
+A single Raspberry Pi can run both a Lens Reader and a Playlist Label screen. The hardware list therefore is [Lens Reader hardware](https://github.com/ACMILabs/lens-reader) plus a screen. We use a Crystal Display CDS123WU01 12.3" 8:3 display.
+
 ## Run the development container
 
 To run the development container:
