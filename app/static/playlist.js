@@ -11,7 +11,7 @@ export default class PlaylistLabelRenderer {
       currentLabelId: null,
       nextLabelId: null,
       playlistJson: null,
-      isAnimatingCollect: false
+      isAnimatingCollect: false,
     };
   }
 
@@ -49,17 +49,17 @@ export default class PlaylistLabelRenderer {
    */
   fetchPlaylist(url) {
     fetch(url)
-      .then(response => {
+      .then((response) => {
         if (!response.ok) {
           throw Error(response.statusText);
         }
         return response.json();
       })
-      .then(jsonData => {
+      .then((jsonData) => {
         this.state.playlistJson = jsonData;
         this.subscribeToMediaPlayer(jsonData);
       })
-      .catch(error => console.error(error)); // eslint-disable-line no-console
+      .catch((error) => console.error(error)); // eslint-disable-line no-console
   }
 
   /**
@@ -87,7 +87,7 @@ export default class PlaylistLabelRenderer {
         client.subscribe(
           `mediaplayer.${window.playlistLabelData.xos_media_player_id}`
         );
-      }
+      },
     });
   }
 
@@ -141,7 +141,7 @@ export default class PlaylistLabelRenderer {
 
           if (labels.length > 1) {
             // Update up next label
-            const elementNext = labels.find(label => {
+            const elementNext = labels.find((label) => {
               return label.label.id === this.state.nextLabelId;
             });
             document.getElementById("next_title").innerHTML =
