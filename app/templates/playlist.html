@@ -30,6 +30,11 @@
                       <div id='content2' class="{{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[2].style == 'smaller' else 'standard' }}">
                           {{ playlist_json.playlist_labels[0].label.columns[2].content|safe }}
                       </div>
+                      <div id='indigenous' class="indigenous{{ ' indigenous_active' if playlist_json.playlist_labels[0].label.work.is_context_indigenous else '' }}">
+                          <img src='/static/indigenous.png'/>
+                          <div>This work contains</div>
+                          <div class='indigenous_bold'>FIRST PEOPLES CONTENT</div>
+                      </div>
                   </div>
                   <div class='collect' id='collect'>
                     COLLECT
