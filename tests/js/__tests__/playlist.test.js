@@ -20,7 +20,7 @@ describe("PlaylistLabelRenderer", () => {
       mqtt_host: "mqtt_host",
       mqtt_port: "1234",
       mqtt_username: "mqtt_username",
-      mqtt_password: "mqtt_password"
+      mqtt_password: "mqtt_password",
     };
 
     // Set up our document body
@@ -52,7 +52,7 @@ describe("PlaylistLabelRenderer", () => {
 
   it("should update label fields when a message arrives", () => {
     const messageData = {
-      payloadString: JSON.stringify(messageJson)
+      payloadString: JSON.stringify(messageJson),
     };
     const renderer = new PlaylistLabelRenderer();
     renderer.state.playlistJson = playlistJson;
@@ -62,14 +62,16 @@ describe("PlaylistLabelRenderer", () => {
     expect(messageJson.duration).toBeDefined();
     expect(messageJson.playback_position).toBeDefined();
     expect(renderer.state.currentLabelId).toStrictEqual(messageJson.label_id);
-    const element = renderer.state.playlistJson.playlist_labels.find(label => {
-      return label.label.id === renderer.state.currentLabelId;
-    });
+    const element = renderer.state.playlistJson.playlist_labels.find(
+      (label) => {
+        return label.label.id === renderer.state.currentLabelId;
+      }
+    );
     expect(document.body.innerHTML).toContain(element.label.title);
     expect(document.body.innerHTML).toContain(element.label.subtitles);
     expect(document.body.innerHTML).toContain(element.label.columns[0].content);
     const elementNext = renderer.state.playlistJson.playlist_labels.find(
-      label => {
+      (label) => {
         return label.label.id === renderer.state.nextLabelId;
       }
     );
