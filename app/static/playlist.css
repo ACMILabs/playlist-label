@@ -206,7 +206,7 @@ p:first-child {
   right: 0;
   padding: 0 75px;
   display: none;
-  width: 685px;
+  width: 100%;
   box-sizing: border-box;
   font-size: 34px;
   text-align: right;
