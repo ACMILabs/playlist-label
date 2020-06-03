@@ -17,8 +17,8 @@
                   </div>
               {% else %}
                   <div class='title_cont'>
-                      <div id='title' class='title'>{{ playlist_json.playlist_labels[0].label.title }}</div>
-                      <div id='subtitles' class='subtitles'>{{ playlist_json.playlist_labels[0].label.subtitles }}</div>
+                      <div id='title' class='title'>{{ playlist_json.playlist_labels[0].label.title_html|safe }}</div>
+                      <div id='subtitles' class='subtitles'>{{ playlist_json.playlist_labels[0].label.subtitles_html|safe }}</div>
                   </div>
                   <div class='content'>
                       <div id='content0' class="{{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[0].style == 'smaller' else 'standard' }}">
@@ -48,7 +48,7 @@
                             NEXT
                           </div>
                           <div class='next_right'>
-                            <div id='next_title'>{{ playlist_json.playlist_labels[1].label.title }}</div>
+                            <div id='next_title'>{{ playlist_json.playlist_labels[1].label.title_html|safe }}</div>
                           </div>
                       </div>
                   {% else %}

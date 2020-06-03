@@ -119,9 +119,9 @@ export default class PlaylistLabelRenderer {
           this.state.nextLabelId = labels[(index + 1) % labels.length].label.id;
 
           // Update the label fields with the currently playing data
-          document.getElementById("title").innerHTML = element.label.title;
+          document.getElementById("title").innerHTML = element.label.title_html;
           document.getElementById("subtitles").innerHTML =
-            element.label.subtitles;
+            element.label.subtitles_html;
           document.getElementById("content0").innerHTML =
             element.label.columns[0].content;
           document.getElementById("content1").innerHTML =
@@ -132,12 +132,9 @@ export default class PlaylistLabelRenderer {
           if (element.label.work.is_context_indigenous) {
             document.getElementById("indigenous").className =
               "indigenous indigenous_active";
+          } else {
+            document.getElementById("indigenous").className = "indigenous";
           }
-          else {
-            document.getElementById("indigenous").className =
-              "indigenous";
-          }
-
 
           if (labels.length > 1) {
             // Update up next label
@@ -145,7 +142,7 @@ export default class PlaylistLabelRenderer {
               return label.label.id === this.state.nextLabelId;
             });
             document.getElementById("next_title").innerHTML =
-              elementNext.label.title;
+              elementNext.label.title_html;
           }
         }
       }

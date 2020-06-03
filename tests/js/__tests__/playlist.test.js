@@ -67,15 +67,15 @@ describe("PlaylistLabelRenderer", () => {
         return label.label.id === renderer.state.currentLabelId;
       }
     );
-    expect(document.body.innerHTML).toContain(element.label.title);
-    expect(document.body.innerHTML).toContain(element.label.subtitles);
+    expect(document.body.innerHTML).toContain(element.label.title_html);
+    expect(document.body.innerHTML).toContain(element.label.subtitles_html);
     expect(document.body.innerHTML).toContain(element.label.columns[0].content);
     const elementNext = renderer.state.playlistJson.playlist_labels.find(
       (label) => {
         return label.label.id === renderer.state.nextLabelId;
       }
     );
-    expect(document.body.innerHTML).toContain(elementNext.label.title);
+    expect(document.body.innerHTML).toContain(elementNext.label.title_html);
   });
 
   it("should handle tap events", () => {
