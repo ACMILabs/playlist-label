@@ -27,17 +27,18 @@ describe("PlaylistLabelRenderer", () => {
     document.body.innerHTML = `<div> 
                                 <div>
                                   <div>
-                                    <div id='title'></div>
-                                    <div id='subtitles'></div>
+                                    <div id="title"></div>
+                                    <div id="subtitles"></div>
                                   </div>
                                   <div>
-                                    <div id='content0'></div>
-                                    <div id='content1'></div>
-                                    <div id='content2'></div>
+                                    <div id="content0"></div>
+                                    <div id="content1"></div>
+                                    <div id="content2"></div>
+                                    <div id="indigenous" class="indigenous"></div>
                                   </div>
                                 </div>
-                                <div class='collect' id='collect'>COLLECT</div>
-                                <div id='next_title'></div>
+                                <div class="collect" id="collect">COLLECT</div>
+                                <div id="next_title"></div>
                               </div>
                               <div class="progress-bar-container">
                                 <div id="progress-bar" class="progress-bar"></div>
