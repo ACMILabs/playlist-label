@@ -16,7 +16,7 @@ steps:
     title: Building Playlist Label Docker Image
     type: build
     stage: package
-    image_name: playlistlabel
+    image_name: acmilabs/playlist-label
     working_directory: ./
     tag: '${{CF_BRANCH_TAG_NORMALIZED}}'
     dockerfile: ./development/Dockerfile
@@ -24,7 +24,7 @@ steps:
     title: Building Javascript Test Docker Image
     type: build
     stage: package
-    image_name: javascripttests
+    image_name: acmilabs/playlist-label
     tag: ${{CF_BRANCH_TAG_NORMALIZED}}-javascript
     dockerfile: ./testing/Dockerfile.node
   unit_test:
