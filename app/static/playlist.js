@@ -88,6 +88,10 @@ export default class PlaylistLabelRenderer {
           `mediaplayer.${window.playlistLabelData.xos_media_player_id}`
         );
       },
+      onFailure: () => {
+        // Try to re-connect again
+        this.subscribeToMediaPlayer();
+      },
     });
   }
 
