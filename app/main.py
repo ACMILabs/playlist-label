@@ -84,7 +84,8 @@ class PlaylistLabel():
         # Download Playlist JSON from XOS
         try:
             playlist_label_json = requests.get(
-                f'{XOS_API_ENDPOINT}playlists/{XOS_PLAYLIST_ID}/'
+                f'{XOS_API_ENDPOINT}playlists/{XOS_PLAYLIST_ID}/',
+                timeout=5,
             ).json()
 
             # Write it to the file system
@@ -259,13 +260,17 @@ class HasTapped(Model):
 @app.route('/')
 def playlist_label():
     # Read in the cached JSON
-    with open(CACHED_PLAYLIST_JSON, encoding='utf-8') as json_file:
-        json_data = json.load(json_file)
+    json_data = {}
+    try:
+        with open(CACHED_PLAYLIST_JSON, encoding='utf-8') as json_file:
+            json_data = json.load(json_file)
 
-    # Remove playlist items that don't have a label
-    for item in list(json_data['playlist_labels']):
-        if item['label'] is None:
-            json_data['playlist_labels'].remove(item)
+        # Remove playlist items that don't have a label
+        for item in list(json_data['playlist_labels']):
+            if item['label'] is None:
+                json_data['playlist_labels'].remove(item)
+    except FileNotFoundError:
+        print(f'Couldn\'t open cached playlist JSON: {CACHED_PLAYLIST_JSON}')
 
     return render_template(
         'playlist.html',
@@ -286,8 +291,12 @@ def playlist_label():
 @app.route('/api/playlist/')
 def playlist_json():
     # Read in the cached JSON
-    with open(CACHED_PLAYLIST_JSON, encoding='utf-8') as json_file:
-        json_data = json.load(json_file)
+    json_data = {}
+    try:
+        with open(CACHED_PLAYLIST_JSON, encoding='utf-8') as json_file:
+            json_data = json.load(json_file)
+    except FileNotFoundError:
+        pass
 
     return jsonify(json_data)
 
