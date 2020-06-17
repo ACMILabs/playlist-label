@@ -5,7 +5,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app import main
+from app import cache, main
+from app.cache import create_cache
 from app.main import Message, PlaylistLabel
 
 
@@ -62,20 +63,17 @@ def test_message():
 
 
 @patch('requests.get', MagicMock(side_effect=mocked_requests_get))
-def test_download_playlist_label():
+def test_create_cache(capsys):
     """
-    Test that downloading the playlist from XOS
-    successfully saves it to the filesystem.
+    Test the create_cache method downloads an XOS Playlist and saves it to the cache directory.
     """
-
-    playlistlabel = PlaylistLabel()
-    playlistlabel.download_playlist_label()
-
-    with open('playlist_1.json', 'r') as the_file:
-        playlist = json.loads(the_file.read())['playlist_labels']
-
-    assert len(playlist) == 3
-    assert playlist[0]['label']['title'] == 'Dracula'
+    # capsys.disabled forwards stdout and stderr
+    with capsys.disabled():
+        create_cache()
+        with open('playlist_1.json', 'r') as playlist_cache:
+            playlist = json.loads(playlist_cache.read())['playlist_labels']
+        assert len(playlist) == 3
+        assert playlist[0]['label']['title'] == 'Dracula'
 
 
 @pytest.mark.usefixtures('database')
@@ -116,9 +114,8 @@ def test_route_playlist_label_with_no_label(client):
     when a playlist item doesn't have a label.
     """
 
-    main.XOS_PLAYLIST_ID = 2
-    playlistlabel = PlaylistLabel()
-    playlistlabel.download_playlist_label()
+    cache.XOS_PLAYLIST_ID = 2
+    create_cache()
     response = client.get('/')
     response_data = response.data.decode('utf-8')
 
@@ -132,9 +129,8 @@ def test_route_playlist_json(client):
     Test that the playlist route returns the expected data.
     """
 
-    main.XOS_PLAYLIST_ID = 1
-    playlistlabel = PlaylistLabel()
-    playlistlabel.download_playlist_label()
+    cache.XOS_PLAYLIST_ID = 1
+    create_cache()
     response = client.get('/api/playlist/')
 
     assert b'Dracula' in response.data
