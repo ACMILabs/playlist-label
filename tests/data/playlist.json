@@ -5,8 +5,7 @@
     {
       "label": {
         "id": 17,
-        "title": "Dracula",
-        "title_html": "<p>Dracula</p>",
+        "title": "<p>Dracula</p>",
         "columns": [
           {
             "content": "When Dracula leaves the captive Jonathan Harker and Transylvania for London in search of Mina Harkerâ€”the spitting image of Dracula's long-dead wife, Elisabetaâ€”obsessed vampire hunter, Dr. Van Helsing sets out to end the madness.",
@@ -21,8 +20,7 @@
             "style": "standard"
           }
         ],
-        "subtitles": "1992, Dir. Francis Ford Coppola",
-        "subtitles_html": "<p>1992, Dir. Francis Ford Coppola</p>",
+        "subtitles": "<p>1992, Dir. Francis Ford Coppola</p>",
         "rights": "",
         "work": {
           "id": 47,
@@ -49,8 +47,7 @@
     {
       "label": {
         "id": 18,
-        "title": "Jurassic Park",
-        "title_html": "<p>Jurassic Park</p>",
+        "title": "<p>Jurassic Park</p>",
         "columns": [
           {
             "content": "A wealthy entrepreneur secretly creates a theme park featuring living dinosaurs drawn from prehistoric DNA. Before opening day, he invites a team of experts and his two eager grandchildren to experience the park and help calm anxious investors. However, the park is anything but amusing as the security systems go off-line and the dinosaurs escape.",
@@ -65,8 +62,7 @@
             "style": "standard"
           }
         ],
-        "subtitles": "1993, Dir. Steven Spielberg",
-        "subtitles_html": "<p>1993, Dir. Steven Spielberg</p>",
+        "subtitles": "<p>1993, Dir. Steven Spielberg</p>",
         "rights": "",
         "work": {
           "id": 49,
@@ -93,8 +89,7 @@
     {
       "label": {
         "id": 19,
-        "title": "Kiki's Delivery Service",
-        "title_html": "<p>Kiki's Delivery Service</p>",
+        "title": "<p>Kiki's Delivery Service</p>",
         "columns": [
           {
             "content": "A young witch, on her mandatory year of independent life, finds fitting into a new community difficult while she supports herself by running an air courier service.",
@@ -110,8 +105,7 @@
           }
 
         ],
-        "subtitles": "1989, Dir. Hayao Miyazaki",
-        "subtitles_html": "<p>1989, Dir. Hayao Miyazaki</p>",
+        "subtitles": "<p>1989, Dir. Hayao Miyazaki</p>",
         "rights": "",
         "work": {
           "id": 48,

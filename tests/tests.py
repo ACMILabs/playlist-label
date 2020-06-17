@@ -75,7 +75,7 @@ def test_download_playlist_label():
         playlist = json.loads(the_file.read())['playlist_labels']
 
     assert len(playlist) == 3
-    assert playlist[0]['label']['title'] == 'Dracula'
+    assert playlist[0]['label']['title'] == '<p>Dracula</p>'
 
 
 @pytest.mark.usefixtures('database')
