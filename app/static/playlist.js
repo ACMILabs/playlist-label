@@ -133,6 +133,13 @@ export default class PlaylistLabelRenderer {
           document.getElementById("content2").innerHTML =
             element.label.columns[2].content;
 
+          if (element.label.work.is_context_indigenous) {
+            document.getElementById("indigenous").className =
+              "indigenous indigenous_active";
+          } else {
+            document.getElementById("indigenous").className = "indigenous";
+          }
+
           if (labels.length > 1) {
             // Update up next label
             const elementNext = labels.find((label) => {

@@ -5,7 +5,7 @@
     {
       "label": {
         "id": 17,
-        "title": "Dracula",
+        "title": "<p>Dracula</p>",
         "columns": [
           {
             "content": "When Dracula leaves the captive Jonathan Harker and Transylvania for London in search of Mina Harkerâ€”the spitting image of Dracula's long-dead wife, Elisabetaâ€”obsessed vampire hunter, Dr. Van Helsing sets out to end the madness.",
@@ -20,28 +20,26 @@
             "style": "standard"
           }
         ],
-        "subtitles": "1992, Dir. Francis Ford Coppola",
+        "subtitles": "<p>1992, Dir. Francis Ford Coppola</p>",
         "rights": "",
-        "works": [
-          {
-            "id": 47,
-            "title": "Dracula",
-            "public_images": [
-              {
-                  "id": 554,
-                  "image_file": "file://../../data/sample.jpg",
-                  "thumbnail_url": "file://../../data/sample.jpg.150x150_q85.jpg",
-                  "caption": "",
-                  "credit_line": "",
-                  "width": 1920,
-                  "height": 1080
-              }
-            ],
-            "abstract": "",
-            "brief_description": "When Dracula leaves the captive Jonathan Harker and Transylvania for London in search of Mina Harkerâ€”the spitting image of Dracula's long-dead wife, Elisabetaâ€”obsessed vampire hunter, Dr. Van Helsing sets out to end the madness.",
-            "first_production_year": "1992"
-          }
-        ]
+        "work": {
+          "id": 47,
+          "title": "Dracula",
+          "public_images": [
+            {
+                "id": 554,
+                "image_file": "file://../../data/sample.jpg",
+                "thumbnail_url": "file://../../data/sample.jpg.150x150_q85.jpg",
+                "caption": "",
+                "credit_line": "",
+                "width": 1920,
+                "height": 1080
+            }
+          ],
+          "abstract": "",
+          "brief_description": "When Dracula leaves the captive Jonathan Harker and Transylvania for London in search of Mina Harkerâ€”the spitting image of Dracula's long-dead wife, Elisabetaâ€”obsessed vampire hunter, Dr. Van Helsing sets out to end the madness.",
+          "first_production_year": "1992"
+        }
       },
       "resource": "file://../../data/sample.mp4",
       "subtitles": "file://../../data/sample.srt"
@@ -49,7 +47,7 @@
     {
       "label": {
         "id": 18,
-        "title": "Jurassic Park",
+        "title": "<p>Jurassic Park</p>",
         "columns": [
           {
             "content": "A wealthy entrepreneur secretly creates a theme park featuring living dinosaurs drawn from prehistoric DNA. Before opening day, he invites a team of experts and his two eager grandchildren to experience the park and help calm anxious investors. However, the park is anything but amusing as the security systems go off-line and the dinosaurs escape.",
@@ -64,28 +62,26 @@
             "style": "standard"
           }
         ],
-        "subtitles": "1993, Dir. Steven Spielberg",
+        "subtitles": "<p>1993, Dir. Steven Spielberg</p>",
         "rights": "",
-        "works": [
-          {
-            "id": 49,
-            "title": "Jurassic Park",
-            "public_images": [
-              {
-                  "id": 554,
-                  "image_file": "file://../../data/sample.jpg",
-                  "thumbnail_url": "file://../../data/sample.jpg.150x150_q85.jpg",
-                  "caption": "",
-                  "credit_line": "",
-                  "width": 1920,
-                  "height": 1080
-              }
-            ],
-            "abstract": "",
-            "brief_description": "A wealthy entrepreneur secretly creates a theme park featuring living dinosaurs drawn from prehistoric DNA. Before opening day, he invites a team of experts and his two eager grandchildren to experience the park and help calm anxious investors. However, the park is anything but amusing as the security systems go off-line and the dinosaurs escape.",
-            "first_production_year": "1993"
-          }
-        ]
+        "work": {
+          "id": 49,
+          "title": "Jurassic Park",
+          "public_images": [
+            {
+                "id": 554,
+                "image_file": "file://../../data/sample.jpg",
+                "thumbnail_url": "file://../../data/sample.jpg.150x150_q85.jpg",
+                "caption": "",
+                "credit_line": "",
+                "width": 1920,
+                "height": 1080
+            }
+          ],
+          "abstract": "",
+          "brief_description": "A wealthy entrepreneur secretly creates a theme park featuring living dinosaurs drawn from prehistoric DNA. Before opening day, he invites a team of experts and his two eager grandchildren to experience the park and help calm anxious investors. However, the park is anything but amusing as the security systems go off-line and the dinosaurs escape.",
+          "first_production_year": "1993"
+        }
       },
       "resource": "file://../../data/sample.mp4",
       "subtitles": "file://../../data/sample.srt"
@@ -93,7 +89,7 @@
     {
       "label": {
         "id": 19,
-        "title": "Kiki's Delivery Service",
+        "title": "<p>Kiki's Delivery Service</p>",
         "columns": [
           {
             "content": "A young witch, on her mandatory year of independent life, finds fitting into a new community difficult while she supports herself by running an air courier service.",
@@ -109,28 +105,26 @@
           }
 
         ],
-        "subtitles": "1989, Dir. Hayao Miyazaki",
+        "subtitles": "<p>1989, Dir. Hayao Miyazaki</p>",
         "rights": "",
-        "works": [
-          {
-            "id": 48,
-            "title": "Kiki's Delivery Service",
-            "public_images": [
-              {
-                  "id": 554,
-                  "image_file": "file://../../data/sample.jpg",
-                  "thumbnail_url": "file://../../data/sample.jpg.150x150_q85.jpg",
-                  "caption": "",
-                  "credit_line": "",
-                  "width": 1920,
-                  "height": 1080
-              }
-            ],
-            "abstract": "",
-            "brief_description": "A young witch, on her mandatory year of independent life, finds fitting into a new community difficult while she supports herself by running an air courier service.",
-            "first_production_year": "1989"
-          }
-        ]
+        "work": {
+          "id": 48,
+          "title": "Kiki's Delivery Service",
+          "public_images": [
+            {
+                "id": 554,
+                "image_file": "file://../../data/sample.jpg",
+                "thumbnail_url": "file://../../data/sample.jpg.150x150_q85.jpg",
+                "caption": "",
+                "credit_line": "",
+                "width": 1920,
+                "height": 1080
+            }
+          ],
+          "abstract": "",
+          "brief_description": "A young witch, on her mandatory year of independent life, finds fitting into a new community difficult while she supports herself by running an air courier service.",
+          "first_production_year": "1989"
+        }
       },
       "resource": "file://../../data/sample.mp4",
       "subtitles": "file://../../data/sample.srt"
