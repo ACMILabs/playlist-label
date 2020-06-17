@@ -253,23 +253,24 @@ def playlist_label():
         for item in list(json_data['playlist_labels']):
             if item['label'] is None:
                 json_data['playlist_labels'].remove(item)
+
+        return render_template(
+            'playlist.html',
+            playlist_json=json_data,
+            mqtt={
+                'host': RABBITMQ_MQTT_HOST,
+                'port': RABBITMQ_MQTT_PORT,
+                'username': RABBITMQ_MEDIA_PLAYER_USER,
+                'password': RABBITMQ_MEDIA_PLAYER_PASS
+            },
+            xos={
+                'playlist_endpoint': f'{XOS_API_ENDPOINT}playlists/',
+                'media_player_id': XOS_MEDIA_PLAYER_ID
+            }
+        )
     except FileNotFoundError:
         print(f'Couldn\'t open cached playlist JSON: {CACHE_DIR}{CACHED_PLAYLIST_JSON}')
-
-    return render_template(
-        'playlist.html',
-        playlist_json=json_data,
-        mqtt={
-            'host': RABBITMQ_MQTT_HOST,
-            'port': RABBITMQ_MQTT_PORT,
-            'username': RABBITMQ_MEDIA_PLAYER_USER,
-            'password': RABBITMQ_MEDIA_PLAYER_PASS
-        },
-        xos={
-            'playlist_endpoint': f'{XOS_API_ENDPOINT}playlists/',
-            'media_player_id': XOS_MEDIA_PLAYER_ID
-        }
-    )
+        return render_template('no_playlist.html')
 
 
 @app.route('/api/playlist/')

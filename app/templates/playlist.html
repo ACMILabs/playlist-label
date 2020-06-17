@@ -1,87 +1,82 @@
 <!doctype html>
 <html>
-  <head>
-      <title>Playlist: {{ playlist_json.title }}</title>
-      <link rel="stylesheet" type="text/css" href="/static/playlist.css">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <meta charset="UTF-8">
-  </head>
 
-  <body>
-      <div>
-          <div>
-              {% if (not playlist_json) or (playlist_json.playlist_labels|length == 0) %}
-                  <div class='title_cont'>
-                      <div id='title' class='title'>Playlist not found 😭</div>
-                      <div id='subtitles' class='subtitles'>Sorry, there isn't any XOS Playlist data.</div>
-                  </div>
-                  <div class='content'>
-                      <div id='content0' class="standard">
-                          <p><strong>Things to try</strong>:</p>
-                          <ul>
-                              <li>Do you have an internet connection?</li>
-                              <li>Is this device connected to the VPN?</li>
-                              <li>Can you access <a href="https://xos.acmi.net.au">XOS</a>?</li>
-                              <li>Have you setup this device in <a href="https://xos.acmi.net.au">XOS</a>?</li>
-                              <li>Instructions and more help are available in the ACMI Knowledge Base: <a href="https://kb.acmi.net.au/display/XOS/How-to+articles">kb.acmi.net.au</a></li>
-                          </ul>
-                      </div>
-                  </div>
-              {% else %}
-                  <div class='title_cont'>
-                      <div id='title' class='title'>{{ playlist_json.playlist_labels[0].label.title|safe }}</div>
-                      <div id='subtitles' class='subtitles'>{{ playlist_json.playlist_labels[0].label.subtitles|safe }}</div>
-                  </div>
-                  <div class='content'>
-                      <div id='content0' class="{{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[0].style == 'smaller' else 'standard' }}">
-                          {{ playlist_json.playlist_labels[0].label.columns[0].content|safe }}
-                      </div>
-                      <div id='content1' class="{{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[1].style == 'smaller' else 'standard' }}">
-                          {{ playlist_json.playlist_labels[0].label.columns[1].content|safe }}
-                      </div>
-                      <div id='content2' class="{{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[2].style == 'smaller' else 'standard' }}">
-                          {{ playlist_json.playlist_labels[0].label.columns[2].content|safe }}
-                      </div>
-                  </div>
-                  <div class='collect' id='collect'>
-                    COLLECT
-                  </div>
-                  {% if playlist_json.playlist_labels|length > 1 %}
-                      <div class='next'>
-                          <div class='progress-bar-container'>
-                              <div id='progress-bar' class='progress-bar'></div>
-                          </div>
-                          <div class='next_left'>
-                            NEXT
-                          </div>
-                          <div class='next_right'>
-                            <div id='next_title'>{{ playlist_json.playlist_labels[1].label.title|safe }}</div>
-                          </div>
-                      </div>
-                  {% else %}
-                      <div class='progress-bar-container full-width-progress'>
-                          <div id='progress-bar' class='progress-bar'></div>
-                      </div>
-                  {% endif %}
-              {% endif %}
+<head>
+  <title>Playlist: {{ playlist_json.title }}</title>
+  <link rel="stylesheet" type="text/css" href="/static/style.css">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta charset="UTF-8">
+</head>
+
+<body>
+  <div>
+    <div>
+      {% if (not playlist_json) or (playlist_json.playlist_labels|length == 0) %}
+        <div class='title_cont'>
+          <div id='title' class='title'>Playlist has no labels 😭</div>
+          <div id='subtitles' class='subtitles'>Sorry, there aren't any labels in this XOS Playlist.</div>
+        </div>
+        <div class='content'>
+          <div id='content0' class="standard">
           </div>
-      </div>
+        </div>
+      {% else %}
+        <div class='title_cont'>
+          <div id='title' class='title'>{{ playlist_json.playlist_labels[0].label.title|safe }}</div>
+          <div id='subtitles' class='subtitles'>{{ playlist_json.playlist_labels[0].label.subtitles|safe }}</div>
+        </div>
+        <div class='content'>
+          <div id='content0' class="{{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[0].style == 'smaller' else 'standard' }}">
+            {{ playlist_json.playlist_labels[0].label.columns[0].content|safe }}
+          </div>
+          <div id='content1' class="{{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[1].style == 'smaller' else 'standard' }}">
+            {{ playlist_json.playlist_labels[0].label.columns[1].content|safe }}
+          </div>
+          <div id='content2' class="{{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[2].style == 'smaller' else 'standard' }}">
+            {{ playlist_json.playlist_labels[0].label.columns[2].content|safe }}
+          </div>
+        </div>
+        <div class='collect' id='collect'>
+          COLLECT
+        </div>
+        {% if playlist_json.playlist_labels|length > 1 %}
+          <div class='next'>
+            <div class='progress-bar-container'>
+              <div id='progress-bar' class='progress-bar'></div>
+            </div>
+            <div class='next_left'>
+              NEXT
+            </div>
+            <div class='next_right'>
+              <div id='next_title'>{{ playlist_json.playlist_labels[1].label.title|safe }}</div>
+            </div>
+          </div>
+        {% else %}
+          <div class='progress-bar-container full-width-progress'>
+            <div id='progress-bar' class='progress-bar'></div>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
 
-      <script src="/static/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
-      <script src="/static/playlist.js" type="module"></script>
-  </body>
+  <script src="/static/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+  <script src="/static/playlist.js" type="module"></script>
+</body>
 
-  <script>
-      window.playlistLabelData = {
-          "id": "{{ playlist_json.id }}",
-          "current_label_id": "{% if playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %}",
-          "next_label_id": "{% if playlist_json.playlist_labels|length > 1 %}{{ playlist_json.playlist_labels.1.label.id }}{% elif playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %}",
-          "mqtt_host": "{{ mqtt.host }}",
-          "mqtt_port": "{{ mqtt.port }}",
-          "mqtt_username": "{{ mqtt.username }}",
-          "mqtt_password": "{{ mqtt.password }}",
-          "xos_playlist_endpoint": "{{ xos.playlist_endpoint }}",
-          "xos_media_player_id": "{{ xos.media_player_id }}"
-      }
-  </script>
+<script>
+  window.playlistLabelData = {
+    "id": "{{ playlist_json.id }}",
+    "current_label_id": "{% if playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %}",
+    "next_label_id": "{% if playlist_json.playlist_labels|length > 1 %}{{ playlist_json.playlist_labels.1.label.id }}{% elif playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %}",
+    "mqtt_host": "{{ mqtt.host }}",
+    "mqtt_port": "{{ mqtt.port }}",
+    "mqtt_username": "{{ mqtt.username }}",
+    "mqtt_password": "{{ mqtt.password }}",
+    "xos_playlist_endpoint": "{{ xos.playlist_endpoint }}",
+    "xos_media_player_id": "{{ xos.media_player_id }}"
+  }
+</script>
+
 </html>
