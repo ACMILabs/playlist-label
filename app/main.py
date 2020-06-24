@@ -36,6 +36,7 @@ BALENA_SERVICE_NAME = os.getenv('BALENA_SERVICE_NAME')
 BALENA_SUPERVISOR_ADDRESS = os.getenv('BALENA_SUPERVISOR_ADDRESS')
 BALENA_SUPERVISOR_API_KEY = os.getenv('BALENA_SUPERVISOR_API_KEY')
 DEBUG = os.getenv('DEBUG', 'false').lower() == "true"
+CACHE_DIR = os.getenv('CACHE_DIR', '/data/')
 
 # Setup Sentry
 sentry_sdk.init(
@@ -78,22 +79,6 @@ class PlaylistLabel():
     def __init__(self):
         self.playlist = None
         self.errors_history = {}
-
-    @staticmethod
-    def download_playlist_label():
-        # Download Playlist JSON from XOS
-        try:
-            playlist_label_json = requests.get(
-                f'{XOS_API_ENDPOINT}playlists/{XOS_PLAYLIST_ID}/'
-            ).json()
-
-            # Write it to the file system
-            with open(CACHED_PLAYLIST_JSON, 'w') as outfile:
-                json.dump(playlist_label_json, outfile)
-
-        except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as exception:
-            print(f'Error downloading playlist JSON from XOS: {exception}')
-            sentry_sdk.capture_exception(exception)
 
     @staticmethod
     def process_media(body, message):
@@ -259,35 +244,44 @@ class HasTapped(Model):
 @app.route('/')
 def playlist_label():
     # Read in the cached JSON
-    with open(CACHED_PLAYLIST_JSON, encoding='utf-8') as json_file:
-        json_data = json.load(json_file)
+    json_data = {}
+    try:
+        with open(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}', encoding='utf-8') as json_file:
+            json_data = json.load(json_file)
 
-    # Remove playlist items that don't have a label
-    for item in list(json_data['playlist_labels']):
-        if item['label'] is None:
-            json_data['playlist_labels'].remove(item)
+        # Remove playlist items that don't have a label
+        for item in list(json_data['playlist_labels']):
+            if item['label'] is None:
+                json_data['playlist_labels'].remove(item)
 
-    return render_template(
-        'playlist.html',
-        playlist_json=json_data,
-        mqtt={
-            'host': RABBITMQ_MQTT_HOST,
-            'port': RABBITMQ_MQTT_PORT,
-            'username': RABBITMQ_MEDIA_PLAYER_USER,
-            'password': RABBITMQ_MEDIA_PLAYER_PASS
-        },
-        xos={
-            'playlist_endpoint': f'{XOS_API_ENDPOINT}playlists/',
-            'media_player_id': XOS_MEDIA_PLAYER_ID
-        }
-    )
+        return render_template(
+            'playlist.html',
+            playlist_json=json_data,
+            mqtt={
+                'host': RABBITMQ_MQTT_HOST,
+                'port': RABBITMQ_MQTT_PORT,
+                'username': RABBITMQ_MEDIA_PLAYER_USER,
+                'password': RABBITMQ_MEDIA_PLAYER_PASS
+            },
+            xos={
+                'playlist_endpoint': f'{XOS_API_ENDPOINT}playlists/',
+                'media_player_id': XOS_MEDIA_PLAYER_ID
+            }
+        )
+    except FileNotFoundError:
+        print(f'Couldn\'t open cached playlist JSON: {CACHE_DIR}{CACHED_PLAYLIST_JSON}')
+        return render_template('no_playlist.html')
 
 
 @app.route('/api/playlist/')
 def playlist_json():
     # Read in the cached JSON
-    with open(CACHED_PLAYLIST_JSON, encoding='utf-8') as json_file:
-        json_data = json.load(json_file)
+    json_data = {}
+    try:
+        with open(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}', encoding='utf-8') as json_file:
+            json_data = json.load(json_file)
+    except FileNotFoundError:
+        pass
 
     return jsonify(json_data)
 
@@ -338,6 +332,5 @@ if __name__ == '__main__':
     db.create_tables([Message, HasTapped])
     HasTapped.create(has_tapped=0)
     playlistlabel = PlaylistLabel()  # pylint: disable=C0103
-    playlistlabel.download_playlist_label()
     Thread(target=playlistlabel.get_events).start()
     app.run(host='0.0.0.0', port=PLAYLIST_LABEL_PORT)

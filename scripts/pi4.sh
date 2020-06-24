@@ -53,6 +53,9 @@ fi
 # Hide the cursor
 unclutter -display :0 -idle 0.1 &
 
+# Download and cache XOS Playlist
+python3 -u -m app.cache
+
 # Start Flask
 python3 -u -m app.main &
 

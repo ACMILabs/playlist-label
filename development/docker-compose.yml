@@ -11,7 +11,8 @@ services:
     container_name: playlistlabel
     env_file: ../config.env
     volumes:
-      - ../:/code        
+      - ../:/code
+      - ../data:/data
     command: ./scripts/dev.sh
     ports:
      - 8081:8081
