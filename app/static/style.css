@@ -152,6 +152,10 @@ p:first-child {
   margin-top: 0;
 }
 
+p:last-child {
+  margin-bottom: 0;
+}
+
 .collect {
   color: #000;
   margin-top: 39px;
