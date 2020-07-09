@@ -58,6 +58,7 @@ export default class PlaylistLabelRenderer {
       .then((jsonData) => {
         this.state.playlistJson = jsonData;
         this.subscribeToMediaPlayer(jsonData);
+        this.addTitleAnnotation(jsonData.playlist_labels[0].label.work);
       })
       .catch((error) => console.error(error)); // eslint-disable-line no-console
   }
@@ -123,7 +124,9 @@ export default class PlaylistLabelRenderer {
           this.state.nextLabelId = labels[(index + 1) % labels.length].label.id;
 
           // Update the label fields with the currently playing data
-          document.getElementById("title").innerHTML = element.label.title;
+          const title = document.getElementById("title");
+          title.innerHTML = element.label.title;
+          this.addTitleAnnotation(element.label.work);
           document.getElementById("subtitles").innerHTML =
             element.label.subtitles;
           document.getElementById("content0").innerHTML =
@@ -180,6 +183,20 @@ export default class PlaylistLabelRenderer {
           this.state.isAnimatingCollect = false;
         }.bind(this),
         3500
+      );
+    }
+  }
+
+  addTitleAnnotation(work) {
+    // If a title_annotation exists, add it to the end of the title
+    if (work && work.title_annotation) {
+      const title = document.getElementById("title");
+      const titleAnnotation = document.createElement("span");
+      titleAnnotation.className = "title_annotation";
+      titleAnnotation.innerHTML = work.title_annotation;
+      title.innerHTML = title.innerHTML.replace(
+        /<\/p>/g,
+        `${titleAnnotation.outerHTML}</p>`
       );
     }
   }
