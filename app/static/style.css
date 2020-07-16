@@ -80,6 +80,14 @@ body {
   line-height: 65px;
 }
 
+.title_annotation {
+  font-family: FaktPro;
+  font-size: 2.5rem;
+  font-weight: normal;
+  padding-left: 1rem;
+  text-transform: lowercase;
+}
+
 .subtitles {
   font-size: 28px;
   line-height: 39px;

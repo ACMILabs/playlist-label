@@ -1,6 +1,7 @@
 import PlaylistLabelRenderer from "../../../app/static/playlist";
 import playlistJson from "../../data/playlist.json";
 import messageJson from "../../data/message.json";
+import messageJsonWithTitleAnnotation from "../../data/message_with_title_annotation.json";
 
 describe("PlaylistLabelRenderer", () => {
   beforeEach(() => {
@@ -69,6 +70,7 @@ describe("PlaylistLabelRenderer", () => {
       }
     );
     expect(document.body.innerHTML).toContain(element.label.title);
+    expect(document.body.innerHTML).not.toContain("title_annotation");
     expect(document.body.innerHTML).toContain(element.label.subtitles);
     expect(document.body.innerHTML).toContain(element.label.columns[0].content);
     const elementNext = renderer.state.playlistJson.playlist_labels.find(
@@ -77,6 +79,27 @@ describe("PlaylistLabelRenderer", () => {
       }
     );
     expect(document.body.innerHTML).toContain(elementNext.label.title);
+  });
+
+  it("should include a title annotation when a message arrives", () => {
+    const messageData = {
+      payloadString: JSON.stringify(messageJsonWithTitleAnnotation),
+    };
+    const renderer = new PlaylistLabelRenderer();
+    renderer.state.playlistJson = playlistJson;
+    renderer.init();
+    renderer.onMessageArrived(messageData);
+    const element = renderer.state.playlistJson.playlist_labels.find(
+      (label) => {
+        return label.label.id === renderer.state.currentLabelId;
+      }
+    );
+    const tmp = document.createElement("div");
+    tmp.innerHTML = element.label.title;
+    expect(document.body.innerHTML).toContain(tmp.textContent);
+    expect(document.body.innerHTML).toContain(
+      element.label.work.title_annotation
+    );
   });
 
   it("should handle tap events", () => {
