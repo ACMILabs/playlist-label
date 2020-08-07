@@ -83,21 +83,29 @@
   </div>
 
   <script src="/static/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
-  <script src="/static/playlist.js" type="module"></script>
-</body>
+  <script type="module">
+    /**
+     * Init the PlaylistLabelRenderer app once the DOM has completed loading.
+     */
+    import PlaylistLabelRenderer from '/static/playlist.js';
 
-<script>
-  window.playlistLabelData = {
-    "id": {{ playlist_json.id }},
-    "current_label_id": {% if playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %},
-    "next_label_id": {% if playlist_json.playlist_labels|length > 1 %}{{ playlist_json.playlist_labels.1.label.id }}{% elif playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %},
-    "mqtt_host": "{{ mqtt.host }}",
-    "mqtt_port": "{{ mqtt.port }}",
-    "mqtt_username": "{{ mqtt.username }}",
-    "mqtt_password": "{{ mqtt.password }}",
-    "xos_playlist_endpoint": "{{ xos.playlist_endpoint }}",
-    "xos_media_player_id": "{{ xos.media_player_id }}"
-  }
-</script>
+    window.initialData = {
+      "id": {{ playlist_json.id }},
+      "current_label_id": {% if playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %},
+      "next_label_id": {% if playlist_json.playlist_labels|length > 1 %}{{ playlist_json.playlist_labels.1.label.id }}{% elif playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %},
+      "mqtt_host": "{{ mqtt.host }}",
+      "mqtt_port": "{{ mqtt.port }}",
+      "mqtt_username": "{{ mqtt.username }}",
+      "mqtt_password": "{{ mqtt.password }}",
+      "xos_playlist_endpoint": "{{ xos.playlist_endpoint }}",
+      "xos_media_player_id": "{{ xos.media_player_id }}"
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+      window.playlistLabelApp = new PlaylistLabelRenderer();
+      window.playlistLabelApp.init();
+    });
+  </script>
+</body>
 
 </html>

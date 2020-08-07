@@ -2,6 +2,7 @@
  * Class grouping together all methods to render a playlist label in the client,
  * along with simple state to track the current playlist being played.
  */
+
 export default class PlaylistLabelRenderer {
   /**
    * Set an initial state for the renderer
@@ -17,18 +18,18 @@ export default class PlaylistLabelRenderer {
 
   /**
    * Init, parsing playlist id that should be made available on the
-   * rendered page via window.playlistLabelData.
+   * rendered page via window.initialData.
    */
   init() {
     const id =
-      "id" in window.playlistLabelData ? window.playlistLabelData.id : null;
+      "id" in window.initialData ? window.initialData.id : null;
     this.state.currentLabelId =
-      "current_label_id" in window.playlistLabelData
-        ? window.playlistLabelData.current_label_id
+      "current_label_id" in window.initialData
+        ? window.initialData.current_label_id
         : null;
     this.state.nextLabelId =
-      "next_label_id" in window.playlistLabelData
-        ? window.playlistLabelData.next_label_id
+      "next_label_id" in window.initialData
+        ? window.initialData.next_label_id
         : null;
 
     if (id != null) {
@@ -71,8 +72,8 @@ export default class PlaylistLabelRenderer {
     // Subscribe to the media player messages
     // TODO: get media_player id from XOS
     const client = new Paho.MQTT.Client( // eslint-disable-line no-undef
-      window.playlistLabelData.mqtt_host,
-      parseInt(window.playlistLabelData.mqtt_port, 10),
+      window.initialData.mqtt_host,
+      parseInt(window.initialData.mqtt_port, 10),
       "/ws",
       ""
     );
@@ -81,13 +82,13 @@ export default class PlaylistLabelRenderer {
     client.onConnectionLost = this.onConnectionLost.bind(this);
     client.onMessageArrived = this.onMessageArrived.bind(this);
     client.connect({
-      userName: window.playlistLabelData.mqtt_username,
-      password: window.playlistLabelData.mqtt_password,
+      userName: window.initialData.mqtt_username,
+      password: window.initialData.mqtt_password,
       onSuccess: () => {
         // Subscribe to the media player AMQP feed
         // TODO: Get the media player ID from XOS
         client.subscribe(
-          `mediaplayer.${window.playlistLabelData.xos_media_player_id}`
+          `mediaplayer.${window.initialData.xos_media_player_id}`
         );
       },
       onFailure: () => {
@@ -133,38 +134,34 @@ export default class PlaylistLabelRenderer {
   jump_to_label(label_id) {
     // Update the current state
     this.state.currentLabelId = label_id;
-    // look through labels to find the match
-    const items = this.state.playlistJson.playlist_labels;
-    for (let index = 0; index < items.length; index++) {
-      const item = items[index];
-      if (item.label && item.label.id === this.state.currentLabelId) {
-        this.update_main_label_content(item.label)
+    const items = this.state.playlistJson.labels;
 
-        if (items.length > 1) {
-          this.state.nextLabelId = items[(index + 1) % items.length].label.id;
-          this.update_up_next_content(items)
-        }
-      }
-    }
+    // make a list of items that starts with the new label
+    const coming_items = [];
+    const start_index = items.findIndex(function(item) {
+      return item.label && item.label.id === label_id;
+    });
+
+    for (let i = 0; i < items.length; i++) {
+      coming_items.push(items[(start_index + i) % items.length]);
+    };
+
+    this.update_main_label_content(coming_items[0]);
+    if (items.length > 1) this.update_next_content(coming_items);
   }
 
-  update_main_label_content(label) {
+  update_main_label_content(item) {
+    const label = item.label;
     // Update the label fields with the currently playing data
-    const title = document.getElementById("title");
-    title.innerHTML = label.title;
+    const title = document.getElementById("title").innerHTML = label.title;
     this.addTitleAnnotation(label.work);
-    document.getElementById("subtitles").innerHTML =
-      label.subtitles;
-    document.getElementById("content0").innerHTML =
-      label.columns[0].content;
-    document.getElementById("content1").innerHTML =
-      label.columns[1].content;
-    document.getElementById("content2").innerHTML =
-      label.columns[2].content;
+    document.getElementById("subtitles").innerHTML = label.subtitles;
+    document.getElementById("content0").innerHTML = label.columns[0].content;
+    document.getElementById("content1").innerHTML = label.columns[1].content;
+    document.getElementById("content2").innerHTML = label.columns[2].content;
 
     if (label.work.is_context_indigenous) {
-      document.getElementById("indigenous").className =
-        "indigenous indigenous_active";
+      document.getElementById("indigenous").className = "indigenous indigenous_active";
     } else {
       document.getElementById("indigenous").className = "indigenous";
     }
@@ -172,10 +169,9 @@ export default class PlaylistLabelRenderer {
 
   update_up_next_content(items) {
     // Update up next label
-    const item = items.find((item) => {
-      return item.label.id === this.state.nextLabelId;
-    });
+    const item = items[1];
     document.getElementById("next_title").innerHTML = item.label.title;
+
   }
 
   update_progress(playback_position) {
@@ -229,15 +225,3 @@ export default class PlaylistLabelRenderer {
     }
   }
 }
-
-/**
- * Init the PlaylistLabelRenderer app once the DOM has completed loading.
- */
-document.addEventListener("DOMContentLoaded", () => {
-  if (window.playlistLabelData) {
-    const playlistLabelApp = new PlaylistLabelRenderer();
-    playlistLabelApp.init();
-  } else {
-    console.error("No playlist label data could be found on initial pageload."); // eslint-disable-line no-console
-  }
-});
