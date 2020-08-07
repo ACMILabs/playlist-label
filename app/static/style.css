@@ -57,6 +57,7 @@ body {
   width: 100%;
   height: 10px;
   background-color: #757575;
+  transition: width 0.2s;
 }
 
 .title_cont {

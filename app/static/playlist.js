@@ -3,10 +3,13 @@
  * along with simple state to track the current playlist being played.
  */
 
+const FPS = 5;
+
 export default class PlaylistLabelRenderer {
   /**
    * Set an initial state for the renderer
    */
+
   constructor() {
     this.state = {
       currentLabelId: null,
@@ -14,6 +17,7 @@ export default class PlaylistLabelRenderer {
       items: null,
       upcomingItems: null,
       isAnimatingCollect: false,
+      playbackPosition: 0,
     };
   }
 
@@ -43,6 +47,8 @@ export default class PlaylistLabelRenderer {
     this.handleTapMessage = this.handleTapMessage.bind(this);
     const tapSource = new EventSource("/api/tap-source/");
     tapSource.onmessage = this.handleTapMessage;
+
+    setInterval(this.autoUpdateProgress, 1000/FPS, this);
   }
 
   /**
@@ -104,14 +110,16 @@ export default class PlaylistLabelRenderer {
    * Add key bindings to simulate messages
    */
   addKeyBindings() {
-    self = this;
+    const slf = this;
     document.onkeydown = function(e) {
       if (48 <= e.keyCode && e.keyCode <= 57) { // numbers
-        self.update_progress(0.1 * (e.keyCode - 48));
+        slf.state.playbackPosition = 0.1 * (e.keyCode - 48);
+        slf.updateProgress();
       }
       if (e.keyCode == 39) { // right arrow
-        self.jump_to_label(self.state.nextLabelId);
-        self.update_progress(0);
+        slf.jumpToLabel(slf.state.nextLabelId);
+        slf.state.playbackPosition = 0;
+        slf.updateProgress();
       }
     }
   }
@@ -129,15 +137,16 @@ export default class PlaylistLabelRenderer {
     const messageJson = JSON.parse(message.payloadString);
 
     // Update the progress bar
-    this.update_progress(messageJson.playback_position)
+    this.state.playbackPosition = messageJson.playback_position;
+    this.updateProgress()
 
     // Update the label if needed
     if (messageJson.label_id !== this.state.currentLabelId) {
-      this.jump_to_label(messageJson.label_id)
+      this.jumpToLabel(messageJson.label_id)
     }
   }
 
-  jump_to_label(label_id) {
+  jumpToLabel(label_id) {
     console.log('jump to label', label_id);
     // Update the current state
     this.state.currentLabelId = label_id;
@@ -155,14 +164,14 @@ export default class PlaylistLabelRenderer {
     this.state.upcomingItems = upcoming_items;
 
     // update label content
-    this.update_main_label_content(upcoming_items[0]);
+    this.updateMainLabelContent(upcoming_items[0]);
     if (items.length > 1) {
       this.state.nextLabelId = upcoming_items[1].label.id;
-      this.update_up_next_content(upcoming_items);
+      this.updateUpNextContent(upcoming_items);
     }
   }
 
-  update_main_label_content(item) {
+  updateMainLabelContent(item) {
     const label = item.label;
     // Update the label fields with the currently playing data
     const title = document.getElementById("title").innerHTML = label.title;
@@ -179,7 +188,7 @@ export default class PlaylistLabelRenderer {
     }
   }
 
-  update_up_next_content(items) {
+  updateUpNextContent(items) {
     // Update up next label
     const item = items[1];
     document.querySelector("#next_title").innerHTML = item.label.title;
@@ -194,18 +203,19 @@ export default class PlaylistLabelRenderer {
     }
   }
 
-  update_progress(playback_position) {
+  updateProgress() {
     const progressBar = document.getElementById("progress-bar");
-    progressBar.style.width = `${playback_position * 100}%`;
+    const playbackPosition = this.state.playbackPosition;
+    progressBar.style.width = `${playbackPosition * 100}%`;
 
     const items = this.state.upcomingItems;
 
     // calculate time to wait times for the upcoming videos;
-    let time_to_wait = items[0].video.duration_secs * (1.0 - playback_position);
+    let time_to_wait = items[0].video.duration_secs * (1.0 - playbackPosition);
     for (let i=1; i<items.length; i++) {
       const label = items[i].label;
 
-      const num_minutes = parseInt(time_to_wait / 60.0);
+      const num_minutes = parseInt(Math.round(time_to_wait / 60.0));
       let unit = ' minute';
       if (num_minutes != 1) unit += 's';
 
@@ -214,6 +224,16 @@ export default class PlaylistLabelRenderer {
         document.querySelector(id + " .time_to_wait").innerHTML = num_minutes + unit;
       } catch(err) {}
       time_to_wait += items[i].video.duration_secs;
+    }
+  }
+
+  autoUpdateProgress(slf) {
+    // move progress bar along one frame, while we wait for the next message to arrive from the broker
+    if (slf.state.upcomingItems && slf.state.playbackPosition < 1.0) {
+      const duration = slf.state.upcomingItems[0].video.duration_secs;
+      const portion_per_frame = 1.0 / (duration * FPS);
+      slf.state.playbackPosition += portion_per_frame;
+      slf.updateProgress();
     }
   }
 
