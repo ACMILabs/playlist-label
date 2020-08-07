@@ -49,11 +49,10 @@
           <div class="up_next_heading" id="up_next_heading">Up next</div>
           <div class='up_next_works'>
             {% for item in playlist_json.playlist_labels[1:] %}
-              <div class='up_next_work' id='up_next_video_{{item.video.id}}'>
+              <div class='up_next_work' id='up_next_label_{{ loop.index }}'>
                 <div class='title'>{{ loop.index }}. {{ item.label.title|safe }}</div>
                 <div class='subtitles'>{{ item.label.subtitles|safe }}</div>
-                <div class='subtitles'>Duration: {{ item.video.duration_secs }}</div>
-                <div class='subtitles'>Starts in <span class="time_to_wait">6</span> minutes</div>
+                <div class='starts_in'>Starts in <span class="time_to_wait">x minutes</span></div>
               </div>
             {% endfor %}
           </div>

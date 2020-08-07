@@ -57,6 +57,7 @@ To install and run on a Raspbian OS Raspberry Pi for prototyping:
 ## Keyboard input
 
 Ctrl+F5 refresh the browser view (NB this does not refresh the API source)
+0-9: Move progress bar along 0-90%.
 Right arrow: simulate a 'next label' message.
 
 ### Keyboard input from a shell

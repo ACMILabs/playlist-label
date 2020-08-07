@@ -11,7 +11,8 @@ export default class PlaylistLabelRenderer {
     this.state = {
       currentLabelId: null,
       nextLabelId: null,
-      playlistJson: null,
+      items: null,
+      upcomingItems: null,
       isAnimatingCollect: false,
     };
   }
@@ -57,7 +58,8 @@ export default class PlaylistLabelRenderer {
         return response.json();
       })
       .then((jsonData) => {
-        this.state.playlistJson = jsonData;
+        this.state.items = jsonData.playlist_labels;
+        this.state.upcomingItems = jsonData.playlist_labels;
         this.addKeyBindings();
         this.subscribeToMediaPlayer(jsonData);
         this.addTitleAnnotation(jsonData.playlist_labels[0].label.work);
@@ -104,9 +106,13 @@ export default class PlaylistLabelRenderer {
   addKeyBindings() {
     self = this;
     document.onkeydown = function(e) {
+      if (48 <= e.keyCode && e.keyCode <= 57) { // numbers
+        self.update_progress(0.1 * (e.keyCode - 48));
+      }
       if (e.keyCode == 39) { // right arrow
         self.jump_to_label(self.state.nextLabelId);
-     }
+        self.update_progress(0);
+      }
     }
   }
 
@@ -132,22 +138,28 @@ export default class PlaylistLabelRenderer {
   }
 
   jump_to_label(label_id) {
+    console.log('jump to label', label_id);
     // Update the current state
     this.state.currentLabelId = label_id;
-    const items = this.state.playlistJson.labels;
+    const items = this.state.items;
 
     // make a list of items that starts with the new label
-    const coming_items = [];
+    const upcoming_items = [];
     const start_index = items.findIndex(function(item) {
       return item.label && item.label.id === label_id;
     });
-
-    for (let i = 0; i < items.length; i++) {
-      coming_items.push(items[(start_index + i) % items.length]);
+    for (let i=0; i<items.length; i++) {
+      upcoming_items.push(items[(start_index + i) % items.length]);
     };
 
-    this.update_main_label_content(coming_items[0]);
-    if (items.length > 1) this.update_next_content(coming_items);
+    this.state.upcomingItems = upcoming_items;
+
+    // update label content
+    this.update_main_label_content(upcoming_items[0]);
+    if (items.length > 1) {
+      this.state.nextLabelId = upcoming_items[1].label.id;
+      this.update_up_next_content(upcoming_items);
+    }
   }
 
   update_main_label_content(item) {
@@ -170,14 +182,39 @@ export default class PlaylistLabelRenderer {
   update_up_next_content(items) {
     // Update up next label
     const item = items[1];
-    document.getElementById("next_title").innerHTML = item.label.title;
+    document.querySelector("#next_title").innerHTML = item.label.title;
 
+    for (let i=1; i<items.length; i++) {
+      const label = items[i].label;
+      const id = "#up_next_label_" + i;
+      try {
+        document.querySelector(id + " .title").innerHTML = i + '. ' + label.title;
+        document.querySelector(id + " .subtitles").innerHTML = label.subtitles;
+      } catch(err) {}
+    }
   }
 
   update_progress(playback_position) {
-    const videoPlaybackPercentage = playback_position * 100;
     const progressBar = document.getElementById("progress-bar");
-    progressBar.style.width = `${videoPlaybackPercentage}%`;
+    progressBar.style.width = `${playback_position * 100}%`;
+
+    const items = this.state.upcomingItems;
+
+    // calculate time to wait times for the upcoming videos;
+    let time_to_wait = items[0].video.duration_secs * (1.0 - playback_position);
+    for (let i=1; i<items.length; i++) {
+      const label = items[i].label;
+
+      const num_minutes = parseInt(time_to_wait / 60.0);
+      let unit = ' minute';
+      if (num_minutes != 1) unit += 's';
+
+      const id = "#up_next_label_" + i;
+      try {
+        document.querySelector(id + " .time_to_wait").innerHTML = num_minutes + unit;
+      } catch(err) {}
+      time_to_wait += items[i].video.duration_secs;
+    }
   }
 
   truncate(str, max) {
