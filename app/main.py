@@ -38,6 +38,8 @@ BALENA_SUPERVISOR_API_KEY = os.getenv('BALENA_SUPERVISOR_API_KEY')
 DEBUG = os.getenv('DEBUG', 'false').lower() == "true"
 CACHE_DIR = os.getenv('CACHE_DIR', '/data/')
 
+LABEL_TEMPLATE = os.getenv('LABEL_TEMPLATE', 'playlist.html')
+
 # Setup Sentry
 sentry_sdk.init(
     dsn=SENTRY_ID,
@@ -255,7 +257,7 @@ def playlist_label():
                 json_data['playlist_labels'].remove(item)
 
         return render_template(
-            'playlist.html',
+            LABEL_TEMPLATE,
             playlist_json=json_data,
             mqtt={
                 'host': RABBITMQ_MQTT_HOST,

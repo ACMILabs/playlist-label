@@ -57,6 +57,7 @@ export default class PlaylistLabelRenderer {
       })
       .then((jsonData) => {
         this.state.playlistJson = jsonData;
+        this.addKeyBindings();
         this.subscribeToMediaPlayer(jsonData);
         this.addTitleAnnotation(jsonData.playlist_labels[0].label.work);
       })
@@ -96,6 +97,18 @@ export default class PlaylistLabelRenderer {
     });
   }
 
+  /**
+   * Add key bindings to simulate messages
+   */
+  addKeyBindings() {
+    self = this;
+    document.onkeydown = function(e) {
+      if (e.keyCode == 39) { // right arrow
+        self.jump_to_label(self.state.nextLabelId);
+     }
+    }
+  }
+
   onConnectionLost(responseObject) {
     if (responseObject.errorCode !== 0) {
       console.error(`MQTT connection lost: ${responseObject.errorMessage}`); // eslint-disable-line no-console
@@ -105,55 +118,70 @@ export default class PlaylistLabelRenderer {
   }
 
   onMessageArrived(message) {
-    // Check to see if the currently playing label is the same as the currently displayed label
+    // Update display as needed based on message content
     const messageJson = JSON.parse(message.payloadString);
 
     // Update the progress bar
-    const videoPlaybackPercentage = messageJson.playback_position * 100;
-    const progressBar = document.getElementById("progress-bar");
-    progressBar.style.width = `${videoPlaybackPercentage}%`;
+    this.update_progress(messageJson.playback_position)
 
     // Update the label if needed
     if (messageJson.label_id !== this.state.currentLabelId) {
-      // Update the current state
-      this.state.currentLabelId = messageJson.label_id;
-      const labels = this.state.playlistJson.playlist_labels;
-      for (let index = 0; index < labels.length; index++) {
-        const element = labels[index];
-        if (element.label && element.label.id === this.state.currentLabelId) {
-          this.state.nextLabelId = labels[(index + 1) % labels.length].label.id;
+      this.jump_to_label(messageJson.label_id)
+    }
+  }
 
-          // Update the label fields with the currently playing data
-          const title = document.getElementById("title");
-          title.innerHTML = element.label.title;
-          this.addTitleAnnotation(element.label.work);
-          document.getElementById("subtitles").innerHTML =
-            element.label.subtitles;
-          document.getElementById("content0").innerHTML =
-            element.label.columns[0].content;
-          document.getElementById("content1").innerHTML =
-            element.label.columns[1].content;
-          document.getElementById("content2").innerHTML =
-            element.label.columns[2].content;
+  jump_to_label(label_id) {
+    // Update the current state
+    this.state.currentLabelId = label_id;
+    // look through labels to find the match
+    const items = this.state.playlistJson.playlist_labels;
+    for (let index = 0; index < items.length; index++) {
+      const item = items[index];
+      if (item.label && item.label.id === this.state.currentLabelId) {
+        this.update_main_label_content(item.label)
 
-          if (element.label.work.is_context_indigenous) {
-            document.getElementById("indigenous").className =
-              "indigenous indigenous_active";
-          } else {
-            document.getElementById("indigenous").className = "indigenous";
-          }
-
-          if (labels.length > 1) {
-            // Update up next label
-            const elementNext = labels.find((label) => {
-              return label.label.id === this.state.nextLabelId;
-            });
-            document.getElementById("next_title").innerHTML =
-              elementNext.label.title;
-          }
+        if (items.length > 1) {
+          this.state.nextLabelId = items[(index + 1) % items.length].label.id;
+          this.update_up_next_content(items)
         }
       }
     }
+  }
+
+  update_main_label_content(label) {
+    // Update the label fields with the currently playing data
+    const title = document.getElementById("title");
+    title.innerHTML = label.title;
+    this.addTitleAnnotation(label.work);
+    document.getElementById("subtitles").innerHTML =
+      label.subtitles;
+    document.getElementById("content0").innerHTML =
+      label.columns[0].content;
+    document.getElementById("content1").innerHTML =
+      label.columns[1].content;
+    document.getElementById("content2").innerHTML =
+      label.columns[2].content;
+
+    if (label.work.is_context_indigenous) {
+      document.getElementById("indigenous").className =
+        "indigenous indigenous_active";
+    } else {
+      document.getElementById("indigenous").className = "indigenous";
+    }
+  }
+
+  update_up_next_content(items) {
+    // Update up next label
+    const item = items.find((item) => {
+      return item.label.id === this.state.nextLabelId;
+    });
+    document.getElementById("next_title").innerHTML = item.label.title;
+  }
+
+  update_progress(playback_position) {
+    const videoPlaybackPercentage = playback_position * 100;
+    const progressBar = document.getElementById("progress-bar");
+    progressBar.style.width = `${videoPlaybackPercentage}%`;
   }
 
   truncate(str, max) {

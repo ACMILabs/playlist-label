@@ -2,14 +2,14 @@
 <html>
 
 <head>
-  <title>Playlist: {{ playlist_json.title }}</title>
+  <title>Up Next Playlist: {{ playlist_json.title }}</title>
   <link rel="stylesheet" type="text/css" href="/static/style.css">
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta charset="UTF-8">
 </head>
 
-<body class='playlist'>
+<body class='up_next'>
   <div>
     <div>
       {% if (not playlist_json) or (playlist_json.playlist_labels|length == 0) %}
@@ -25,8 +25,7 @@
         <div class='title_cont'>
           <div id='title' class='title'>{{ playlist_json.playlist_labels[0].label.title|safe }}</div>
           <div id='subtitles' class='subtitles'>{{ playlist_json.playlist_labels[0].label.subtitles|safe }}</div>
-        </div>
-        <div class='content'>
+
           <div id='content0' class="description {{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[0].style == 'smaller' else 'standard' }}">
             {{ playlist_json.playlist_labels[0].label.columns[0].content|safe }}
           </div>
@@ -36,14 +35,31 @@
           <div id='content2' class="description {{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[2].style == 'smaller' else 'standard' }}">
             {{ playlist_json.playlist_labels[0].label.columns[2].content|safe }}
           </div>
+
+          <div id='about_title' class='about_title'>{{ playlist_json.introduction_title | safe }}</div>
+          <div id='about' class='about'>{{ playlist_json.introduction_content | safe }}</div>
+        </div>
+        <div class='content'>
           <div id='indigenous' class="indigenous{{ ' indigenous_active' if playlist_json.playlist_labels[0].label.work.is_context_indigenous else '' }}">
             <img src='/static/indigenous.png'/>
-            <div>This work contains</div>
-            <div class='indigenous_bold'>FIRST PEOPLES CONTENT</div>
+            <!-- <div>This work contains</div>
+            <div class='indigenous_bold'>FIRST PEOPLES CONTENT</div> -->
           </div>
-        </div>
-        <div class='collect' id='collect'>
-          COLLECT
+
+          <div class="up_next_heading" id="up_next_heading">Up next</div>
+          <div class='up_next_works'>
+            {% for item in playlist_json.playlist_labels[1:] %}
+              <div class='up_next_work' id='up_next_video_{{item.video.id}}'>
+                <div class='title'>{{ loop.index }}. {{ item.label.title|safe }}</div>
+                <div class='subtitles'>{{ item.label.subtitles|safe }}</div>
+                <div class='subtitles'>Duration: {{ item.video.duration_secs }}</div>
+                <div class='subtitles'>Starts in <span class="time_to_wait">6</span> minutes</div>
+              </div>
+            {% endfor %}
+          </div>
+          <div class='collect' id='collect'>
+            COLLECT
+          </div>
         </div>
         {% if playlist_json.playlist_labels|length > 1 %}
           <div class='next'>
@@ -72,9 +88,9 @@
 
 <script>
   window.playlistLabelData = {
-    "id": "{{ playlist_json.id }}",
-    "current_label_id": "{% if playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %}",
-    "next_label_id": "{% if playlist_json.playlist_labels|length > 1 %}{{ playlist_json.playlist_labels.1.label.id }}{% elif playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %}",
+    "id": {{ playlist_json.id }},
+    "current_label_id": {% if playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %},
+    "next_label_id": {% if playlist_json.playlist_labels|length > 1 %}{{ playlist_json.playlist_labels.1.label.id }}{% elif playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %},
     "mqtt_host": "{{ mqtt.host }}",
     "mqtt_port": "{{ mqtt.port }}",
     "mqtt_username": "{{ mqtt.username }}",
