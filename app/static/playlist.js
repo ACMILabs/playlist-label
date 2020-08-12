@@ -123,6 +123,10 @@ export default class PlaylistLabelRenderer {
     if (e.keyCode == 39) { // right arrow
       location.hash = this.state.nextLabelId;
     }
+    if (e.keyCode == 84) { // 't'
+      console.log('tap');
+      this.handleTapMessage();
+    }
   }
 
   onConnectionLost(responseObject) {
