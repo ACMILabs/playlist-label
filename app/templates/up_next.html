@@ -1,15 +1,10 @@
-<!doctype html>
-<html>
+{% extends "_base.html" %}
 
-<head>
-  <title>Up Next Playlist: {{ playlist_json.title }}</title>
-  <link rel="stylesheet" type="text/css" href="/static/up_next.style.css">
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta charset="UTF-8">
-</head>
+{% block title %}Up Next Playlist: {{ playlist_json.title }}{% endblock %}
+{% block stylesheet %}/static/up_next.style.css{% endblock %}
+{% block bodyclass %}up_next{% endblock %}
 
-<body class='up_next'>
+{% block body %}
   <div>
     <div>
       {% if (not playlist_json) or (playlist_json.playlist_labels|length == 0) %}
@@ -84,33 +79,4 @@
       {% endif %}
     </div>
   </div>
-
-  <script src="/static/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
-  <script type="module">
-    /**
-     * Init the PlaylistLabelRenderer app once the DOM has completed loading.
-     */
-    import PlaylistLabelRenderer from '/static/playlist.js';
-
-    window.initialData = {
-      "id": {{ playlist_json.id }},
-      "current_label_id": {% if playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %},
-      "next_label_id": {% if playlist_json.playlist_labels|length > 1 %}{{ playlist_json.playlist_labels.1.label.id }}{% elif playlist_json.playlist_labels|length > 0 %}{{ playlist_json.playlist_labels.0.label.id }}{% endif %},
-      "mqtt_host": "{{ mqtt.host }}",
-      "mqtt_port": "{{ mqtt.port }}",
-      "mqtt_username": "{{ mqtt.username }}",
-      "mqtt_password": "{{ mqtt.password }}",
-      "xos_playlist_endpoint": "{{ xos.playlist_endpoint }}",
-      "xos_media_player_id": "{{ xos.media_player_id }}"
-    };
-
-    document.addEventListener("DOMContentLoaded", () => {
-      window.playlistLabelApp = new PlaylistLabelRenderer();
-      window.playlistLabelApp.init();
-    });
-  </script>
-  <!-- <img src='/static/design.png' class='design' style='position: fixed; left: 0; top: 0; opacity: 0.3; z-index: -1'> -->
-
-</body>
-
-</html>
+{% endblock body %}
