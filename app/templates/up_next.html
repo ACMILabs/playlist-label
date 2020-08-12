@@ -3,7 +3,7 @@
 
 <head>
   <title>Up Next Playlist: {{ playlist_json.title }}</title>
-  <link rel="stylesheet" type="text/css" href="/static/style.css">
+  <link rel="stylesheet" type="text/css" href="/static/up_next.style.css">
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta charset="UTF-8">
@@ -23,21 +23,25 @@
         </div>
       {% else %}
         <div class='title_cont'>
-          <div id='title' class='title'>{{ playlist_json.playlist_labels[0].label.title|safe }}</div>
-          <div id='subtitles' class='subtitles'>{{ playlist_json.playlist_labels[0].label.subtitles|safe }}</div>
+          <div id="left_heading">
 
-          <div id='content0' class="description {{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[0].style == 'smaller' else 'standard' }}">
-            {{ playlist_json.playlist_labels[0].label.columns[0].content|safe }}
+            <div id='title' class='title'>{{ playlist_json.playlist_labels[0].label.title|safe }}</div>
+            <div id='subtitles' class='subtitles'>{{ playlist_json.playlist_labels[0].label.subtitles|safe }}</div>
           </div>
-          <div id='content1' class="description {{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[1].style == 'smaller' else 'standard' }}">
-            {{ playlist_json.playlist_labels[0].label.columns[1].content|safe }}
-          </div>
-          <div id='content2' class="description {{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[2].style == 'smaller' else 'standard' }}">
-            {{ playlist_json.playlist_labels[0].label.columns[2].content|safe }}
-          </div>
+          <div id="left_description">
+            <div id='content0' class="description {{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[0].style == 'smaller' else 'standard' }}">
+              {{ playlist_json.playlist_labels[0].label.columns[0].content|safe }}
+            </div>
+            <div id='content1' class="description {{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[1].style == 'smaller' else 'standard' }}">
+              {{ playlist_json.playlist_labels[0].label.columns[1].content|safe }}
+            </div>
+            <div id='content2' class="description {{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[2].style == 'smaller' else 'standard' }}">
+              {{ playlist_json.playlist_labels[0].label.columns[2].content|safe }}
+            </div>
 
-          <div id='about_title' class='about_title'>{{ playlist_json.introduction_title | safe }}</div>
-          <div id='about' class='about'>{{ playlist_json.introduction_content | safe }}</div>
+            <div id='about_title' class='about_title'>{{ playlist_json.introduction_title | safe }}</div>
+            <div id='about' class='about'>{{ playlist_json.introduction_content | safe }}</div>
+          </div>
         </div>
         <div class='content'>
           <div id='indigenous' class="indigenous{{ ' indigenous_active' if playlist_json.playlist_labels[0].label.work.is_context_indigenous else '' }}">
@@ -56,7 +60,7 @@
               </div>
             {% endfor %}
           </div>
-          <div class='collect' id='collect'>
+          <div class='collect active' id='collect'>
             COLLECT
           </div>
         </div>
@@ -105,6 +109,8 @@
       window.playlistLabelApp.init();
     });
   </script>
+  <!-- <img src='/static/design.png' class='design' style='position: fixed; left: 0; top: 0; opacity: 0.3; z-index: -1'> -->
+
 </body>
 
 </html>
