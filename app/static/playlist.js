@@ -77,7 +77,11 @@ export default class PlaylistLabelRenderer {
         window.onhashchange = this.hashChange.bind(this);
         this.subscribeToMediaPlayer(jsonData);
         this.addTitleAnnotation(jsonData.playlist_labels[0].label.work);
-        this.hashChange();
+        if (location.hash) {
+          this.hashChange();
+        } else {
+          location.hash = this.state.items[0].label.id;
+        }
       })
       .catch((error) => console.error(error)); // eslint-disable-line no-console
   }
