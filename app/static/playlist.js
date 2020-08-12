@@ -51,6 +51,13 @@ export default class PlaylistLabelRenderer {
     setInterval(this.autoUpdateProgress, 1000/FPS, this);
   }
 
+  hashChange() {
+    let label_id = parseInt(location.hash.substring(1));
+    this.jumpToLabel(label_id);
+    this.state.playbackPosition = 0;
+    this.updateProgress();
+  }
+
   /**
    * Fetch playlist makes API request to get playlist data and calls {@link subscribeToMediaPlayer}.
    * @param {string} url - The nfcTag API endpoint with primary key already included.
@@ -67,8 +74,10 @@ export default class PlaylistLabelRenderer {
         this.state.items = jsonData.playlist_labels;
         this.state.upcomingItems = jsonData.playlist_labels;
         this.addKeyBindings();
+        window.onhashchange = this.hashChange.bind(this);
         this.subscribeToMediaPlayer(jsonData);
         this.addTitleAnnotation(jsonData.playlist_labels[0].label.work);
+        this.hashChange();
       })
       .catch((error) => console.error(error)); // eslint-disable-line no-console
   }
@@ -117,9 +126,7 @@ export default class PlaylistLabelRenderer {
         slf.updateProgress();
       }
       if (e.keyCode == 39) { // right arrow
-        slf.jumpToLabel(slf.state.nextLabelId);
-        slf.state.playbackPosition = 0;
-        slf.updateProgress();
+        location.hash = slf.state.nextLabelId;
       }
     }
   }
@@ -142,7 +149,7 @@ export default class PlaylistLabelRenderer {
 
     // Update the label if needed
     if (messageJson.label_id !== this.state.currentLabelId) {
-      this.jumpToLabel(messageJson.label_id)
+      location.hash = messageJson.label_id;
     }
   }
 
