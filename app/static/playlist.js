@@ -73,7 +73,7 @@ export default class PlaylistLabelRenderer {
       .then((jsonData) => {
         this.state.items = jsonData.playlist_labels;
         this.state.upcomingItems = jsonData.playlist_labels;
-        this.addKeyBindings();
+        document.onkeydown = this.onKeyPress.bind(this);
         window.onhashchange = this.hashChange.bind(this);
         this.subscribeToMediaPlayer(jsonData);
         this.addTitleAnnotation(jsonData.playlist_labels[0].label.work);
@@ -115,19 +115,13 @@ export default class PlaylistLabelRenderer {
     });
   }
 
-  /**
-   * Add key bindings to simulate messages
-   */
-  addKeyBindings() {
-    const slf = this;
-    document.onkeydown = function(e) {
-      if (48 <= e.keyCode && e.keyCode <= 57) { // numbers
-        slf.state.playbackPosition = 0.1 * (e.keyCode - 48);
-        slf.updateProgress();
-      }
-      if (e.keyCode == 39) { // right arrow
-        location.hash = slf.state.nextLabelId;
-      }
+  onKeyPress(e) {
+    if (48 <= e.keyCode && e.keyCode <= 57) { // numbers
+      this.state.playbackPosition = 0.1 * (e.keyCode - 48);
+      this.updateProgress();
+    }
+    if (e.keyCode == 39) { // right arrow
+      location.hash = this.state.nextLabelId;
     }
   }
 
