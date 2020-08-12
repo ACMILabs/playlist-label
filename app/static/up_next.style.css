@@ -113,10 +113,12 @@ p:last-child {
   color: #000;
   font-family: PxGrotesk;
   font-size: 27px;
-  padding: 30px 64px 40px 100px;
-  margin-right: -64px;
+  padding: 33px 64px 33px 100px;
   transition: background 500ms, color 500ms;
   display: inline-block;
+  position: fixed;
+  bottom: 16px;
+  right: 0;
 }
 
 .collect:after {
