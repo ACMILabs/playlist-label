@@ -7,7 +7,7 @@
 {% block body %}
   <div>
     <div>
-      {% if (not playlist_json) or (playlist_json.playlist_labels|length == 0) %}
+      {% if not playlist_json or playlist_json.playlist_labels|length == 0 %}
         <div class='title_cont'>
           <div id='title' class='title'>Playlist has no labels 😭</div>
           <div id='subtitles' class='subtitles'>Sorry, there aren't any labels in this XOS Playlist.</div>
@@ -20,27 +20,24 @@
         <div class='title_cont'>
           <div id="left_heading">
 
-            <div id='title' class='title'>{{ playlist_json.playlist_labels[0].label.title|safe }}</div>
-            <div id='subtitles' class='subtitles'>{{ playlist_json.playlist_labels[0].label.subtitles|safe }}</div>
+            <div id='title' class='title'></div>
+            <div id='subtitles' class='subtitles'></div>
           </div>
           <div id="left_description">
-            <div id='content0' class="description {{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[0].style == 'smaller' else 'standard' }}">
-              {{ playlist_json.playlist_labels[0].label.columns[0].content|safe }}
+            <div id='content0' class="description standard">
             </div>
-            <div id='content1' class="description {{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[1].style == 'smaller' else 'standard' }}">
-              {{ playlist_json.playlist_labels[0].label.columns[1].content|safe }}
+            <div id='content1' class="description standard">
             </div>
-            <div id='content2' class="description {{ 'content_smaller' if playlist_json.playlist_labels[0].label.columns[2].style == 'smaller' else 'standard' }}">
-              {{ playlist_json.playlist_labels[0].label.columns[2].content|safe }}
+            <div id='content2' class="description standard">
             </div>
 
-            <div id='about_title' class='about_title'>{{ playlist_json.introduction_title | safe }}</div>
-            <div id='about' class='about'>{{ playlist_json.introduction_content | safe }}</div>
+            <div id='about_title' class='about_title'></div>
+            <div id='about' class='about'></div>
           </div>
         </div>
         <div class='content'>
-          <div id='indigenous' class="indigenous{{ ' indigenous_active' if playlist_json.playlist_labels[0].label.work.is_context_indigenous else '' }}">
-            <img src='/static/indigenous.png'/>
+          <div id='indigenous' class="indigenous">
+          <img src='/static/indigenous.png'/>
             <!-- <div>This work contains</div>
             <div class='indigenous_bold'>FIRST PEOPLES CONTENT</div> -->
           </div>
@@ -49,8 +46,8 @@
           <div class='up_next_works'>
             {% for item in playlist_json.playlist_labels[1:] %}
               <div class='up_next_work' id='up_next_label_{{ loop.index }}'>
-                <div class='title'>{{ loop.index }}. {{ item.label.title|safe }}</div>
-                <div class='subtitles'>{{ item.label.subtitles|safe }}</div>
+                <div class='title'></div>
+                <div class='subtitles'></div>
                 <div class='starts_in'>Starts in <span class="time_to_wait">x minutes</span></div>
               </div>
             {% endfor %}
@@ -68,7 +65,7 @@
               NEXT
             </div>
             <div class='next_right'>
-              <div id='next_title'>{{ playlist_json.playlist_labels[1].label.title|safe }}</div>
+              <div id='next_title'></div>
             </div>
           </div>
         {% else %}

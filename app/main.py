@@ -259,6 +259,7 @@ def playlist_label():
         return render_template(
             LABEL_TEMPLATE,
             playlist_json=json_data,
+            playlist_json_rendered=json.dumps(json_data),
             mqtt={
                 'host': RABBITMQ_MQTT_HOST,
                 'port': RABBITMQ_MQTT_PORT,
@@ -268,7 +269,8 @@ def playlist_label():
             xos={
                 'playlist_endpoint': f'{XOS_API_ENDPOINT}playlists/',
                 'media_player_id': XOS_MEDIA_PLAYER_ID
-            }
+            },
+            is_preview='false'
         )
     except FileNotFoundError:
         print(f'Couldn\'t open cached playlist JSON: {CACHE_DIR}{CACHED_PLAYLIST_JSON}')

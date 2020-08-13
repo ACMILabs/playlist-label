@@ -38,17 +38,20 @@ export default class PlaylistLabelRenderer {
         : null;
 
     if (id != null) {
-      const url = `/api/playlist/`;
-      this.fetchPlaylist(url);
+      this.fetchPlaylist(`/api/playlist/`);
     } else {
       console.error("No valid id could be found on initial pageload."); // eslint-disable-line no-console
     }
 
-    this.handleTapMessage = this.handleTapMessage.bind(this);
-    const tapSource = new EventSource("/api/tap-source/");
-    tapSource.onmessage = this.handleTapMessage;
+    if (typeof initialData.ignore_tap_reader === 'undefined' || !initialData.ignore_tap_reader) {
+      this.handleTapMessage = this.handleTapMessage.bind(this);
+      const tapSource = new EventSource("/api/tap-source/");
+      tapSource.onmessage = this.handleTapMessage;
+    }
 
-    setInterval(this.autoUpdateProgress, 1000/FPS, this);
+    if (typeof initialData.ignore_media_player !== 'undefined' && initialData.ignore_media_player) {
+      setInterval(this.autoUpdateProgress, 1000/FPS, this);
+    }
   }
 
   hashChange() {
@@ -58,32 +61,39 @@ export default class PlaylistLabelRenderer {
     this.updateProgress();
   }
 
+  onPlaylistData(jsonData) {
+    this.state.items = jsonData.playlist_labels;
+    this.state.upcomingItems = jsonData.playlist_labels;
+    document.onkeydown = this.onKeyPress.bind(this);
+    window.onhashchange = this.hashChange.bind(this);
+    if (typeof initialData.ignore_media_player === 'undefined' || !initialData.ignore_media_player) {
+      this.subscribeToMediaPlayer(jsonData);
+    };
+    this.addTitleAnnotation(jsonData.playlist_labels[0].label.work);
+    if (location.hash) {
+      this.hashChange();
+    } else {
+      location.hash = this.state.items[0].label.id;
+    }
+  }
   /**
    * Fetch playlist makes API request to get playlist data and calls {@link subscribeToMediaPlayer}.
    * @param {string} url - The nfcTag API endpoint with primary key already included.
    */
   fetchPlaylist(url) {
-    fetch(url)
+    if (url && !initialData.is_preview) {
+      fetch(url)
       .then((response) => {
         if (!response.ok) {
           throw Error(response.statusText);
         }
         return response.json();
       })
-      .then((jsonData) => {
-        this.state.items = jsonData.playlist_labels;
-        this.state.upcomingItems = jsonData.playlist_labels;
-        document.onkeydown = this.onKeyPress.bind(this);
-        window.onhashchange = this.hashChange.bind(this);
-        this.subscribeToMediaPlayer(jsonData);
-        this.addTitleAnnotation(jsonData.playlist_labels[0].label.work);
-        if (location.hash) {
-          this.hashChange();
-        } else {
-          location.hash = this.state.items[0].label.id;
-        }
-      })
+      .then(this.onPlaylistData.bind(this))
       .catch((error) => console.error(error)); // eslint-disable-line no-console
+    } else {
+      this.onPlaylistData(initialData.playlist_json);
+    }
   }
 
   /**
@@ -189,6 +199,7 @@ export default class PlaylistLabelRenderer {
     document.getElementById("content0").innerHTML = label.columns[0].content;
     document.getElementById("content1").innerHTML = label.columns[1].content;
     document.getElementById("content2").innerHTML = label.columns[2].content;
+    // TODO: update style classes
 
     if (label.work.is_context_indigenous) {
       document.getElementById("indigenous").className = "indigenous indigenous_active";
