@@ -1,19 +1,18 @@
 Playlist label
 ==============
 
-A playlist label prototype running on a Raspberry Pi connected to a 12.3" screen.
-
+A playlist label running on a Raspberry Pi connected to a 12.3" screen.
 
 ## Features
 
 * Downloads playlist data (including labels data) from an API endpoint
 * Subscribes to playback status originating from a [media player](https://github.com/ACMILabs/media-player), via a message broker
 * Displays applicable label in response to playback status using a fullscreen Chromium window.
-* When combined with a Lens reader, receives tap data from a Lens reader and attaches the appropriate label metadata,
-before forwarding a `POST /taps/` message to a central API
+* When combined with a Lens reader, receives tap data from a Lens reader and attaches the appropriate label metadata, before forwarding a `POST /taps/` message to a central API
 * Can display in portrait or landscape
 
 ## Hardware
+
 The label should play on any HDMI-connected screen, and some GPIO-connected screens. We use a Crystal Display CDS123WU01 12.3" 8:3 display.
 
 A single Raspberry Pi can run both a Lens Reader and a Playlist Label screen. The hardware list may also include
@@ -69,8 +68,7 @@ Right arrow: simulate a 'next label' message.
 
 ## Alternative template
 
-* An alternative template may be specified by setting the `LABEL_TEMPLATE` environment variable to a filename matching
-a file in the `templates` folder, e.g. `up_next.html`.
+* An alternative template may be specified by setting the `LABEL_TEMPLATE` environment variable to a filename matching a file in the `templates` folder, e.g. `up_next.html`.
 
 ## Rasbperry Pi display quirks
 
@@ -84,8 +82,7 @@ a file in the `templates` folder, e.g. `up_next.html`.
 
 ### If using a Crystal Display CDS123WU01 12.3" 8:3 display and are seeing shadows, blurring or noise
 
-* Add the following to `config.txt` on the SD card - the order may be important, and Balena may interfere if the device
-is already registered with Balena.
+* Add the following to `config.txt` on the SD card - the order may be important, and Balena may interfere if the device is already registered with Balena.
 
 ```
 # Timing settings to get 12.3" screens to work
