@@ -310,7 +310,7 @@ export default class PlaylistLabelRenderer {
       const title = document.getElementById('title');
       const titleAnnotation = document.createElement('span');
       titleAnnotation.className = 'title_annotation';
-      titleAnnotation.innerHTML = work.title_annotion;
+      titleAnnotation.innerHTML = work.title_annotation;
       title.innerHTML = title.innerHTML.replace(
         /<\/p>/g,
         `${titleAnnotation.outerHTML}</p>`
