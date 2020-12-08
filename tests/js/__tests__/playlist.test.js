@@ -13,7 +13,7 @@ describe("PlaylistLabelRenderer", () => {
     const playlistData = playlistJson;
 
     // Set up window data
-    window.playlistLabelData = {
+    window.initialData = {
       id: playlistData.id,
       current_label_id: playlistData.playlist_labels[0].id,
       next_label_id: playlistData.playlist_labels[1].id,
@@ -25,7 +25,7 @@ describe("PlaylistLabelRenderer", () => {
     };
 
     // Set up our document body
-    document.body.innerHTML = `<div> 
+    document.body.innerHTML = `<div>
                                 <div>
                                   <div>
                                     <div id="title"></div>

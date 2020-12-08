@@ -38,6 +38,8 @@ BALENA_SUPERVISOR_API_KEY = os.getenv('BALENA_SUPERVISOR_API_KEY')
 DEBUG = os.getenv('DEBUG', 'false').lower() == "true"
 CACHE_DIR = os.getenv('CACHE_DIR', '/data/')
 
+LABEL_TEMPLATE = os.getenv('LABEL_TEMPLATE', 'playlist.html')
+
 # Setup Sentry
 sentry_sdk.init(
     dsn=SENTRY_ID,
@@ -255,8 +257,9 @@ def playlist_label():
                 json_data['playlist_labels'].remove(item)
 
         return render_template(
-            'playlist.html',
+            LABEL_TEMPLATE,
             playlist_json=json_data,
+            playlist_json_rendered=json.dumps(json_data),
             mqtt={
                 'host': RABBITMQ_MQTT_HOST,
                 'port': RABBITMQ_MQTT_PORT,
@@ -266,7 +269,8 @@ def playlist_label():
             xos={
                 'playlist_endpoint': f'{XOS_API_ENDPOINT}playlists/',
                 'media_player_id': XOS_MEDIA_PLAYER_ID
-            }
+            },
+            is_preview='false'
         )
     except FileNotFoundError:
         print(f'Couldn\'t open cached playlist JSON: {CACHE_DIR}{CACHED_PLAYLIST_JSON}')

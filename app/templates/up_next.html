@@ -1,0 +1,79 @@
+{% extends "_base.html" %}
+
+{% block title %}Up Next Playlist: {{ playlist_json.title }}{% endblock %}
+{% block stylesheet %}/static/up_next.style.css{% endblock %}
+{% block bodyclass %}up_next{% endblock %}
+
+{% block body %}
+  <div>
+    <div>
+      {% if not playlist_json or playlist_json.playlist_labels|length == 0 %}
+        <div class='title_cont'>
+          <div id='title' class='title'>Playlist has no labels 😭</div>
+          <div id='subtitles' class='subtitles'>Sorry, there aren't any labels in this XOS Playlist.</div>
+        </div>
+        <div class='content'>
+          <div id='content0' class="standard">
+          </div>
+        </div>
+      {% else %}
+        <div class='title_cont'>
+          <div id="left_heading">
+
+            <div id='title' class='title'></div>
+            <div id='subtitles' class='subtitles'></div>
+          </div>
+          <div id="left_description">
+            <div id='content0' class="description standard">
+            </div>
+            <div id='content1' class="description standard">
+            </div>
+            <div id='content2' class="description standard">
+            </div>
+
+            <div id='about_title' class='about_title'></div>
+            <div id='about' class='about'></div>
+          </div>
+        </div>
+        <div class='content'>
+          <div id='indigenous' class="indigenous">
+          <img src='/static/indigenous.png'/>
+            <!-- <div>This work contains</div>
+            <div class='indigenous_bold'>FIRST PEOPLES CONTENT</div> -->
+          </div>
+
+          <div class="up_next_heading" id="up_next_heading">Up next</div>
+          <div class='up_next_works'>
+            {% for item in playlist_json.playlist_labels[1:] %}
+              <div class='up_next_work' id='up_next_label_{{ loop.index }}'>
+                <div class='title'></div>
+                <div class='subtitles'></div>
+                <div class='starts_in'>Starts in <span class="time_to_wait">x minutes</span></div>
+              </div>
+            {% endfor %}
+          </div>
+          <div class='collect' id='collect'>
+            COLLECT
+          </div>
+        </div>
+        {% if playlist_json.playlist_labels|length > 1 %}
+          <div class='next'>
+            <div class='progress-bar-container'>
+              <div id='progress-bar' class='progress-bar'></div>
+            </div>
+            <div class='next_left'>
+              NEXT
+            </div>
+            <div class='next_right'>
+              <div id='next_title'></div>
+            </div>
+          </div>
+        {% else %}
+          <div class='progress-bar-container full-width-progress'>
+            <div id='progress-bar' class='progress-bar'></div>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+{% endblock body %}

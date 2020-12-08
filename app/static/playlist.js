@@ -2,45 +2,87 @@
  * Class grouping together all methods to render a playlist label in the client,
  * along with simple state to track the current playlist being played.
  */
+
+const FPS = 5;
+
 export default class PlaylistLabelRenderer {
   /**
    * Set an initial state for the renderer
    */
+
   constructor() {
     this.state = {
       currentLabelId: null,
       nextLabelId: null,
-      playlistJson: null,
+      items: null,
+      upcomingItems: null,
       isAnimatingCollect: false,
+      playbackPosition: 0
     };
   }
 
   /**
    * Init, parsing playlist id that should be made available on the
-   * rendered page via window.playlistLabelData.
+   * rendered page via window.initialData.
    */
   init() {
-    const id =
-      "id" in window.playlistLabelData ? window.playlistLabelData.id : null;
+    const id = 'id' in window.initialData ? window.initialData.id : null;
     this.state.currentLabelId =
-      "current_label_id" in window.playlistLabelData
-        ? window.playlistLabelData.current_label_id
+      'current_label_id' in window.initialData
+        ? window.initialData.current_label_id
         : null;
     this.state.nextLabelId =
-      "next_label_id" in window.playlistLabelData
-        ? window.playlistLabelData.next_label_id
+      'next_label_id' in window.initialData
+        ? window.initialData.next_label_id
         : null;
 
     if (id != null) {
-      const url = `/api/playlist/`;
-      this.fetchPlaylist(url);
+      this.fetchPlaylist(`/api/playlist/`);
     } else {
-      console.error("No valid id could be found on initial pageload."); // eslint-disable-line no-console
+      console.error('No valid id could be found on initial pageload.'); // eslint-disable-line no-console
     }
 
-    this.handleTapMessage = this.handleTapMessage.bind(this);
-    const tapSource = new EventSource("/api/tap-source/");
-    tapSource.onmessage = this.handleTapMessage;
+    if (
+      typeof window.initialData.ignore_tap_reader === 'undefined' ||
+      !window.initialData.ignore_tap_reader
+    ) {
+      this.handleTapMessage = this.handleTapMessage.bind(this);
+      const tapSource = new EventSource('/api/tap-source/');
+      tapSource.onmessage = this.handleTapMessage;
+    }
+
+    if (
+      typeof window.initialData.ignore_media_player !== 'undefined' &&
+      window.initialData.ignore_media_player
+    ) {
+      setInterval(this.autoUpdateProgress, 1000 / FPS, this);
+    }
+  }
+
+  hashChange() {
+    const labelId = parseInt(window.location.hash.substring(1), 10);
+    this.jumpToLabel(labelId);
+    this.state.playbackPosition = 0;
+    this.updateProgress();
+  }
+
+  onPlaylistData(jsonData) {
+    this.state.items = jsonData.playlist_labels;
+    this.state.upcomingItems = jsonData.playlist_labels;
+    document.onkeydown = this.onKeyPress.bind(this);
+    window.onhashchange = this.hashChange.bind(this);
+    if (
+      typeof window.initialData.ignore_media_player === 'undefined' ||
+      !window.initialData.ignore_media_player
+    ) {
+      this.subscribeToMediaPlayer(jsonData);
+    }
+    this.addTitleAnnotation(jsonData.playlist_labels[0].label.work);
+    if (window.location.hash) {
+      this.hashChange();
+    } else {
+      window.location.hash = this.state.items[0].label.id;
+    }
   }
 
   /**
@@ -48,19 +90,19 @@ export default class PlaylistLabelRenderer {
    * @param {string} url - The nfcTag API endpoint with primary key already included.
    */
   fetchPlaylist(url) {
-    fetch(url)
-      .then((response) => {
-        if (!response.ok) {
-          throw Error(response.statusText);
-        }
-        return response.json();
-      })
-      .then((jsonData) => {
-        this.state.playlistJson = jsonData;
-        this.subscribeToMediaPlayer(jsonData);
-        this.addTitleAnnotation(jsonData.playlist_labels[0].label.work);
-      })
-      .catch((error) => console.error(error)); // eslint-disable-line no-console
+    if (url && !window.initialData.is_preview) {
+      fetch(url)
+        .then(response => {
+          if (!response.ok) {
+            throw Error(response.statusText);
+          }
+          return response.json();
+        })
+        .then(this.onPlaylistData.bind(this))
+        .catch(error => console.error(error)); // eslint-disable-line no-console
+    } else {
+      this.onPlaylistData(window.initialData.playlist_json);
+    }
   }
 
   /**
@@ -70,30 +112,46 @@ export default class PlaylistLabelRenderer {
     // Subscribe to the media player messages
     // TODO: get media_player id from XOS
     const client = new Paho.MQTT.Client( // eslint-disable-line no-undef
-      window.playlistLabelData.mqtt_host,
-      parseInt(window.playlistLabelData.mqtt_port, 10),
-      "/ws",
-      ""
+      window.initialData.mqtt_host,
+      parseInt(window.initialData.mqtt_port, 10),
+      '/ws',
+      ''
     );
 
     // set callback handlers
     client.onConnectionLost = this.onConnectionLost.bind(this);
     client.onMessageArrived = this.onMessageArrived.bind(this);
     client.connect({
-      userName: window.playlistLabelData.mqtt_username,
-      password: window.playlistLabelData.mqtt_password,
+      userName: window.initialData.mqtt_username,
+      password: window.initialData.mqtt_password,
       onSuccess: () => {
         // Subscribe to the media player AMQP feed
         // TODO: Get the media player ID from XOS
         client.subscribe(
-          `mediaplayer.${window.playlistLabelData.xos_media_player_id}`
+          `mediaplayer.${window.initialData.xos_media_player_id}`
         );
       },
       onFailure: () => {
         // Try to re-connect again
         this.subscribeToMediaPlayer();
-      },
+      }
     });
+  }
+
+  onKeyPress(e) {
+    if (e.keyCode >= 48 && e.keyCode <= 57) {
+      // number keys
+      this.state.playbackPosition = 0.1 * (e.keyCode - 48);
+      this.updateProgress();
+    }
+    if (e.keyCode === 39) {
+      // right arrow
+      window.location.hash = this.state.nextLabelId;
+    }
+    if (e.keyCode === 84) {
+      // 't'
+      this.handleTapMessage();
+    }
   }
 
   onConnectionLost(responseObject) {
@@ -105,54 +163,113 @@ export default class PlaylistLabelRenderer {
   }
 
   onMessageArrived(message) {
-    // Check to see if the currently playing label is the same as the currently displayed label
+    // Update display as needed based on message content
     const messageJson = JSON.parse(message.payloadString);
 
     // Update the progress bar
-    const videoPlaybackPercentage = messageJson.playback_position * 100;
-    const progressBar = document.getElementById("progress-bar");
-    progressBar.style.width = `${videoPlaybackPercentage}%`;
+    this.state.playbackPosition = messageJson.playback_position;
+    this.updateProgress();
 
     // Update the label if needed
     if (messageJson.label_id !== this.state.currentLabelId) {
-      // Update the current state
-      this.state.currentLabelId = messageJson.label_id;
-      const labels = this.state.playlistJson.playlist_labels;
-      for (let index = 0; index < labels.length; index++) {
-        const element = labels[index];
-        if (element.label && element.label.id === this.state.currentLabelId) {
-          this.state.nextLabelId = labels[(index + 1) % labels.length].label.id;
+      window.location.hash = messageJson.label_id;
+    }
+  }
 
-          // Update the label fields with the currently playing data
-          const title = document.getElementById("title");
-          title.innerHTML = element.label.title;
-          this.addTitleAnnotation(element.label.work);
-          document.getElementById("subtitles").innerHTML =
-            element.label.subtitles;
-          document.getElementById("content0").innerHTML =
-            element.label.columns[0].content;
-          document.getElementById("content1").innerHTML =
-            element.label.columns[1].content;
-          document.getElementById("content2").innerHTML =
-            element.label.columns[2].content;
+  jumpToLabel(labelId) {
+    // console.log('jump to label', labelId);
+    // Update the current state
+    this.state.currentLabelId = labelId;
+    const { items } = this.state;
 
-          if (element.label.work.is_context_indigenous) {
-            document.getElementById("indigenous").className =
-              "indigenous indigenous_active";
-          } else {
-            document.getElementById("indigenous").className = "indigenous";
-          }
+    // make a list of items that starts with the new label
+    const upcomingItems = [];
+    const startIndex = items.findIndex(item => {
+      return item.label && item.label.id === labelId;
+    });
+    for (let i = 0; i < items.length; i++) {
+      upcomingItems.push(items[(startIndex + i) % items.length]);
+    }
 
-          if (labels.length > 1) {
-            // Update up next label
-            const elementNext = labels.find((label) => {
-              return label.label.id === this.state.nextLabelId;
-            });
-            document.getElementById("next_title").innerHTML =
-              elementNext.label.title;
-          }
-        }
+    this.state.upcomingItems = upcomingItems;
+
+    // update label content
+    this.updateMainLabelContent(upcomingItems[0]);
+    if (items.length > 1) {
+      this.state.nextLabelId = upcomingItems[1].label.id;
+      this.updateUpNextContent(upcomingItems);
+    }
+  }
+
+  updateMainLabelContent(item) {
+    const { label } = item;
+    // Update the label fields with the currently playing data
+    document.getElementById('title').innerHTML = label.title;
+    this.addTitleAnnotation(label.work);
+    document.getElementById('subtitles').innerHTML = label.subtitles;
+    document.getElementById('content0').innerHTML = label.columns[0].content;
+    document.getElementById('content1').innerHTML = label.columns[1].content;
+    document.getElementById('content2').innerHTML = label.columns[2].content;
+
+    if (label.work.is_context_indigenous) {
+      document.getElementById('indigenous').className =
+        'indigenous indigenous_active';
+    } else {
+      document.getElementById('indigenous').className = 'indigenous';
+    }
+  }
+
+  updateUpNextContent(items) {
+    // Update up next label
+    const item = items[1];
+    document.querySelector('#next_title').innerHTML = item.label.title;
+
+    for (let i = 1; i < items.length; i++) {
+      const { label } = items[i];
+      const id = `#up_next_label_${i}`;
+      try {
+        document.querySelector(
+          `${id} .title`
+        ).innerHTML = `${i}. ${label.title}`;
+        document.querySelector(`${id} .subtitles`).innerHTML = label.subtitles;
+      } catch (err) {
+        // continue regardless of error
       }
+    }
+  }
+
+  updateProgress() {
+    const progressBar = document.getElementById('progress-bar');
+    const { playbackPosition } = this.state;
+    progressBar.style.width = `${playbackPosition * 100}%`;
+
+    const items = this.state.upcomingItems;
+
+    // calculate time to wait times for the upcoming videos;
+    let timeToWait = items[0].video.duration_secs * (1.0 - playbackPosition);
+    for (let i = 1; i < items.length; i++) {
+      const numMinutes = parseInt(Math.round(timeToWait / 60.0), 10);
+      let unit = ' minute';
+      if (numMinutes !== 1) unit += 's';
+
+      const id = `#up_next_label_${i}`;
+      try {
+        document.querySelector(`${id} .time_to_wait`).innerHTML =
+          numMinutes + unit;
+      } catch (err) {
+        // continue regardless of error
+      }
+      timeToWait += items[i].video.duration_secs;
+    }
+  }
+
+  autoUpdateProgress(slf) {
+    // move progress bar along one frame, while we wait for the next message to arrive from the broker
+    if (slf.state.upcomingItems && slf.state.playbackPosition < 1.0) {
+      const duration = slf.state.upcomingItems[0].video.duration_secs;
+      const portionPerFrame = 1.0 / (duration * FPS);
+      slf.state.playbackPosition += portionPerFrame; // eslint-disable-line no-param-reassign
+      slf.updateProgress();
     }
   }
 
@@ -167,19 +284,19 @@ export default class PlaylistLabelRenderer {
       this.state.isAnimatingCollect = true;
 
       // Animation plays: collect -> hidden -> collected -> hidden -> collect
-      const collectElement = document.getElementById("collect");
-      collectElement.className = "collect hidden";
+      const collectElement = document.getElementById('collect');
+      collectElement.className = 'collect hidden';
       window.setTimeout(function timeout1() {
-        collectElement.innerHTML = "COLLECTED";
-        collectElement.className = "collect active";
+        collectElement.innerHTML = 'COLLECTED';
+        collectElement.className = 'collect active';
       }, 500);
       window.setTimeout(function timeout2() {
-        collectElement.className = "collect active hidden";
+        collectElement.className = 'collect active hidden';
       }, 3000);
       window.setTimeout(
         function timeout3() {
-          collectElement.className = "collect";
-          collectElement.innerHTML = "COLLECT";
+          collectElement.className = 'collect';
+          collectElement.innerHTML = 'COLLECT';
           this.state.isAnimatingCollect = false;
         }.bind(this),
         3500
@@ -190,9 +307,9 @@ export default class PlaylistLabelRenderer {
   addTitleAnnotation(work) {
     // If a title_annotation exists, add it to the end of the title
     if (work && work.title_annotation) {
-      const title = document.getElementById("title");
-      const titleAnnotation = document.createElement("span");
-      titleAnnotation.className = "title_annotation";
+      const title = document.getElementById('title');
+      const titleAnnotation = document.createElement('span');
+      titleAnnotation.className = 'title_annotation';
       titleAnnotation.innerHTML = work.title_annotation;
       title.innerHTML = title.innerHTML.replace(
         /<\/p>/g,
@@ -201,15 +318,3 @@ export default class PlaylistLabelRenderer {
     }
   }
 }
-
-/**
- * Init the PlaylistLabelRenderer app once the DOM has completed loading.
- */
-document.addEventListener("DOMContentLoaded", () => {
-  if (window.playlistLabelData) {
-    const playlistLabelApp = new PlaylistLabelRenderer();
-    playlistLabelApp.init();
-  } else {
-    console.error("No playlist label data could be found on initial pageload."); // eslint-disable-line no-console
-  }
-});

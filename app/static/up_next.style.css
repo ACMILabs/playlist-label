@@ -1,0 +1,177 @@
+
+.title_cont {
+  float: left;
+  width: 50%;
+  padding: 56px 75px 0 64px;
+  box-sizing: border-box;
+}
+
+.title_cont .title {
+  font-family: PxGrotesk;
+  font-weight: bold;
+  font-size: 56px;
+  line-height: 84px;
+}
+
+.title_cont .title_annotation {
+  font-family: FaktPro;
+  font-size: 2.5rem;
+  font-weight: normal;
+  padding-left: 1rem;
+  text-transform: lowercase;
+  line-height: 64px;
+}
+
+.title_cont .subtitles {
+  font-size: 28px;
+  line-height: 39px;
+  margin-top: 54px;
+}
+
+.subtitles p {
+  margin: 0;
+  line-height: 35px;
+}
+
+#left_heading {
+  height: 318px;
+}
+
+#left_description {
+  /* top: 200px; */
+}
+
+.content {
+  float: right;
+  width: 50%;
+  padding-top: 56px;
+  padding-right: 64px;
+  padding-left: 10px;
+  box-sizing: border-box;
+  /* Must be higher than the title_cont, or .collect float will break */
+  min-height: 220px;
+}
+
+.up_next .description {
+  font-size: 26px;
+  line-height: 35px;
+}
+
+.up_next .about_title {
+  font-weight: bold;
+  margin-top: 32px;
+  font-size: 26px;
+  line-height: 35px;
+}
+
+.up_next .about {
+  font-size: 26px;
+  line-height: 35px;
+}
+
+.up_next_heading {
+  font-family: PxGrotesk;
+  font-size: 28px;
+  text-transform: uppercase;
+  margin-top: 217px;
+  margin-bottom: 64px;
+  line-height: 39px;
+}
+
+.up_next_works {
+  display: flex;
+  flex-flow: row wrap;
+  font-size: 26px;
+  margin-right: -20px;
+}
+
+.up_next_works .up_next_work {
+  margin-right: 20px;
+  margin-bottom: 40px;
+  height: 9.25em;
+  width: calc( (100% / 3) - 20px );
+}
+
+.up_next_work .title {
+  font-weight: bold;
+}
+
+.up_next_work .title p {
+  display: inline;
+}
+
+p:first-child {
+  margin-top: 0;
+}
+
+p:last-child {
+  margin-bottom: 0px;
+}
+
+.collect {
+  float: right;
+  color: #000;
+  font-family: PxGrotesk;
+  font-size: 27px;
+  padding: 33px 64px 33px 100px;
+  transition: background 500ms, color 500ms;
+  display: inline-block;
+  position: fixed;
+  bottom: 16px;
+  right: 0;
+}
+
+.collect:after {
+  width: 50px;
+  height: 58px;
+  display: inline-block;
+  background: url('down.svg') center/contain no-repeat;
+  content: " ";
+  margin-left: 10px;
+  transition: opacity 500ms;
+  transform: rotate(-90deg);
+  vertical-align: -19px;
+}
+
+.collect.active:after  {
+  background: url('tick.svg') center/contain no-repeat;
+  transform: rotate(0deg);
+}
+.collect.active.hidden,
+.collect.hidden {
+  color: rgba(255,255,255,0);
+  background: rgba(255,255,255,0);
+}
+
+.collect.active.hidden:after,
+.collect.hidden:after {
+  opacity: 0;
+}
+
+.collect.active {
+  background: #000;
+  color: #fff;
+}
+
+.indigenous {
+  position: fixed;
+  right: 64px;
+  display: none;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 34px;
+  text-align: right;
+}
+
+.up_next .indigenous img {
+  height: 160px;
+}
+
+.indigenous_active {
+  display: block;
+}
+
+.indigenous_bold {
+  font-family: 'PxGrotesk';
+  font-weight: bold;
+}
