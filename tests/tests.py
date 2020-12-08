@@ -70,7 +70,7 @@ def test_create_cache(capsys):
     # capsys.disabled forwards stdout and stderr
     with capsys.disabled():
         create_cache()
-        with open('playlist_1.json', 'r') as playlist_cache:
+        with open(f'{main.CACHE_DIR}playlist_1.json', 'r') as playlist_cache:
             playlist = json.loads(playlist_cache.read())['playlist_labels']
         assert len(playlist) == 3
         assert playlist[0]['label']['title'] == '<p>Dracula</p>'
