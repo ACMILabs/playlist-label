@@ -67,6 +67,7 @@ p:last-child {
 }
 
 .collect {
+  background-color: #fff;
   color: #000;
   margin-top: 39px;
   padding: 30px 40px 24px 75px;
@@ -74,6 +75,9 @@ p:last-child {
   font-size: 23px;
   transition: background 500ms, color 500ms;
   display: inline-block;
+  position: fixed;
+  bottom: 200px;
+  left: 0;
 }
 
 .collect:before {
