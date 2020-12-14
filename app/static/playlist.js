@@ -256,10 +256,14 @@ export default class PlaylistLabelRenderer {
       try {
         document.querySelector(`${id} .time_to_wait`).innerHTML =
           numMinutes + unit;
-      } catch (err) {
+      } catch (error) {
         // continue regardless of error
       }
-      timeToWait += items[i].video.duration_secs;
+      try {
+        timeToWait += items[i].video.duration_secs;
+      } catch (error) {
+        // continue regardless of error
+      }
     }
   }
 
