@@ -1,134 +1,301 @@
 {
   "id": 1,
-  "title": "Demo playlist",
+  "title": "Default playlist",
+  "introduction_title": "About this series",
+  "introduction_content": "",
   "playlist_labels": [
     {
       "label": {
-        "id": 17,
-        "title": "<p>Dracula</p>",
+        "id": 51517,
+        "title": "<p>Test pattern</p>",
+        "type": "Film",
+        "subtitles": "<p>Daniel Bronsema, Lachlan Dickie and Chris Hill, Australia, 2006</p>",
         "columns": [
           {
-            "content": "When Dracula leaves the captive Jonathan Harker and Transylvania for London in search of Mina Harkerâ€”the spitting image of Dracula's long-dead wife, Elisabetaâ€”obsessed vampire hunter, Dr. Van Helsing sets out to end the madness.",
+            "content": "<p>Music video uses video effect, animation and gaming sequences<br>\nGraduate work from RMIT media arts (BA Arts).</p>",
             "style": "standard"
           },
-          {
-            "content": "When Dracula leaves the captive Jonathan Harker and Transylvania for London in search of Mina Harkerâ€”the spitting image of Dracula's long-dead wife, Elisabetaâ€”obsessed vampire hunter, Dr. Van Helsing sets out to end the madness.",
-            "style": "small"
+          { "content": "", "style": "standard" },
+          { "content": "", "style": "smaller" }
+        ],
+        "work": {
+          "id": 110639,
+          "acmi_id": "14423",
+          "title": "Test pattern",
+          "title_annotation": "",
+          "slug": "test-pattern",
+          "creator_credit": "Daniel Bronsema, Lachlan Dickie and Chris Hill",
+          "credit_line": "",
+          "headline_credit": "Australia, 2006",
+          "thumbnail": {
+            "image_url": "file://../../data/sample.jpg",
+            "has_video": false
           },
+          "record_type": "work",
+          "type": "Film",
+          "is_on_display": false,
+          "last_on_display_place": "ACMI Viewing Booths",
+          "last_on_display_date": null,
+          "is_context_indigenous": false,
+          "material_description": "",
+          "unpublished": false,
+          "brief_description": "<p>Music video uses video effect, animation and gaming sequences<br>\nGraduate work from RMIT media arts (BA Arts).</p>",
+          "constellations_primary": [],
+          "constellations_other": [],
+          "recommendations": []
+        },
+        "images": [
           {
-            "content": "When Dracula leaves the captive Jonathan Harker and Transylvania for London in search of Mina Harkerâ€”the spitting image of Dracula's long-dead wife, Elisabetaâ€”obsessed vampire hunter, Dr. Van Helsing sets out to end the madness.",
-            "style": "standard"
+            "id": 11343,
+            "image_file": "file://../../data/sample.jpg",
+            "image_file_thumbnail": "file://../../data/sample.jpg",
+            "image_file_xs": "file://../../data/sample.jpg",
+            "image_file_s": "file://../../data/sample.jpg",
+            "image_file_m": "file://../../data/sample.jpg",
+            "image_file_l": "file://../../data/sample.jpg",
+            "caption": "Test pattern (Chris Hill) still",
+            "credit_line": "",
+            "alt_text": "",
+            "width": 438,
+            "height": 327,
+            "access_level": "View anywhere"
           }
         ],
-        "subtitles": "<p>1992, Dir. Francis Ford Coppola</p>",
-        "rights": "",
-        "work": {
-          "id": 47,
-          "title": "Dracula",
-          "public_images": [
-            {
-                "id": 554,
-                "image_file": "file://../../data/sample.jpg",
-                "thumbnail_url": "file://../../data/sample.jpg.150x150_q85.jpg",
-                "caption": "",
-                "credit_line": "",
-                "width": 1920,
-                "height": 1080
-            }
-          ],
-          "abstract": "",
-          "brief_description": "When Dracula leaves the captive Jonathan Harker and Transylvania for London in search of Mina Harkerâ€”the spitting image of Dracula's long-dead wife, Elisabetaâ€”obsessed vampire hunter, Dr. Van Helsing sets out to end the madness.",
-          "first_production_year": "1992"
-        }
+        "url_override": "",
+        "is_an_event": false
+      },
+      "video": {
+        "id": 1112,
+        "title": "Test pattern 1920x1080 with audio no logo",
+        "resource": "file://../../data/sample.mp4",
+        "web_resource": "file://../../data/sample.mp4",
+        "duration_secs": 30.036,
+        "subtitles": null,
+        "master_metadata": null,
+        "access_metadata": null,
+        "web_metadata": {
+          "width": 1920,
+          "height": 1080,
+          "checksum": "a53a1aa1d6f9443301a7708385f4ca6c",
+          "mime_type": "video/mp4",
+          "audio_codec": "aac",
+          "video_codec": "h264",
+          "duration_hms": "00:30",
+          "duration_secs": 30.036,
+          "audio_bit_rate": 128854,
+          "audio_channels": 2,
+          "video_bit_rate": 64179,
+          "file_size_bytes": 758819,
+          "overall_bit_rate": 202109,
+          "video_frame_rate": 29.97002997002997,
+          "audio_sample_rate": 48000,
+          "creation_datetime": "2020-09-25 22:01:33.410678",
+          "audio_max_bit_rate": 128854,
+          "video_max_bit_rate": null
+        },
+        "access_level": "View anywhere",
+        "snapshot": "file://../../data/sample.jpg",
+        "animated_snapshot": ""
       },
       "resource": "file://../../data/sample.mp4",
-      "subtitles": "file://../../data/sample.srt"
+      "subtitles": null,
+      "region_svg": ""
     },
     {
       "label": {
-        "id": 18,
-        "title": "<p>Jurassic Park</p>",
+        "id": 44,
+        "title": "<p>Placeholder video 1</p>",
+        "type": "work",
+        "subtitles": "<p>Secondary content</p>",
         "columns": [
           {
-            "content": "A wealthy entrepreneur secretly creates a theme park featuring living dinosaurs drawn from prehistoric DNA. Before opening day, he invites a team of experts and his two eager grandchildren to experience the park and help calm anxious investors. However, the park is anything but amusing as the security systems go off-line and the dinosaurs escape.",
+            "content": "<p>This is the first placeholder video for the ACMI media players. On initial startup an unconfigured media player will play a playlist containing this video.</p>",
             "style": "standard"
           },
-          {
-            "content": "A wealthy entrepreneur secretly creates a theme park featuring living dinosaurs drawn from prehistoric DNA. Before opening day, he invites a team of experts and his two eager grandchildren to experience the park and help calm anxious investors. However, the park is anything but amusing as the security systems go off-line and the dinosaurs escape.",
-            "style": "standard"
-          },
-          {
-            "content": "",
-            "style": "standard"
-          }
+          { "content": "", "style": "standard" },
+          { "content": "", "style": "smaller" }
         ],
-        "subtitles": "<p>1993, Dir. Steven Spielberg</p>",
-        "rights": "",
         "work": {
-          "id": 49,
-          "title": "Jurassic Park",
+          "id": 60889,
+          "acmi_id": "xos-60889",
+          "title": "Placeholder video 1",
           "title_annotation": "facsimile",
-          "public_images": [
-            {
-                "id": 554,
-                "image_file": "file://../../data/sample.jpg",
-                "thumbnail_url": "file://../../data/sample.jpg.150x150_q85.jpg",
-                "caption": "",
-                "credit_line": "",
-                "width": 1920,
-                "height": 1080
-            }
-          ],
-          "abstract": "",
-          "brief_description": "A wealthy entrepreneur secretly creates a theme park featuring living dinosaurs drawn from prehistoric DNA. Before opening day, he invites a team of experts and his two eager grandchildren to experience the park and help calm anxious investors. However, the park is anything but amusing as the security systems go off-line and the dinosaurs escape.",
-          "first_production_year": "1993"
-        }
+          "slug": "placeholder-video-1",
+          "creator_credit": "",
+          "credit_line": "",
+          "headline_credit": "Melbourne/VIC/Australia, 2019",
+          "thumbnail": {
+            "image_url": "file://../../data/sample.jpg",
+            "has_video": false
+          },
+          "record_type": "work",
+          "type": "Film",
+          "is_on_display": false,
+          "last_on_display_place": null,
+          "last_on_display_date": null,
+          "is_context_indigenous": false,
+          "material_description": "",
+          "unpublished": false,
+          "brief_description": "<p>This is the first placeholder video for the ACMI media players. On initial startup an unconfigured media player will play a playlist containing this video.</p>",
+          "constellations_primary": [],
+          "constellations_other": [],
+          "recommendations": []
+        },
+        "images": [
+          {
+            "id": 554,
+            "image_file": "file://../../data/sample.jpg",
+            "image_file_thumbnail": "file://../../data/sample.jpg",
+            "image_file_xs": "file://../../data/sample.jpg",
+            "image_file_s": "file://../../data/sample.jpg",
+            "image_file_m": "file://../../data/sample.jpg",
+            "image_file_l": "file://../../data/sample.jpg",
+            "caption": "",
+            "credit_line": "",
+            "alt_text": "",
+            "width": 1920,
+            "height": 1080,
+            "access_level": "View anywhere"
+          }
+        ],
+        "url_override": "",
+        "is_an_event": false
+      },
+      "video": {
+        "id": 1067,
+        "title": "Placeholder video 1 with audio",
+        "resource": "file://../../data/sample.mp4",
+        "web_resource": "file://../../data/sample.mp4",
+        "duration_secs": 30.058,
+        "subtitles": null,
+        "master_metadata": null,
+        "access_metadata": null,
+        "web_metadata": {
+          "width": 1920,
+          "height": 1080,
+          "checksum": "7f1f868fb026caed64b54b98f5212731",
+          "mime_type": "video/mp4",
+          "audio_codec": "aac",
+          "video_codec": "h264",
+          "duration_hms": "00:30",
+          "duration_secs": 30.058,
+          "audio_bit_rate": 126241,
+          "audio_channels": 2,
+          "video_bit_rate": 1950719,
+          "file_size_bytes": 7831159,
+          "overall_bit_rate": 2084279,
+          "video_frame_rate": 29.97002997002997,
+          "audio_sample_rate": 48000,
+          "creation_datetime": "2020-08-31 22:54:58.557279",
+          "audio_max_bit_rate": 128000,
+          "video_max_bit_rate": null
+        },
+        "access_level": "View anywhere",
+        "snapshot": "file://../../data/sample.jpg",
+        "animated_snapshot": ""
       },
       "resource": "file://../../data/sample.mp4",
-      "subtitles": "file://../../data/sample.srt"
+      "subtitles": null,
+      "region_svg": ""
     },
     {
       "label": {
-        "id": 19,
-        "title": "<p>Kiki's Delivery Service</p>",
+        "id": 45,
+        "title": "<p>Placeholder video 2</p>",
+        "type": "work",
+        "subtitles": "<p>Secondary content</p>",
         "columns": [
           {
-            "content": "A young witch, on her mandatory year of independent life, finds fitting into a new community difficult while she supports herself by running an air courier service.",
+            "content": "<p>This is the second placeholder video for the ACMI media players. On initial startup an unconfigured media player will play a playlist containing this video.</p>",
             "style": "standard"
           },
-          {
-            "content": "A wealthy entrepreneur secretly creates a theme park featuring living dinosaurs drawn from prehistoric DNA. Before opening day, he invites a team of experts and his two eager grandchildren to experience the park and help calm anxious investors. However, the park is anything but amusing as the security systems go off-line and the dinosaurs escape.",
-            "style": "standard"
-          },
-          {
-            "content": "",
-            "style": "standard"
-          }
-
+          { "content": "", "style": "standard" },
+          { "content": "", "style": "smaller" }
         ],
-        "subtitles": "<p>1989, Dir. Hayao Miyazaki</p>",
-        "rights": "",
         "work": {
-          "id": 48,
-          "title": "Kiki's Delivery Service",
-          "public_images": [
-            {
-                "id": 554,
-                "image_file": "file://../../data/sample.jpg",
-                "thumbnail_url": "file://../../data/sample.jpg.150x150_q85.jpg",
-                "caption": "",
-                "credit_line": "",
-                "width": 1920,
-                "height": 1080
-            }
-          ],
-          "abstract": "",
-          "brief_description": "A young witch, on her mandatory year of independent life, finds fitting into a new community difficult while she supports herself by running an air courier service.",
-          "first_production_year": "1989"
-        }
+          "id": 60890,
+          "acmi_id": "xos-60890",
+          "title": "Placeholder video 2",
+          "title_annotation": "",
+          "slug": "placeholder-video-2",
+          "creator_credit": "",
+          "credit_line": "",
+          "headline_credit": "Melbourne/VIC/Australia, 2019",
+          "thumbnail": {
+            "image_url": "file://../../data/sample.jpg",
+            "has_video": false
+          },
+          "record_type": "work",
+          "type": "Film",
+          "is_on_display": false,
+          "last_on_display_place": null,
+          "last_on_display_date": null,
+          "is_context_indigenous": false,
+          "material_description": "",
+          "unpublished": false,
+          "brief_description": "<p>This is the second placeholder video for the ACMI media players. On initial startup an unconfigured media player will play a playlist containing this video.</p>",
+          "constellations_primary": [],
+          "constellations_other": [],
+          "recommendations": []
+        },
+        "images": [
+          {
+            "id": 555,
+            "image_file": "file://../../data/sample.jpg",
+            "image_file_thumbnail": "file://../../data/sample.jpg",
+            "image_file_xs": "file://../../data/sample.jpg",
+            "image_file_s": "file://../../data/sample.jpg",
+            "image_file_m": "file://../../data/sample.jpg",
+            "image_file_l": "file://../../data/sample.jpg",
+            "caption": "",
+            "credit_line": "",
+            "alt_text": "",
+            "width": 1920,
+            "height": 1080,
+            "access_level": "View anywhere"
+          }
+        ],
+        "url_override": "",
+        "is_an_event": false
+      },
+      "video": {
+        "id": 1068,
+        "title": "Placeholder video 2 with audio",
+        "resource": "file://../../data/sample.mp4",
+        "web_resource": "file://../../data/sample.mp4",
+        "duration_secs": 20.052,
+        "subtitles": null,
+        "master_metadata": null,
+        "access_metadata": null,
+        "web_metadata": {
+          "width": 1920,
+          "height": 1080,
+          "checksum": "582479747b5d8bd9b6fb93405889b777",
+          "mime_type": "video/mp4",
+          "audio_codec": "aac",
+          "video_codec": "h264",
+          "duration_hms": "00:20",
+          "duration_secs": 20.052,
+          "audio_bit_rate": 129224,
+          "audio_channels": 2,
+          "video_bit_rate": 186167,
+          "file_size_bytes": 813035,
+          "overall_bit_rate": 324370,
+          "video_frame_rate": 29.97002997002997,
+          "audio_sample_rate": 48000,
+          "creation_datetime": "2020-08-31 22:55:54.909910",
+          "audio_max_bit_rate": 129224,
+          "video_max_bit_rate": null
+        },
+        "access_level": "View anywhere",
+        "snapshot": "file://../../data/sample.jpg",
+        "animated_snapshot": ""
       },
       "resource": "file://../../data/sample.mp4",
-      "subtitles": "file://../../data/sample.srt"
+      "subtitles": null,
+      "region_svg": ""
     }
-  ]
+  ],
+  "background": null,
+  "background_dimensions": null
 }
