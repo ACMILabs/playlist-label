@@ -17,7 +17,7 @@ export default class PlaylistLabelRenderer {
       items: null,
       upcomingItems: null,
       isAnimatingCollect: false,
-      playbackPosition: 0
+      playbackPosition: 0,
     };
   }
 
@@ -26,33 +26,33 @@ export default class PlaylistLabelRenderer {
    * rendered page via window.initialData.
    */
   init() {
-    const id = 'id' in window.initialData ? window.initialData.id : null;
+    const id = "id" in window.initialData ? window.initialData.id : null;
     this.state.currentLabelId =
-      'current_label_id' in window.initialData
+      "current_label_id" in window.initialData
         ? window.initialData.current_label_id
         : null;
     this.state.nextLabelId =
-      'next_label_id' in window.initialData
+      "next_label_id" in window.initialData
         ? window.initialData.next_label_id
         : null;
 
     if (id != null) {
       this.fetchPlaylist(`/api/playlist/`);
     } else {
-      console.error('No valid id could be found on initial pageload.'); // eslint-disable-line no-console
+      console.error("No valid id could be found on initial pageload."); // eslint-disable-line no-console
     }
 
     if (
-      typeof window.initialData.ignore_tap_reader === 'undefined' ||
+      typeof window.initialData.ignore_tap_reader === "undefined" ||
       !window.initialData.ignore_tap_reader
     ) {
       this.handleTapMessage = this.handleTapMessage.bind(this);
-      const tapSource = new EventSource('/api/tap-source/');
+      const tapSource = new EventSource("/api/tap-source/");
       tapSource.onmessage = this.handleTapMessage;
     }
 
     if (
-      typeof window.initialData.ignore_media_player !== 'undefined' &&
+      typeof window.initialData.ignore_media_player !== "undefined" &&
       window.initialData.ignore_media_player
     ) {
       setInterval(this.autoUpdateProgress, 1000 / FPS, this);
@@ -72,7 +72,7 @@ export default class PlaylistLabelRenderer {
     document.onkeydown = this.onKeyPress.bind(this);
     window.onhashchange = this.hashChange.bind(this);
     if (
-      typeof window.initialData.ignore_media_player === 'undefined' ||
+      typeof window.initialData.ignore_media_player === "undefined" ||
       !window.initialData.ignore_media_player
     ) {
       this.subscribeToMediaPlayer(jsonData);
@@ -92,14 +92,14 @@ export default class PlaylistLabelRenderer {
   fetchPlaylist(url) {
     if (url && !window.initialData.is_preview) {
       fetch(url)
-        .then(response => {
+        .then((response) => {
           if (!response.ok) {
             throw Error(response.statusText);
           }
           return response.json();
         })
         .then(this.onPlaylistData.bind(this))
-        .catch(error => console.error(error)); // eslint-disable-line no-console
+        .catch((error) => console.error(error)); // eslint-disable-line no-console
     } else {
       this.onPlaylistData(window.initialData.playlist_json);
     }
@@ -114,8 +114,8 @@ export default class PlaylistLabelRenderer {
     const client = new Paho.MQTT.Client( // eslint-disable-line no-undef
       window.initialData.mqtt_host,
       parseInt(window.initialData.mqtt_port, 10),
-      '/ws',
-      ''
+      "/ws",
+      ""
     );
 
     // set callback handlers
@@ -134,7 +134,7 @@ export default class PlaylistLabelRenderer {
       onFailure: () => {
         // Try to re-connect again
         this.subscribeToMediaPlayer();
-      }
+      },
     });
   }
 
@@ -184,7 +184,7 @@ export default class PlaylistLabelRenderer {
 
     // make a list of items that starts with the new label
     const upcomingItems = [];
-    const startIndex = items.findIndex(item => {
+    const startIndex = items.findIndex((item) => {
       return item.label && item.label.id === labelId;
     });
     for (let i = 0; i < items.length; i++) {
@@ -204,25 +204,25 @@ export default class PlaylistLabelRenderer {
   updateMainLabelContent(item) {
     const { label } = item;
     // Update the label fields with the currently playing data
-    document.getElementById('title').innerHTML = label.title;
+    document.getElementById("title").innerHTML = label.title;
     this.addTitleAnnotation(label.work);
-    document.getElementById('subtitles').innerHTML = label.subtitles;
-    document.getElementById('content0').innerHTML = label.columns[0].content;
-    document.getElementById('content1').innerHTML = label.columns[1].content;
-    document.getElementById('content2').innerHTML = label.columns[2].content;
+    document.getElementById("subtitles").innerHTML = label.subtitles;
+    document.getElementById("content0").innerHTML = label.columns[0].content;
+    document.getElementById("content1").innerHTML = label.columns[1].content;
+    document.getElementById("content2").innerHTML = label.columns[2].content;
 
     if (label.work.is_context_indigenous) {
-      document.getElementById('indigenous').className =
-        'indigenous indigenous_active';
+      document.getElementById("indigenous").className =
+        "indigenous indigenous_active";
     } else {
-      document.getElementById('indigenous').className = 'indigenous';
+      document.getElementById("indigenous").className = "indigenous";
     }
   }
 
   updateUpNextContent(items) {
     // Update up next label
     const item = items[1];
-    document.querySelector('#next_title').innerHTML = item.label.title;
+    document.querySelector("#next_title").innerHTML = item.label.title;
 
     for (let i = 1; i < items.length; i++) {
       const { label } = items[i];
@@ -239,7 +239,7 @@ export default class PlaylistLabelRenderer {
   }
 
   updateProgress() {
-    const progressBar = document.getElementById('progress-bar');
+    const progressBar = document.getElementById("progress-bar");
     const { playbackPosition } = this.state;
     progressBar.style.width = `${playbackPosition * 100}%`;
 
@@ -249,8 +249,8 @@ export default class PlaylistLabelRenderer {
     let timeToWait = items[0].video.duration_secs * (1.0 - playbackPosition);
     for (let i = 1; i < items.length; i++) {
       const numMinutes = parseInt(Math.round(timeToWait / 60.0), 10);
-      let unit = ' minute';
-      if (numMinutes !== 1) unit += 's';
+      let unit = " minute";
+      if (numMinutes !== 1) unit += "s";
 
       const id = `#up_next_label_${i}`;
       try {
@@ -288,19 +288,19 @@ export default class PlaylistLabelRenderer {
       this.state.isAnimatingCollect = true;
 
       // Animation plays: collect -> hidden -> collected -> hidden -> collect
-      const collectElement = document.getElementById('collect');
-      collectElement.className = 'collect hidden';
+      const collectElement = document.getElementById("collect");
+      collectElement.className = "collect hidden";
       window.setTimeout(function timeout1() {
-        collectElement.innerHTML = 'COLLECTED';
-        collectElement.className = 'collect active';
+        collectElement.innerHTML = "COLLECTED";
+        collectElement.className = "collect active";
       }, 500);
       window.setTimeout(function timeout2() {
-        collectElement.className = 'collect active hidden';
+        collectElement.className = "collect active hidden";
       }, 3000);
       window.setTimeout(
         function timeout3() {
-          collectElement.className = 'collect';
-          collectElement.innerHTML = 'COLLECT';
+          collectElement.className = "collect";
+          collectElement.innerHTML = "COLLECT";
           this.state.isAnimatingCollect = false;
         }.bind(this),
         3500
@@ -311,9 +311,9 @@ export default class PlaylistLabelRenderer {
   addTitleAnnotation(work) {
     // If a title_annotation exists, add it to the end of the title
     if (work && work.title_annotation) {
-      const title = document.getElementById('title');
-      const titleAnnotation = document.createElement('span');
-      titleAnnotation.className = 'title_annotation';
+      const title = document.getElementById("title");
+      const titleAnnotation = document.createElement("span");
+      titleAnnotation.className = "title_annotation";
       titleAnnotation.innerHTML = work.title_annotation;
       title.innerHTML = title.innerHTML.replace(
         /<\/p>/g,
