@@ -22,6 +22,12 @@ describe("PlaylistLabelRenderer", () => {
       mqtt_port: "1234",
       mqtt_username: "mqtt_username",
       mqtt_password: "mqtt_password",
+      xos_playlist_endpoint: "https://xos.acmi.net.au/api/playlists/",
+      xos_media_player_id: 8,
+      ignore_tap_reader: "false",
+      ignore_media_player: "true",
+      is_preview: "false",
+      playlist_json: playlistData,
     };
 
     // Set up our document body
