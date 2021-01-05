@@ -10,7 +10,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build Python lint and test
-      run: cd development && docker-compose up --build -d
+      run: |
+        cp config.tmpl.env config.env
+        cd development && docker-compose up --build -d
     - name: Run Python lint and test
       run: docker exec -it playlistlabel make linttest
 
