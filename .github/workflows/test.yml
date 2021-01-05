@@ -9,6 +9,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Setup QEMU
+      id: qemu
+      uses: docker/setup-qemu-action@v1
+      with:
+        image: tonistiigi/binfmt:latest
+        platforms: all
     - name: Build Python lint and test
       run: |
         cp config.tmpl.env config.env
