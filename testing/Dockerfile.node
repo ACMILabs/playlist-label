@@ -1,6 +1,8 @@
-FROM node:10.15.3
+FROM node:12
 
 RUN echo 'Setting up Node image'
 
 COPY . /code/
 WORKDIR /code/
+
+RUN npm install

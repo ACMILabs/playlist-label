@@ -28,11 +28,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Javascript lint and test
-      uses: actions/setup-node@v1
-      with:
-        node-version: '12.x'
-    - run: npm install
-    - run: make linttestjs
-      env:
-        CI: true
+    - name: Build Javascript lint and test
+      run: |
+        cd testing && docker-compose up --build -d
+        docker exec javascripttests make install
+    - name: Run Javascript lint and test
+      run: docker exec javascripttests make linttestjs
