@@ -28,6 +28,12 @@ To run the development container:
 
 You should then be able to see the Flask server running at: http://localhost:8081
 
+If you change any of the requirements you'll need to re-build the development container, it's built from `development/Dockerfile.development`. To re-build it:
+
+`docker build --file development/Dockerfile.development -t acmilabs/playlistlabel-development:v1 .`
+
+`docker push acmilabs/playlistlabel-development:v1`
+
 ## Run tests locally
 
 To run the python tests:
@@ -44,7 +50,7 @@ To install and run on a Raspbian OS Raspberry Pi for prototyping:
 
 * Install [Pyenv](http://www.knight-of-pi.org/pyenv-for-python-version-management-on-raspbian-stretch/) and Python 3.7.3
 * Install the required packages `pip install -r requirements.txt`
-* Copy `config.tmpl.env` to `source config.env` and fill in the relevant environment variables
+* Copy `config.tmpl.env` to `config.env` and fill in the relevant environment variables
 * Run `source config.env`
 * Run `./scripts/pi.sh`
 
