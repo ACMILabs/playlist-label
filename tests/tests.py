@@ -73,7 +73,7 @@ def test_create_cache(capsys):
         with open(f'{main.CACHE_DIR}playlist_1.json', 'r') as playlist_cache:
             playlist = json.loads(playlist_cache.read())['playlist_labels']
         assert len(playlist) == 3
-        assert playlist[0]['label']['title'] == '<p>Dracula</p>'
+        assert playlist[0]['label']['title'] == '<p>Test pattern</p>'
 
 
 @pytest.mark.usefixtures('database')
@@ -133,7 +133,7 @@ def test_route_playlist_json(client):
     create_cache()
     response = client.get('/api/playlist/')
 
-    assert b'Dracula' in response.data
+    assert b'Test pattern' in response.data
     assert response.status_code == 200
 
 
