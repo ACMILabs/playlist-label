@@ -31,4 +31,5 @@ jobs:
     - name: Javascript lint and test
       run: |
         cd testing && docker-compose up --build -d
+        docker exec javascripttests make install
         docker exec javascripttests make linttestjs
