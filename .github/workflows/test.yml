@@ -1,0 +1,19 @@
+name: Playlist Label CI
+
+on: [push]
+
+jobs:
+  build-and-test-js:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Javascript lint and test
+      uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+    - run: npm install
+    - run: make linttestjs
+      env:
+        CI: true
