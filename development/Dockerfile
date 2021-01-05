@@ -1,12 +1,8 @@
-FROM balenalib/raspberrypi3-python:3.7.2-stretch-run
-
-RUN install_packages apt-utils g++ build-essential
-
-ENV PYTHONUNBUFFERED 1
-
-COPY ./requirements/base.txt /code/requirements/base.txt
-COPY ./requirements/test.txt /code/requirements/test.txt
-RUN pip install -Ur /code/requirements/test.txt
+# Built from Dockerfile.development
+# To rebuild:
+# docker build --file development/Dockerfile.development -t acmilabs/playlistlabel-development:v1 .
+# docker push acmilabs/playlistlabel-development:v1
+FROM acmilabs/playlistlabel-development:v1
 
 COPY . /code/
 WORKDIR /code/

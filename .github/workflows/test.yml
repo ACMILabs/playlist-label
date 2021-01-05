@@ -1,0 +1,38 @@
+name: Playlist Label CI
+
+on: [push]
+
+jobs:
+  build-and-test-python:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup QEMU
+      id: qemu
+      uses: docker/setup-qemu-action@v1
+      with:
+        image: tonistiigi/binfmt:latest
+        platforms: all
+    - name: Build Python lint and test
+      run: |
+        cp config.tmpl.env config.env
+        cd development && docker-compose up --build -d
+    - name: Run Python lint and test
+      run: docker exec playlistlabel make linttest
+
+  build-and-test-js:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Javascript lint and test
+      uses: actions/setup-node@v1
+      with:
+        node-version: '12.x'
+    - run: npm install
+    - run: make linttestjs
+      env:
+        CI: true
