@@ -28,8 +28,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build Javascript lint and test
+    - name: Javascript lint and test
       run: |
         cd testing && docker-compose up --build -d
-    - name: Run Javascript lint and test
-      run: docker exec javascripttests make linttestjs
+        docker exec javascripttests make linttestjs
