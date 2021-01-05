@@ -4,3 +4,5 @@ RUN echo 'Setting up Node image'
 
 COPY . /code/
 WORKDIR /code/
+
+RUN npm install
