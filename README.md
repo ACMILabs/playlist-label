@@ -3,6 +3,8 @@ Playlist label
 
 A playlist label running on a Raspberry Pi connected to a 12.3" screen.
 
+![GitHub Actions CI status](https://github.com/acmilabs/playlist-label/workflows/.github/workflows/test.yml/badge.svg)
+
 ## Features
 
 * Downloads playlist data (including labels data) from an API endpoint
