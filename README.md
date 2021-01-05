@@ -3,7 +3,7 @@ Playlist label
 
 A playlist label running on a Raspberry Pi connected to a 12.3" screen.
 
-![GitHub Actions CI status](https://github.com/acmilabs/playlist-label/workflows/.github/workflows/test.yml/badge.svg)
+![Playlist Label CI](https://github.com/ACMILabs/playlist-label/workflows/Playlist%20Label%20CI/badge.svg)
 
 ## Features
 
