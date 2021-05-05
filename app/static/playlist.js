@@ -38,8 +38,8 @@ export default class PlaylistLabelRenderer {
         : null;
     this.state.collectClassname =
       "collect_classname" in window.initialData
-        ? window.initialData.collect_classname :
-        'collect';
+        ? window.initialData.collect_classname
+        : 'collect';
 
     if (id != null) {
       this.fetchPlaylist(`/api/playlist/`);
@@ -294,7 +294,7 @@ export default class PlaylistLabelRenderer {
 
       // Animation plays: collect -> hidden -> collected -> hidden -> collect
       const collectElement = document.getElementById("collect");
-      const collectClassname = this.state.collectClassname;
+      const { collectClassname } = this.state;
       collectElement.className = `${collectClassname} hidden`;
       window.setTimeout(function timeout1() {
         collectElement.innerHTML = "COLLECTED";
