@@ -39,7 +39,7 @@ DEBUG = os.getenv('DEBUG', 'false').lower() == "true"
 CACHE_DIR = os.getenv('CACHE_DIR', '/data/')
 
 LABEL_TEMPLATE = os.getenv('LABEL_TEMPLATE', 'playlist.html')
-COLLECT_BOTTOM_RIGHT = os.getenv('COLLECT_BOTTOM_RIGHT', False)
+COLLECT_BOTTOM_RIGHT = os.getenv('COLLECT_BOTTOM_RIGHT', 'false')
 
 # Setup Sentry
 sentry_sdk.init(
