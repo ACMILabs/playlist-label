@@ -290,13 +290,15 @@ export default class PlaylistLabelRenderer {
 
       // Animation plays: collect -> hidden -> collected -> hidden -> collect
       const collectElement = document.getElementById("collect");
-      collectElement.className = collectClassname + " hidden";
+      const collectClassname = this.state.collectElement;
+      
+      collectElement.className = `${collectClassname} hidden`;
       window.setTimeout(function timeout1() {
         collectElement.innerHTML = "COLLECTED";
-        collectElement.className = collectClassname + " active";
+        collectElement.className = `${collectClassname} active`;
       }, 500);
       window.setTimeout(function timeout2() {
-        collectElement.className = collectClassname + " active hidden";
+        collectElement.className = `${collectClassname} active hidden`;
       }, 3000);
       window.setTimeout(
         function timeout3() {
