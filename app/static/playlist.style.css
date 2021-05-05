@@ -1,154 +1,201 @@
 .title_cont {
-  float: left;
-  width: 50%;
-  padding: 75px 75px 0;
-  box-sizing: border-box;
+    float: left;
+    width: 50%;
+    padding: 75px 75px 0;
+    box-sizing: border-box;
 }
 
 @media (max-width: 720px) {
-  .title_cont {
-    width: auto;
-    float: none;
-  }
+    .title_cont {
+        width: auto;
+        float: none;
+    }
 }
 
 .title_cont .title {
-  font-family: PxGrotesk;
-  font-weight: bold;
-  font-size: 56px;
-  line-height: 65px;
+    font-family: PxGrotesk;
+    font-weight: bold;
+    font-size: 56px;
+    line-height: 65px;
 }
 
 .title_cont .title_annotation {
-  font-family: FaktPro;
-  font-size: 2.5rem;
-  font-weight: normal;
-  padding-left: 1rem;
-  text-transform: lowercase;
+    font-family: FaktPro;
+    font-size: 2.5rem;
+    font-weight: normal;
+    padding-left: 1rem;
+    text-transform: lowercase;
 }
 
 .title_cont .subtitles {
-  font-size: 28px;
-  line-height: 39px;
-  margin-top: 39px;
-  margin-bottom: 64px;
+    font-size: 28px;
+    line-height: 39px;
+    margin-top: 39px;
+    margin-bottom: 64px;
 }
 
 .content {
-  float: right;
-  width: 50%;
-  padding-right: 75px;
-  padding-top: 75px;
-  box-sizing: border-box;
-  /* Must be higher than the title_cont, or .collect float will break */
-  min-height: 220px;
+    float: right;
+    width: 50%;
+    padding-right: 75px;
+    padding-top: 75px;
+    box-sizing: border-box;
+    /* Must be higher than the title_cont, or .collect float will break */
+    min-height: 220px;
 }
 
 @media (max-width: 720px) {
-  .content {
-    width: auto;
-    float: none;
-    padding: 0 75px;
-    margin-top: 39px;
-  }
+    .content {
+        width: auto;
+        float: none;
+        padding: 0 75px;
+        margin-top: 39px;
+    }
 }
 
 .playlist .description {
-  font-size: 42px;
-  line-height: 58px;
+    font-size: 42px;
+    line-height: 58px;
 }
 
 p:first-child {
-  margin-top: 0;
+    margin-top: 0;
 }
 
 p:last-child {
-  margin-bottom: 5px;
+    margin-bottom: 5px;
 }
 
+
+/* COLLECT */
+
 .collect {
-  background-color: #fff;
-  color: #000;
-  margin-top: 39px;
-  padding: 30px 40px 24px 75px;
-  font-family: PxGrotesk;
-  font-size: 23px;
-  transition: background 500ms, color 500ms;
-  display: inline-block;
-  position: fixed;
-  bottom: 200px;
-  left: 0;
+    background-color: #fff;
+    color: #000;
+    margin-top: 39px;
+    padding: 30px 40px 24px 75px;
+    font-family: PxGrotesk;
+    font-size: 23px;
+    transition: background 500ms, color 500ms;
+    display: inline-block;
+    position: fixed;
+    bottom: 200px;
+    left: 0;
 }
 
 .collect:before {
-  width: 30px;
-  height: 41px;
-  display: inline-block;
-  background: url('down.svg') center/contain no-repeat;
-  content: " ";
-  margin-right: 10px;
-  transition: opacity 500ms;
-  transform: rotate(90deg);
-  vertical-align: -12px;
+    width: 30px;
+    height: 41px;
+    display: inline-block;
+    background: url('down.svg') center/contain no-repeat;
+    content: " ";
+    margin-right: 10px;
+    transition: opacity 500ms;
+    transform: rotate(90deg);
+    vertical-align: -12px;
 }
 
 @media (max-width: 720px) {
-  .collect:before {
-    transform: none;
-  }
+    .collect:before {
+        transform: none;
+    }
 }
 
-.collect.active:before  {
-  background: url('tick.svg') center/contain no-repeat;
-  transform: rotate(0deg);
+.collect.active:before {
+    background: url('tick.svg') center/contain no-repeat;
+    transform: rotate(0deg);
 }
+
 .collect.active.hidden,
 .collect.hidden {
-  color: rgba(255,255,255,0);
-  background: rgba(255,255,255,0);
+    color: rgba(255, 255, 255, 0);
+    background: rgba(255, 255, 255, 0);
 }
 
 .collect.active.hidden:before,
 .collect.hidden:before {
-  opacity: 0;
+    opacity: 0;
 }
 
 .collect.active {
-  background: #000;
-  color: #fff;
+    background: #000;
+    color: #fff;
 }
 
-.indigenous {
-  right: 0;
-  padding: 0 75px;
-  display: none;
-  width: 100%;
-  box-sizing: border-box;
-  font-size: 34px;
-  text-align: right;
+
+/* COLLECT - BOTTOM RIGHT */
+
+.collect.collect-bottom-right:before {
+    display: none;
 }
 
-.playlist .indigenous {
-  position: fixed;
-  bottom: 20px;
+.collect.collect-bottom-right {
+    bottom: 0px;
+    left: auto;
+    right: 0;
 }
 
-.indigenous_active {
-  display: block;
-}
-.indigenous img {
-  float: right;
-  margin-left: 65px;
-  height: 116px;
-}
-.indigenous_bold {
-  font-family: 'PxGrotesk';
-  font-weight: bold;
+.collect.collect-bottom-right:after {
+    width: 30px;
+    height: 41px;
+    display: inline-block;
+    background: url('down.svg') center/contain no-repeat;
+    content: " ";
+    margin-left: 10px;
+    transition: opacity 500ms;
+    transform: rotate(-90deg);
+    vertical-align: -12px;
 }
 
 @media (max-width: 720px) {
-  .indigenous {
+    .collect:after {
+        transform: none;
+    }
+}
+
+.collect.active:after {
+    background: url('tick.svg') center/contain no-repeat;
+    transform: rotate(0deg);
+}
+
+.collect.active.hidden:after,
+.collect.hidden:after {
+    opacity: 0;
+}
+
+.indigenous {
+    right: 0;
+    padding: 0 75px;
+    display: none;
     width: 100%;
-    bottom: 175px;
-  }
+    box-sizing: border-box;
+    font-size: 34px;
+    text-align: right;
+}
+
+.playlist .indigenous {
+    position: fixed;
+    bottom: 20px;
+}
+
+.indigenous_active {
+    display: block;
+}
+
+.indigenous img {
+    float: right;
+    margin-left: 65px;
+    height: 116px;
+}
+
+.indigenous_bold {
+    font-family: 'PxGrotesk';
+    font-weight: bold;
+}
+
+@media (max-width: 720px) {
+    .indigenous {
+        width: 100%;
+        bottom: 175px;
+    }
 }

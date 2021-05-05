@@ -18,6 +18,7 @@ export default class PlaylistLabelRenderer {
       upcomingItems: null,
       isAnimatingCollect: false,
       playbackPosition: 0,
+      collectClassname: null,
     };
   }
 
@@ -289,17 +290,17 @@ export default class PlaylistLabelRenderer {
 
       // Animation plays: collect -> hidden -> collected -> hidden -> collect
       const collectElement = document.getElementById("collect");
-      collectElement.className = "collect hidden";
+      collectElement.className = collectClassname + " hidden";
       window.setTimeout(function timeout1() {
         collectElement.innerHTML = "COLLECTED";
-        collectElement.className = "collect active";
+        collectElement.className = collectClassname + " active";
       }, 500);
       window.setTimeout(function timeout2() {
-        collectElement.className = "collect active hidden";
+        collectElement.className = collectClassname + " active hidden";
       }, 3000);
       window.setTimeout(
         function timeout3() {
-          collectElement.className = "collect";
+          collectElement.className = collectClassname;
           collectElement.innerHTML = "COLLECT";
           this.state.isAnimatingCollect = false;
         }.bind(this),
