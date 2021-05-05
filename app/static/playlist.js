@@ -39,7 +39,7 @@ export default class PlaylistLabelRenderer {
     this.state.collectClassname =
       "collect_classname" in window.initialData
         ? window.initialData.collect_classname
-        : 'collect';
+        : "collect";
 
     if (id != null) {
       this.fetchPlaylist(`/api/playlist/`);
