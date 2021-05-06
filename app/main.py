@@ -275,7 +275,7 @@ def playlist_label():
                 'media_player_id': XOS_MEDIA_PLAYER_ID
             },
             is_preview='false',
-            collect_classname=COLLECT_CLASSNAME
+            collect_classname=collect_classname
         )
     except FileNotFoundError:
         print(f'Couldn\'t open cached playlist JSON: {CACHE_DIR}{CACHED_PLAYLIST_JSON}')
