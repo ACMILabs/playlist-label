@@ -78,6 +78,7 @@ p:last-child {
   position: fixed;
   bottom: 200px;
   left: 0;
+  z-index: -1;
 }
 
 .collect:before {
@@ -120,17 +121,17 @@ p:last-child {
 
 /* COLLECT - BOTTOM RIGHT */
 
-.collect.collect-bottom-right:before {
+.collect.collect-right:before {
   display: none;
 }
 
-.collect.collect-bottom-right {
+.collect.collect-right {
   bottom: 0px;
   left: auto;
   right: 0;
 }
 
-.collect.collect-bottom-right:after {
+.collect.collect-right:after {
   width: 30px;
   height: 41px;
   display: inline-block;
@@ -143,18 +144,18 @@ p:last-child {
 }
 
 @media (max-width: 720px) {
-  .collect.collect-bottom-right:after {
+  .collect.collect-right:after {
     transform: none;
   }
 }
 
-.collect.collect-bottom-right.active:after {
+.collect.collect-right.active:after {
   background: url('tick.svg') center/contain no-repeat;
   transform: rotate(0deg);
 }
 
-.collect.collect-bottom-right.active.hidden:after,
-.collect.collect-bottom-right.hidden:after {
+.collect.collect-right.active.hidden:after,
+.collect.collect-right.hidden:after {
   opacity: 0;
 }
 
