@@ -40,7 +40,6 @@ CACHE_DIR = os.getenv('CACHE_DIR', '/data/')
 
 LABEL_TEMPLATE = os.getenv('LABEL_TEMPLATE', 'playlist.html')
 COLLECT_POSITION = os.getenv('COLLECT_POSITION', None)
-COLLECT_CLASSNAME = f'collect collect-{COLLECT_POSITION}' if COLLECT_POSITION else 'collect'
 
 # Setup Sentry
 sentry_sdk.init(
@@ -257,6 +256,9 @@ def playlist_label():
         for item in list(json_data['playlist_labels']):
             if item['label'] is None:
                 json_data['playlist_labels'].remove(item)
+
+        # Calculate classnames
+        collect_classname = f'collect {COLLECT_POSITION}' if COLLECT_POSITION else 'collect'
 
         return render_template(
             LABEL_TEMPLATE,

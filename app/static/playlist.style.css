@@ -119,19 +119,17 @@ p:last-child {
   color: #fff;
 }
 
-/* COLLECT - BOTTOM RIGHT */
-
-.collect.collect-right:before {
+.collect.right:before {
   display: none;
 }
 
-.collect.collect-right {
+.collect.right {
   bottom: 0px;
   left: auto;
   right: 0;
 }
 
-.collect.collect-right:after {
+.collect.right:after {
   width: 30px;
   height: 41px;
   display: inline-block;
@@ -144,18 +142,18 @@ p:last-child {
 }
 
 @media (max-width: 720px) {
-  .collect.collect-right:after {
+  .collect.right:after {
     transform: none;
   }
 }
 
-.collect.collect-right.active:after {
+.collect.right.active:after {
   background: url('tick.svg') center/contain no-repeat;
   transform: rotate(0deg);
 }
 
-.collect.collect-right.active.hidden:after,
-.collect.collect-right.hidden:after {
+.collect.right.active.hidden:after,
+.collect.right.hidden:after {
   opacity: 0;
 }
 
