@@ -18,6 +18,7 @@ export default class PlaylistLabelRenderer {
       upcomingItems: null,
       isAnimatingCollect: false,
       playbackPosition: 0,
+      collectClassname: null,
     };
   }
 
@@ -35,6 +36,10 @@ export default class PlaylistLabelRenderer {
       "next_label_id" in window.initialData
         ? window.initialData.next_label_id
         : null;
+    this.state.collectClassname =
+      "collect_classname" in window.initialData
+        ? window.initialData.collect_classname
+        : "collect";
 
     if (id != null) {
       this.fetchPlaylist(`/api/playlist/`);
@@ -289,17 +294,18 @@ export default class PlaylistLabelRenderer {
 
       // Animation plays: collect -> hidden -> collected -> hidden -> collect
       const collectElement = document.getElementById("collect");
-      collectElement.className = "collect hidden";
+      const { collectClassname } = this.state;
+      collectElement.className = `${collectClassname} hidden`;
       window.setTimeout(function timeout1() {
         collectElement.innerHTML = "COLLECTED";
-        collectElement.className = "collect active";
+        collectElement.className = `${collectClassname} active`;
       }, 500);
       window.setTimeout(function timeout2() {
-        collectElement.className = "collect active hidden";
+        collectElement.className = `${collectClassname} active hidden`;
       }, 3000);
       window.setTimeout(
         function timeout3() {
-          collectElement.className = "collect";
+          collectElement.className = collectClassname;
           collectElement.innerHTML = "COLLECT";
           this.state.isAnimatingCollect = false;
         }.bind(this),

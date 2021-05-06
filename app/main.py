@@ -39,6 +39,7 @@ DEBUG = os.getenv('DEBUG', 'false').lower() == "true"
 CACHE_DIR = os.getenv('CACHE_DIR', '/data/')
 
 LABEL_TEMPLATE = os.getenv('LABEL_TEMPLATE', 'playlist.html')
+COLLECT_POSITION = os.getenv('COLLECT_POSITION', None)
 
 # Setup Sentry
 sentry_sdk.init(
@@ -256,6 +257,9 @@ def playlist_label():
             if item['label'] is None:
                 json_data['playlist_labels'].remove(item)
 
+        # Calculate classnames
+        collect_classname = f'collect {COLLECT_POSITION}' if COLLECT_POSITION else 'collect'
+
         return render_template(
             LABEL_TEMPLATE,
             playlist_json=json_data,
@@ -270,7 +274,8 @@ def playlist_label():
                 'playlist_endpoint': f'{XOS_API_ENDPOINT}playlists/',
                 'media_player_id': XOS_MEDIA_PLAYER_ID
             },
-            is_preview='false'
+            is_preview='false',
+            collect_classname=collect_classname
         )
     except FileNotFoundError:
         print(f'Couldn\'t open cached playlist JSON: {CACHE_DIR}{CACHED_PLAYLIST_JSON}')

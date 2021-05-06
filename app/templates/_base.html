@@ -37,7 +37,7 @@
                             <div class='indigenous_bold'>FIRST PEOPLES CONTENT</div>
                         </div>
                     </div>
-                    <div class='collect' id='collect'>
+                    <div class='{{collect_classname}}' id='collect'>
                         COLLECT
                     </div>
                     {% if playlist_json.playlist_labels|length > 1 %}
@@ -79,7 +79,8 @@
             "ignore_tap_reader": {{ ignore_tap_reader or 'false' }},
             "ignore_media_player":{{ ignore_media_player or 'false' }},
             "is_preview": {{ is_preview }},
-            "playlist_json": {{ playlist_json_rendered|safe }}
+            "playlist_json": {{ playlist_json_rendered|safe }},
+            "collect_classname": "{{ collect_classname }}"
         };
 
         document.addEventListener("DOMContentLoaded", () => {
