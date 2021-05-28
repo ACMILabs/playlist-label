@@ -286,7 +286,11 @@ export default class PlaylistLabelRenderer {
     return str.length > max ? `${str.substr(0, max - 3)}...` : str;
   }
 
-  handleTapMessage() {
+  handleTapMessage(e) {
+    const eventData = JSON.parse(e.data);
+    const tapSuccessful = eventData.tap_successful && eventData.tap_successful === 1;
+    const tapSuccessClassname = tapSuccessful ? "tap_success" : "tap_fail";
+
     // UPDATE 'COLLECTED' UI
     if (!this.state.isAnimatingCollect) {
       // Debounced with isAnimatingCollect
@@ -297,11 +301,12 @@ export default class PlaylistLabelRenderer {
       const { collectClassname } = this.state;
       collectElement.className = `${collectClassname} hidden`;
       window.setTimeout(function timeout1() {
-        collectElement.innerHTML = "COLLECTED";
-        collectElement.className = `${collectClassname} active`;
+        const message = tapSuccessful ? "COLLECTED" : "BROKEN LENS";
+        collectElement.innerHTML = message;
+        collectElement.className = `${collectClassname} active ${tapSuccessClassname}`;
       }, 500);
       window.setTimeout(function timeout2() {
-        collectElement.className = `${collectClassname} active hidden`;
+        collectElement.className = `${collectClassname} active hidden ${tapSuccessClassname}`;
       }, 3000);
       window.setTimeout(
         function timeout3() {
