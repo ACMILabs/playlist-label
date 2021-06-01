@@ -261,6 +261,8 @@ export default class PlaylistLabelRenderer {
       try {
         document.querySelector(`${id} .time_to_wait`).innerHTML =
           numMinutes + unit;
+        document.querySelector('#minutes_remaining').innerHTML = numMinutes;
+        document.querySelector('#units').innerHTML = unit;
       } catch (error) {
         // continue regardless of error
       }

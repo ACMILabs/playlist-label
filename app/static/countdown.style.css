@@ -1,0 +1,27 @@
+
+.container {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  padding-top: 10%;
+  font-size: 7rem;
+  line-height: 8rem;
+}
+
+#left_heading {
+  width: 55%;
+  float: left;
+  font-family: PxGrotesk;
+}
+
+#right_heading {
+  width: 45%;
+  float: right;
+  font-family: FaktPro;
+}
+
+.progress-bar {
+    background-color: rgb(249, 213, 72);
+    height: 2.5rem;
+}
