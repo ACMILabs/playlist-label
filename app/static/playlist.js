@@ -262,8 +262,22 @@ export default class PlaylistLabelRenderer {
 
     try {
       // Set countdown timer minutes remaining
-      document.querySelector("#minutes_remaining").innerHTML = numMinutes;
-      document.querySelector("#units").innerHTML = unit;
+      let countdownTime = numMinutes;
+      let countdownUnit = " minute";
+      if (countdownTime !== 1) unit += "s";
+      let updateCountdownTime = true;
+      if (timeToWait < 60) {
+        countdownTime = parseInt(Math.round(timeToWait), 10);
+        countdownUnit = " second";
+        if (countdownTime % 10 !== 0 || countdownTime == 0) {
+          updateCountdownTime = false;
+        }
+      }
+      if (countdownTime !== 1) countdownUnit += "s";
+      if (updateCountdownTime) {
+        document.querySelector("#minutes_remaining").innerHTML = countdownTime;
+        document.querySelector("#units").innerHTML = countdownUnit;
+      }
     } catch (error) {
       // continue regardless of error
     }
