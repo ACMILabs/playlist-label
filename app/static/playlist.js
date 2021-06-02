@@ -209,18 +209,22 @@ export default class PlaylistLabelRenderer {
   updateMainLabelContent(item) {
     const { label } = item;
     // Update the label fields with the currently playing data
-    document.getElementById("title").innerHTML = label.title;
-    this.addTitleAnnotation(label.work);
-    document.getElementById("subtitles").innerHTML = label.subtitles;
-    document.getElementById("content0").innerHTML = label.columns[0].content;
-    document.getElementById("content1").innerHTML = label.columns[1].content;
-    document.getElementById("content2").innerHTML = label.columns[2].content;
+    try {
+      document.getElementById("title").innerHTML = label.title;
+      this.addTitleAnnotation(label.work);
+      document.getElementById("subtitles").innerHTML = label.subtitles;
+      document.getElementById("content0").innerHTML = label.columns[0].content;
+      document.getElementById("content1").innerHTML = label.columns[1].content;
+      document.getElementById("content2").innerHTML = label.columns[2].content;
 
-    if (label.work.is_context_indigenous) {
-      document.getElementById("indigenous").className =
-        "indigenous indigenous_active";
-    } else {
-      document.getElementById("indigenous").className = "indigenous";
+      if (label.work.is_context_indigenous) {
+        document.getElementById("indigenous").className =
+          "indigenous indigenous_active";
+      } else {
+        document.getElementById("indigenous").className = "indigenous";
+      }
+    } catch (error) {
+      // Pass for a countdown template without a title element
     }
   }
 
@@ -252,17 +256,23 @@ export default class PlaylistLabelRenderer {
 
     // calculate time to wait times for the upcoming videos;
     let timeToWait = items[0].video.duration_secs * (1.0 - playbackPosition);
-    for (let i = 1; i < items.length; i++) {
-      const numMinutes = parseInt(Math.round(timeToWait / 60.0), 10);
-      let unit = " minute";
-      if (numMinutes !== 1) unit += "s";
+    const numMinutes = parseInt(Math.round(timeToWait / 60.0), 10);
+    let unit = " minute";
+    if (numMinutes !== 1) unit += "s";
 
+    try {
+      // Set countdown timer minutes remaining
+      document.querySelector("#minutes_remaining").innerHTML = numMinutes;
+      document.querySelector("#units").innerHTML = unit;
+    } catch (error) {
+      // continue regardless of error
+    }
+
+    for (let i = 1; i < items.length; i++) {
       const id = `#up_next_label_${i}`;
       try {
         document.querySelector(`${id} .time_to_wait`).innerHTML =
           numMinutes + unit;
-        document.querySelector('#minutes_remaining').innerHTML = numMinutes;
-        document.querySelector('#units').innerHTML = unit;
       } catch (error) {
         // continue regardless of error
       }
@@ -319,14 +329,18 @@ export default class PlaylistLabelRenderer {
   addTitleAnnotation(work) {
     // If a title_annotation exists, add it to the end of the title
     if (work && work.title_annotation) {
-      const title = document.getElementById("title");
-      const titleAnnotation = document.createElement("span");
-      titleAnnotation.className = "title_annotation";
-      titleAnnotation.innerHTML = work.title_annotation;
-      title.innerHTML = title.innerHTML.replace(
-        /<\/p>/g,
-        `${titleAnnotation.outerHTML}</p>`
-      );
+      try {
+        const title = document.getElementById("title");
+        const titleAnnotation = document.createElement("span");
+        titleAnnotation.className = "title_annotation";
+        titleAnnotation.innerHTML = work.title_annotation;
+        title.innerHTML = title.innerHTML.replace(
+          /<\/p>/g,
+          `${titleAnnotation.outerHTML}</p>`
+        );
+      } catch (error) {
+        // Pass for a countdown template without a title element
+      }
     }
   }
 }
