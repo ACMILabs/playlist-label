@@ -269,7 +269,7 @@ export default class PlaylistLabelRenderer {
       if (timeToWait < 60) {
         countdownTime = parseInt(Math.round(timeToWait), 10);
         countdownUnit = " second";
-        if (countdownTime % 10 !== 0 || countdownTime == 0) {
+        if (countdownTime % 10 !== 0 || countdownTime === 0) {
           updateCountdownTime = false;
         }
       }
