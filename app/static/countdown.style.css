@@ -1,0 +1,33 @@
+html, body {
+    height: 100%;
+}
+
+.container {
+    display: table;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    font-size: 7rem;
+    line-height: 8rem;
+}
+
+#left_heading {
+    display: table-cell;
+    vertical-align: middle;
+    height: 100%;
+    width: 55%;
+    font-family: PxGrotesk;
+}
+
+#right_heading {
+    display: table-cell;
+    vertical-align: middle;
+    height: 100%;
+    width: 45%;
+    font-family: FaktPro;
+}
+
+.progress-bar {
+    background-color: rgb(249, 213, 72);
+    height: 2.5rem;
+}
