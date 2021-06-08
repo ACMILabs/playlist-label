@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import PlaylistLabelRenderer from "../../../app/static/playlist";
 import playlistJson from "../../data/playlist.json";
 import messageJson from "../../data/message.json";
