@@ -6,6 +6,7 @@ import PlaylistLabelRenderer from "../../../app/static/playlist";
 import playlistJson from "../../data/playlist.json";
 import messageJson from "../../data/message.json";
 import messageJsonWithTitleAnnotation from "../../data/message_with_title_annotation.json";
+import tapSuccessfulEventData from "../../data/tap_successful_event_data.json";
 
 describe("PlaylistLabelRenderer", () => {
   beforeEach(() => {
@@ -113,9 +114,12 @@ describe("PlaylistLabelRenderer", () => {
   });
 
   it("should handle tap events", () => {
+    const tapSuccessfulEventPayload = {
+      data: JSON.stringify(tapSuccessfulEventData),
+    };
     const renderer = new PlaylistLabelRenderer();
     renderer.init();
-    renderer.handleTapMessage();
+    renderer.handleTapMessage(tapSuccessfulEventPayload);
     expect(renderer.state.isAnimatingCollect).toBeTruthy();
   });
 });
