@@ -152,10 +152,6 @@ p:last-child {
   transform: rotate(0deg);
 }
 
-.collect.right.active.tap_fail:after {
-  background: url('cross.svg') center/contain no-repeat;
-}
-
 .collect.right.active.hidden:after,
 .collect.right.hidden:after {
   opacity: 0;

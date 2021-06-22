@@ -137,11 +137,6 @@ p:last-child {
   background: url('tick.svg') center/contain no-repeat;
   transform: rotate(0deg);
 }
-
-.collect.active.tap_fail:after {
-  background: url('cross.svg') center/contain no-repeat;
-}
-
 .collect.active.hidden,
 .collect.hidden {
   color: rgba(255,255,255,0);
