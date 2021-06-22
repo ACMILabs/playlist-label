@@ -1,0 +1,29 @@
+{% extends "_base.html" %}
+
+{% block title %}Countdown timer for Playlist: {{ playlist_json.title }}{% endblock %}
+{% block stylesheet %}/static/countdown.style.css{% endblock %}
+{% block bodyclass %}countdown{% endblock %}
+
+{% block body %}
+{% if not playlist_json or playlist_json.playlist_labels|length == 0 %}
+    <div class='container'>
+        <div id="left_heading">
+            <div class='title'>Playlist has no labels 😭</div>
+        </div>
+    </div>
+{% else %}
+    <div class='container'>
+        <div id="left_heading">
+            <div class='title'><p>Restarting<br>in</p></div>
+        </div>
+        <div id="right_heading">
+            <div class='title'><p><span id="minutes_remaining">0:00</span><br><span id="units">minutes</span></p></div>
+        </div>
+    </div>
+    {% if playlist_json.playlist_labels|length > 0 %}
+        <div class='progress-bar-container full-width-progress'>
+            <div id='progress-bar' class='progress-bar'></div>
+        </div>
+    {% endif %}
+{% endif %}
+{% endblock body %}
