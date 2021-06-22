@@ -19,4 +19,4 @@ def database():
     test_db.bind([Message, HasTapped], bind_refs=False, bind_backrefs=False)
     test_db.connect()
     test_db.create_tables([Message, HasTapped])
-    HasTapped.create(has_tapped=0)
+    HasTapped.create(has_tapped=0, tap_successful=0)
