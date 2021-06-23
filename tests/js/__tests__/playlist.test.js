@@ -7,6 +7,7 @@ import playlistJson from "../../data/playlist.json";
 import messageJson from "../../data/message.json";
 import messageJsonWithTitleAnnotation from "../../data/message_with_title_annotation.json";
 import tapSuccessfulEventData from "../../data/tap_successful_event_data.json";
+import tapFailedEventData from "../../data/tap_failed_event_data.json";
 
 describe("PlaylistLabelRenderer", () => {
   beforeEach(() => {
@@ -54,6 +55,10 @@ describe("PlaylistLabelRenderer", () => {
                               </div>
                               <div class="progress-bar-container">
                                 <div id="progress-bar" class="progress-bar"></div>
+                              </div>
+                              <div id="error-dialogue" class="error-dialogue closed">
+                                <div id="error-dialogue-text" class="error-dialogue-text">Error</div>
+                                <div class="error-dialogue-close" />
                               </div>`;
   });
 
@@ -121,5 +126,15 @@ describe("PlaylistLabelRenderer", () => {
     renderer.init();
     renderer.handleTapMessage(tapSuccessfulEventPayload);
     expect(renderer.state.isAnimatingCollect).toBeTruthy();
+  });
+
+  it("should handle failed tap events", () => {
+    const tapFailedEventPayload = {
+      data: JSON.stringify(tapFailedEventData),
+    };
+    const renderer = new PlaylistLabelRenderer();
+    renderer.init();
+    renderer.handleTapMessage(tapFailedEventPayload);
+    expect(renderer.state.isAnimatingCollect).toBe(false);
   });
 });
