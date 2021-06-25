@@ -58,7 +58,6 @@ describe("PlaylistLabelRenderer", () => {
                               </div>
                               <div id="error-dialogue" class="error-dialogue closed">
                                 <div id="error-dialogue-text" class="error-dialogue-text">Error</div>
-                                <div class="error-dialogue-close" />
                               </div>`;
   });
 
