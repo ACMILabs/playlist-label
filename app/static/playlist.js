@@ -325,13 +325,11 @@ export default class PlaylistLabelRenderer {
       this.closeErrorDialogue.bind(this),
       3000
     );
-    window.addEventListener("click", this.closeErrorDialogue.bind(this));
   }
 
   closeErrorDialogue() {
     const errorDialogueElement = document.getElementById("error-dialogue");
     window.clearTimeout(this.state.errorDialogueCloseTimeout);
-    window.removeEventListener("click", this.closeErrorDialogue);
     errorDialogueElement.className = "error-dialogue closed";
   }
 

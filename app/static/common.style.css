@@ -110,7 +110,7 @@ body {
   transform: translate(-50%, -50%);
   width: 50vw;
   height: 50vh;
-  background: #000;
+  background: #fff;
   border: 2px solid #565251;
   transition: opacity 400ms;
   opacity: 0;
@@ -119,12 +119,10 @@ body {
 
 .error-dialogue.open {
   opacity: 1;
-  pointer-events: all;
 }
 
 .error-dialogue.closed {
   opacity: 0;
-  pointer-events: none;
 }
 
 .error-dialogue-text {
@@ -134,17 +132,16 @@ body {
   top: 50%;
   transform: translate(-50%, -50%);
   width: 65%;
-  font-size: 60px;
+  font-size: 3rem;
   font-family: PxGrotesk;
-  color: #fff;
+  color: #000;
   text-align: center;
 }
 
-.error-dialogue-close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 50px;
-  height: 50px;
-  background: center/contain url('close.svg');
+@media (max-width: 720px) {
+  .error-dialogue {
+    width: 90vw;
+    height: 30vh;
+    top: 40%;
+  }
 }
