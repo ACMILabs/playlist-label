@@ -44,27 +44,6 @@ def mocked_requests_post(*args, **kwargs):
     raise Exception("No mocked sample data for request: "+args[0])
 
 
-@pytest.mark.usefixtures('database')
-def test_message():
-    """
-    Test the Message class initialises.
-    """
-
-    timestamp = datetime.datetime.now().timestamp()
-
-    message = Message.create(
-        datetime=timestamp,
-        playlist_id=1,
-        media_player_id=1,
-        label_id=1,
-        playback_position=0,
-        audio_buffer=0,
-        video_buffer=0,
-    )
-    assert message
-    assert message.datetime is timestamp
-
-
 @patch('requests.get', MagicMock(side_effect=mocked_requests_get))
 def test_create_cache(capsys):
     """
@@ -249,7 +228,6 @@ def test_tap_received_while_processing_still_creates(client):
     """
     Test that if an old tap is still being processed by the UI, new taps are still created
     """
-    import pdb; pdb.set_trace()
     has_tapped = HasTapped.get_or_none(tap_processing=0)
     has_tapped.tap_processing = 1
     has_tapped.save()

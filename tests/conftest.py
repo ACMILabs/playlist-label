@@ -1,5 +1,6 @@
-import pytest
 import datetime
+
+import pytest
 from peewee import SqliteDatabase
 
 from app import main
