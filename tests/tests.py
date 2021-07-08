@@ -7,7 +7,7 @@ import pytest
 
 from app import cache, main
 from app.cache import create_cache
-from app.main import Message, PlaylistLabel
+from app.main import HasTapped, Message, PlaylistLabel
 
 
 class MockResponse:
@@ -34,9 +34,12 @@ def mocked_requests_get(*args, **kwargs):
 
 
 def mocked_requests_post(*args, **kwargs):
-    if args[0] == 'https://xos.acmi.net.au/api/taps/':
+    request_url = args[0]
+    if '/api/taps/' in request_url:
         with open('tests/data/xos_tap.json', 'r') as the_file:
             return MockResponse(the_file.read(), 201)
+    if '/api/bad-uri/' in request_url:
+        return MockResponse('{}', 404)
 
     raise Exception("No mocked sample data for request: "+args[0])
 
@@ -137,6 +140,7 @@ def test_route_playlist_json(client):
     assert response.status_code == 200
 
 
+@pytest.mark.usefixtures('database')
 @patch('requests.post', MagicMock(side_effect=mocked_requests_post))
 def test_route_collect_item(client):
     """
@@ -154,6 +158,10 @@ def test_route_collect_item(client):
 
     assert response.json["nfc_tag"]["short_code"] == "nbadbb"
     assert response.status_code == 201
+
+    has_tapped = HasTapped.get_or_none(tap_processing=1)
+    assert has_tapped.has_tapped == 1
+    assert has_tapped.tap_successful == 1
 
 
 @patch('sentry_sdk.capture_exception', side_effect=MagicMock())
@@ -210,3 +218,49 @@ def test_send_error_sends_on_repetition_and_repeat_every_1_second(capture_except
     # make sure the error is sent after 1 second
     playlist_label.send_error('rmq_conn', None, on_rep=5, every=1, units='seconds')
     assert capture_exception.call_count == 2
+
+
+@pytest.mark.usefixtures('database')
+@patch('app.main.XOS_TAPS_ENDPOINT', 'https://xos.acmi.net.au/api/bad-uri/')
+@patch('requests.post', MagicMock(side_effect=mocked_requests_post))
+def test_tap_received_xos_error(client):
+    """
+    Test that a tap fails correctly for an XOS error
+    """
+    with open('tests/data/lens_tap.json', 'r') as the_file:
+        lens_tap_data = the_file.read()
+
+    response = client.post(
+        '/api/taps/',
+        data=lens_tap_data,
+        headers={'Content-Type': 'application/json'}
+    )
+
+    assert response.status_code == 400
+
+    has_tapped = HasTapped.get_or_none(tap_processing=1)
+    assert has_tapped.has_tapped == 1
+    assert has_tapped.tap_successful == 0
+
+
+@pytest.mark.usefixtures('database')
+@patch('requests.post', MagicMock(side_effect=mocked_requests_post))
+def test_tap_received_while_processing_still_creates(client):
+    """
+    Test that if an old tap is still being processed by the UI, new taps are still created
+    """
+    import pdb; pdb.set_trace()
+    has_tapped = HasTapped.get_or_none(tap_processing=0)
+    has_tapped.tap_processing = 1
+    has_tapped.save()
+
+    with open('tests/data/lens_tap.json', 'r') as the_file:
+        lens_tap_data = the_file.read()
+
+    response = client.post(
+        '/api/taps/',
+        data=lens_tap_data,
+        headers={'Content-Type': 'application/json'}
+    )
+
+    assert response.status_code == 201
