@@ -117,14 +117,6 @@ body {
   pointer-events: none;
 }
 
-.error-dialogue.open {
-  opacity: 1;
-}
-
-.error-dialogue.closed {
-  opacity: 0;
-}
-
 .error-dialogue-text {
   position: absolute;
   z-index: 10;

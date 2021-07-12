@@ -315,7 +315,7 @@ export default class PlaylistLabelRenderer {
 
   openErrorDialogue(errorText) {
     const errorDialogueElement = document.getElementById("error-dialogue");
-    errorDialogueElement.className = "error-dialogue open";
+    errorDialogueElement.style.opacity = 1;
     const errorDialogueTextElement = document.getElementById(
       "error-dialogue-text"
     );
@@ -330,11 +330,11 @@ export default class PlaylistLabelRenderer {
   closeErrorDialogue() {
     const errorDialogueElement = document.getElementById("error-dialogue");
     window.clearTimeout(this.state.errorDialogueCloseTimeout);
-    errorDialogueElement.className = "error-dialogue closed";
+    errorDialogueElement.style.opacity = 0;
   }
 
-  handleTapMessage(e) {
-    const eventData = JSON.parse(e.data);
+  handleTapMessage(event) {
+    const eventData = JSON.parse(event.data);
     const tapSuccessful =
       eventData.tap_successful && eventData.tap_successful === 1;
 
