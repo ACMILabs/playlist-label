@@ -4,6 +4,8 @@
  */
 
 const FPS = 5;
+const COLLECT_TEXT = "TO COLLECT TAP LENS ON READER";
+exports.COLLECT_TEXT = COLLECT_TEXT;
 
 export default class PlaylistLabelRenderer {
   /**
@@ -63,6 +65,9 @@ export default class PlaylistLabelRenderer {
     ) {
       setInterval(this.autoUpdateProgress, 1000 / FPS, this);
     }
+
+    const collectElement = document.getElementById("collect");
+    collectElement.innerHTML = COLLECT_TEXT;
   }
 
   hashChange() {
@@ -365,7 +370,7 @@ export default class PlaylistLabelRenderer {
     window.setTimeout(
       function timeout3() {
         collectElement.className = collectClassname;
-        collectElement.innerHTML = "COLLECT";
+        collectElement.innerHTML = COLLECT_TEXT;
         this.state.isAnimatingCollect = false;
       }.bind(this),
       3500
