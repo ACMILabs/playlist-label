@@ -9,8 +9,6 @@ import messageJsonWithTitleAnnotation from "../../data/message_with_title_annota
 import tapSuccessfulEventData from "../../data/tap_successful_event_data.json";
 import tapFailedEventData from "../../data/tap_failed_event_data.json";
 
-const CONSTANTS = require("../../../app/static/playlist");
-
 describe("PlaylistLabelRenderer", () => {
   beforeEach(() => {
     // Reset Mocks
@@ -73,7 +71,7 @@ describe("PlaylistLabelRenderer", () => {
     const renderer = new PlaylistLabelRenderer();
     renderer.init();
     const collectElement = document.getElementById("collect");
-    expect(collectElement.innerHTML).toBe(CONSTANTS.COLLECT_TEXT);
+    expect(collectElement.innerHTML).toBe(renderer.state.collectText);
   });
 
   it("should update label fields when a message arrives", () => {
