@@ -58,6 +58,27 @@ describe("PlaylistLabelRenderer", () => {
                               </div>
                               <div id="error-dialogue" class="error-dialogue closed">
                                 <div id="error-dialogue-text" class="error-dialogue-text">Error</div>
+                              </div>
+                              <div id="up_next_template">
+                                  <div class="up_next_work" id="up_next_label_1">
+                                    <div class="title"></div>
+                                    <div class="subtitles"></div>
+                                    <div class="starts_in">Starts <span class="time_to_wait">x minutes</span></div>
+                                  </div>
+                                  <div class="up_next_work" id="up_next_label_2">
+                                    <div class="title"></div>
+                                    <div class="subtitles"></div>
+                                    <div class="starts_in">Starts <span class="time_to_wait">x minutes</span></div>
+                                  </div>
+                              </div>
+                              <div id="countdown_template">
+                                <div class="title">
+                                  <p>
+                                    <span id="minutes_remaining">0:00</span>
+                                    <br>
+                                    <span id="units">minutes</span>
+                                  </p>
+                                </div>
                               </div>`;
   });
 
@@ -115,6 +136,57 @@ describe("PlaylistLabelRenderer", () => {
     expect(document.body.innerHTML).toContain(
       element.label.work.title_annotation
     );
+  });
+
+  it("up next should show correct time left message", () => {
+    const messageData = {
+      payloadString: JSON.stringify(messageJson),
+    };
+
+    const renderer = new PlaylistLabelRenderer();
+    renderer.state.playlistJson = playlistJson;
+    renderer.init();
+    renderer.onMessageArrived(messageData);
+
+    const upNextTemplate = document.querySelector("#up_next_template");
+
+    const timeToWaitElement1 = upNextTemplate.querySelector(
+      "#up_next_label_1 .time_to_wait"
+    );
+    expect(timeToWaitElement1.innerHTML).toContain("soon");
+
+    const timeToWaitElement2 = upNextTemplate.querySelector(
+      "#up_next_label_2 .time_to_wait"
+    );
+    expect(timeToWaitElement2.innerHTML).toContain("3 minutes");
+  });
+
+  it("countdown should show correct time left message", () => {
+    const renderer = new PlaylistLabelRenderer();
+    renderer.state.playlistJson = playlistJson;
+    renderer.init();
+
+    const messageData = {
+      payloadString: JSON.stringify(messageJson),
+    };
+    renderer.onMessageArrived(messageData);
+    const countDownTemplate = document.querySelector("#countdown_template");
+    const minutesRemainingElement =
+      countDownTemplate.querySelector("#minutes_remaining");
+    const timeLeftUnitElement = countDownTemplate.querySelector("#units");
+
+    expect(minutesRemainingElement.innerHTML).toContain("1");
+    expect(timeLeftUnitElement.innerHTML).toContain(" minute");
+
+    const newMessageJson = messageJson;
+    newMessageJson.playback_position = 0.66;
+    const newMessageData = {
+      payloadString: JSON.stringify(newMessageJson),
+    };
+    renderer.onMessageArrived(newMessageData);
+
+    expect(minutesRemainingElement.innerHTML).toContain("20");
+    expect(timeLeftUnitElement.innerHTML).toContain(" seconds");
   });
 
   it("should handle tap events", () => {

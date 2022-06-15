@@ -254,7 +254,7 @@ export default class PlaylistLabelRenderer {
     progressBar.style.width = `${playbackPosition * 100}%`;
 
     const items = this.state.upcomingItems;
-    let secondsLeft = items[0].video.duration_secs * (1.0 - playbackPosition);
+    const secondsLeft = items[0].video.duration_secs * (1.0 - playbackPosition);
 
     this.updateCountdownProgress(items, secondsLeft);
     this.updateUpNextProgress(items, secondsLeft);
@@ -263,13 +263,13 @@ export default class PlaylistLabelRenderer {
   updateCountdownProgress(items, secondsLeft) {
     const minutesLeft = this.getMinutesFromSeconds(secondsLeft);
     let countdownTime = minutesLeft;
-    let countdownUnit = " minute"
+    let countdownUnit = " minute";
 
     try {
       if (secondsLeft < 60) {
-        let secondsLeftRounded = parseInt(Math.round(secondsLeft), 10);
+        const secondsLeftRounded = parseInt(Math.round(secondsLeft), 10);
 
-        if (countdownTime % 10 !== 0 || countdownTime === 0) {
+        if (secondsLeftRounded % 10 !== 0 || secondsLeftRounded === 0) {
           return;
         }
 
@@ -296,15 +296,16 @@ export default class PlaylistLabelRenderer {
         let timeToWaitText = "";
 
         if (upNextTime > 60) {
-          let minutesLeft = this.getMinutesFromSeconds(upNextTime);
-          timeToWaitText = "in " + minutesLeft + " minute";
+          const minutesLeft = this.getMinutesFromSeconds(upNextTime);
+          timeToWaitText = `in ${minutesLeft} minute`;
 
           if (minutesLeft > 1) timeToWaitText += "s";
         } else {
-          timeToWaitText = 'soon';
+          timeToWaitText = "soon";
         }
 
-        document.querySelector(`${id} .time_to_wait`).innerHTML = timeToWaitText;
+        document.querySelector(`${id} .time_to_wait`).innerHTML =
+          timeToWaitText;
       } catch (error) {
         // continue regardless of error
       }
