@@ -88,6 +88,13 @@ describe("PlaylistLabelRenderer", () => {
     expect(renderer).toBeInstanceOf(PlaylistLabelRenderer);
   });
 
+  it("displays expected tap to collect text", () => {
+    const renderer = new PlaylistLabelRenderer();
+    renderer.init();
+    const collectElement = document.getElementById("collect");
+    expect(collectElement.innerHTML).toBe(renderer.state.collectText);
+  });
+
   it("should update label fields when a message arrives", () => {
     const messageData = {
       payloadString: JSON.stringify(messageJson),

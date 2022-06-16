@@ -112,6 +112,11 @@ p:last-child {
   margin-bottom: 0px;
 }
 
+@-webkit-keyframes animateright {
+  0% { -webkit-transform: translateX(0) rotate(-90deg); }
+  100% { -webkit-transform: translateX(0.2em) rotate(-90deg); }
+}
+
 .collect {
   float: right;
   color: #000;
@@ -135,11 +140,13 @@ p:last-child {
   transition: opacity 500ms;
   transform: rotate(-90deg);
   vertical-align: -19px;
+  -webkit-animation: animateright 0.6s infinite alternate ease-in-out;
 }
 
 .collect.active:after  {
   background: url('tick.svg') center/contain no-repeat;
   transform: rotate(0deg);
+  -webkit-animation: none;
 }
 .collect.active.hidden,
 .collect.hidden {
