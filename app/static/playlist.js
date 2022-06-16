@@ -256,11 +256,11 @@ export default class PlaylistLabelRenderer {
     const items = this.state.upcomingItems;
     const secondsLeft = items[0].video.duration_secs * (1.0 - playbackPosition);
 
-    this.updateCountdownProgress(items, secondsLeft);
+    this.updateCountdownProgress(secondsLeft);
     this.updateUpNextProgress(items, secondsLeft);
   }
 
-  updateCountdownProgress(items, secondsLeft) {
+  updateCountdownProgress(secondsLeft) {
     const minutesLeft = this.getMinutesFromSeconds(secondsLeft);
     let countdownTime = minutesLeft;
     let countdownUnit = " minute";
