@@ -260,45 +260,64 @@ export default class PlaylistLabelRenderer {
     progressBar.style.width = `${playbackPosition * 100}%`;
 
     const items = this.state.upcomingItems;
+    const secondsLeft = items[0].video.duration_secs * (1.0 - playbackPosition);
 
-    // calculate time to wait times for the upcoming videos;
-    let timeToWait = items[0].video.duration_secs * (1.0 - playbackPosition);
-    const numMinutes = parseInt(Math.round(timeToWait / 60.0), 10);
-    let unit = " minute";
-    if (numMinutes !== 1) unit += "s";
+    this.updateCountdownProgress(secondsLeft);
+    this.updateUpNextProgress(items, secondsLeft);
+  }
+
+  updateCountdownProgress(secondsLeft) {
+    const minutesLeft = this.getMinutesFromSeconds(secondsLeft);
+    let countdownTime = minutesLeft;
+    let countdownUnit = " minute";
 
     try {
-      // Set countdown timer minutes remaining
-      let countdownTime = numMinutes;
-      let countdownUnit = " minute";
-      if (countdownTime !== 1) unit += "s";
-      let updateCountdownTime = true;
-      if (timeToWait < 60) {
-        countdownTime = parseInt(Math.round(timeToWait), 10);
-        countdownUnit = " second";
-        if (countdownTime % 10 !== 0 || countdownTime === 0) {
-          updateCountdownTime = false;
+      if (secondsLeft < 60) {
+        const secondsLeftRounded = parseInt(Math.round(secondsLeft), 10);
+
+        if (secondsLeftRounded % 10 !== 0 || secondsLeftRounded === 0) {
+          return;
         }
+
+        countdownTime = secondsLeftRounded;
+        countdownUnit = " second";
       }
-      if (countdownTime !== 1) countdownUnit += "s";
-      if (updateCountdownTime) {
-        document.querySelector("#minutes_remaining").innerHTML = countdownTime;
-        document.querySelector("#units").innerHTML = countdownUnit;
-      }
+
+      if (countdownTime > 1) countdownUnit += "s";
+
+      document.querySelector("#minutes_remaining").innerHTML = countdownTime;
+      document.querySelector("#units").innerHTML = countdownUnit;
     } catch (error) {
       // continue regardless of error
     }
+  }
+
+  updateUpNextProgress(items, secondsLeft) {
+    let upNextTime = secondsLeft;
 
     for (let i = 1; i < items.length; i++) {
       const id = `#up_next_label_${i}`;
+
       try {
+        let timeToWaitText = "";
+
+        if (upNextTime > 60) {
+          const minutesLeft = this.getMinutesFromSeconds(upNextTime);
+          timeToWaitText = `in ${minutesLeft} minute`;
+
+          if (minutesLeft > 1) timeToWaitText += "s";
+        } else {
+          timeToWaitText = "soon";
+        }
+
         document.querySelector(`${id} .time_to_wait`).innerHTML =
-          numMinutes + unit;
+          timeToWaitText;
       } catch (error) {
         // continue regardless of error
       }
+
       try {
-        timeToWait += items[i].video.duration_secs;
+        upNextTime += items[i].video.duration_secs;
       } catch (error) {
         // continue regardless of error
       }
@@ -394,5 +413,9 @@ export default class PlaylistLabelRenderer {
         // Pass for a countdown template without a title element
       }
     }
+  }
+
+  getMinutesFromSeconds(seconds) {
+    return parseInt(Math.round(seconds / 60.0), 10);
   }
 }
