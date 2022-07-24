@@ -75,9 +75,10 @@ p:last-child {
   0% { -webkit-transform: translateX(0) rotate(90deg); }
   100% { -webkit-transform: translateX(-0.2em) rotate(90deg); }
 }
+
 @-webkit-keyframes animatedown {
-  0% { -webkit-transform: translateY(0) ; }
-  100% { -webkit-transform: translateY(0.2em) ; }
+  0% { -webkit-transform: translateY(0); }
+  100% { -webkit-transform: translateY(0.2em); }
 }
 
 .collect {
@@ -105,7 +106,20 @@ p:last-child {
   transition: opacity 500ms;
   transform: rotate(90deg);
   vertical-align: -12px;
-  -webkit-animation: animatedown 0.6s infinite alternate ease-in-out;
+  -webkit-animation: animatedown 0.6s infinite alternate ease-in-out; 
+}
+
+.collect.left::before {
+  width: 30px;
+  height: 41px;
+  display: inline-block;
+  background: url('down.svg') center/contain no-repeat;
+  content: " ";
+  margin-left: 10px;
+  transition: opacity 500ms;
+  transform: rotate(-90deg);
+  vertical-align: -12px;
+  -webkit-animation: animateleft 0.6s infinite alternate ease-in-out;
 }
 
 @media (max-width: 720px) {
