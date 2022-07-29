@@ -5,11 +5,12 @@
   "main": "''",
   "scripts": {
     "test": "jest",
+    "test:debug": "node --inspect-brk=0.0.0.0:9229 node_modules/jest/bin/jest.js",
     "lint": "eslint .",
     "lint-test": "npm run lint && npm run test"
   },
   "devDependencies": {
-    "jest": "^28.1.3",
+    "jest": "*",
     "jest-fetch-mock": "*"
   },
   "jest": {
@@ -34,20 +35,21 @@
   "homepage": "https://github.com/ACMILabs/playlist-label-pi#readme",
   "dependencies": {
     "babel-eslint": "*",
-    "babel-jest": "^28.1.3",
+    "babel-jest": "*",
     "babel-plugin-transform-es2015-modules-commonjs": "*",
-    "eslint": "^8.20.0",
-    "eslint-config-airbnb": "^19.0.4",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-config-react-app": "^7.0.1",
-    "eslint-plugin-flowtype": "^8.0.3",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jest": "^26.6.0",
-    "eslint-plugin-jsx-a11y": "^6.6.1",
-    "eslint-plugin-prettier": "^4.2.1",
-    "eslint-plugin-react": "^7.30.1",
-    "moment": "^2.29.4",
-    "prettier": "^2.7.1"
+    "eslint": "*",
+    "eslint-config-airbnb": "*",
+    "eslint-config-prettier": "*",
+    "eslint-config-react-app": "*",
+    "eslint-plugin-flowtype": "*",
+    "eslint-plugin-import": "*",
+    "eslint-plugin-jest": "*",
+    "eslint-plugin-jsx-a11y": "*",
+    "eslint-plugin-prettier": "*",
+    "eslint-plugin-react": "*",
+    "jest-environment-jsdom": "*",
+    "moment": "*",
+    "prettier": "*"
   },
   "babel": {
     "plugins": [
