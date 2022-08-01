@@ -44,7 +44,9 @@ To run the python tests:
 
 To run the javascript tests:
 
-`$ cd testing` and `$ docker-compose up --build` and `$ docker exec -it javascripttests npm install` and `$ docker exec -it javascripttests make linttestjs`
+* Build the container:`$ cd testing` and `$ docker-compose up --build`
+* If this is the first time you're running the container, install the `npm` dependencies: `$ docker exec -it javascripttests npm install`
+* Run the tests:`$ docker exec -it javascripttests make linttestjs`
 
 ## Installation on Raspbian
 
