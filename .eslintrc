@@ -1,7 +1,11 @@
 {
   "root": true,
   "extends": ["airbnb", "plugin:prettier/recommended"],
-  "plugins": ["jest", "react", "prettier"],
+  "plugins": ["jest", "prettier"],
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
   "env": {
     "browser": true,
     "jest/globals": true
@@ -11,6 +15,7 @@
     "no-console": "error",
     "no-restricted-syntax": 0,
     "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],
+    "import/extensions":0,
     "operator-linebreak": [
       "error",
       "after",

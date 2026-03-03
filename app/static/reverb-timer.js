@@ -1,6 +1,133 @@
+import { computed, signal } from "./signals.js";
+/**
+ * ReverbTimer — Custom element that displays an SVG ring countdown timer.
+ *
+ * Renders a circular progress indicator with elapsed time (MM:SS) and a
+ * duration subtitle. Driven by two data attributes:
+ *
+ *   - `data-video-duration`   — total duration in milliseconds
+ *   - `data-video-start-time` — timestamp (ms since epoch) when playback started
+ *
+ * Elapsed time is calculated as `(Date.now() - startTime) % duration` so the
+ * timer loops automatically. The SVG ring progress and text are updated every
+ * frame via requestAnimationFrame.
+ *
+ * Expects this internal DOM structure (provided by the parent template):
+ *
+ *   <acmi-reverb-timer>
+ *     <div class="timer">
+ *       <svg>…</svg>
+ *       <pre class="ticker">00:00</pre>
+ *       <p class="subtitle">Duration</p>
+ *     </div>
+ *   </acmi-reverb-timer>
+ *
+ * The SVG foreground circle's stroke-dasharray is set via the `--disk-ratio`
+ * CSS custom property on the host element.
+ */
 
-class ReverbTimer extends HTMLElement {
-
+/**
+ * Format minutes and seconds into a human-readable duration string.
+ * @param {number} mins
+ * @param {number} seconds
+ * @returns {string} e.g. "Duration: 3 minutes 25 seconds"
+ */
+function formatDurationText(mins, seconds) {
+  const parts = ["Duration:"];
+  if (mins > 0) {
+    parts.push(`${mins} minute${mins !== 1 ? "s" : ""}`);
+  }
+  if (seconds > 0 || mins === 0) {
+    parts.push(`${seconds} second${seconds !== 1 ? "s" : ""}`);
+  }
+  return parts.join(" ");
 }
 
-customElements.define('acmi-reverb-timer',ReverbTimer)
+class ReverbTimer extends HTMLElement {
+  static observedAttributes =
+    /** @type {const} */
+    (["data-video-duration", "data-video-start-time"]);
+
+  /** Total video duration in milliseconds */
+  duration = signal(60 * 1_000);
+
+  /** Playback start timestamp (ms since epoch) */
+  startTime = signal(Date.now());
+
+  /** Duration broken into minutes and seconds for display */
+  durationData = computed(() => {
+    const d = this.duration.get();
+    const mins = Math.floor(d / 1_000 / 60);
+    const seconds = Math.floor((d % 60_000) / 1_000);
+    return { mins, seconds };
+  });
+
+  /** Current elapsed time in milliseconds (loops at duration) */
+  elapsed = signal(0);
+
+  /** Elapsed time broken into minutes and seconds for display */
+  elapsedData = computed(() => {
+    const d = this.elapsed.get();
+    const mins = Math.floor(d / 1_000 / 60);
+    const seconds = Math.floor((d / 1_000) % 60);
+    return { mins, seconds };
+  });
+
+  /** Progress ratio (0–1) of elapsed / duration */
+  ratio = computed(() => this.elapsed.get() / this.duration.get());
+
+  /** SVG stroke-dasharray value string derived from progress ratio */
+  strokeDashes = computed(() => {
+    const t = this.ratio.get();
+    const positiveLength = (t * 100).toFixed(2);
+    const negativeLength = ((1 - t) * 100).toFixed(2);
+    return `${positiveLength} ${negativeLength}`;
+  });
+
+  connectedCallback() {
+    this.elapsedElem = this.querySelector(".ticker");
+    this.durationElem = this.querySelector(".subtitle");
+
+    const update = () => {
+      const elapsed = (Date.now() - this.startTime.get()) % this.duration.get();
+      this.elapsed.set(elapsed);
+
+      // Update SVG ring progress via CSS custom property
+      this.style.setProperty("--disk-ratio", this.strokeDashes.get());
+
+      // Update duration text
+      const durat = this.durationData.get();
+      this.durationElem.textContent = formatDurationText(
+        durat.mins,
+        durat.seconds
+      );
+
+      // Update elapsed ticker (MM:SS)
+      const elap = this.elapsedData.get();
+      this.elapsedElem.textContent = `${elap.mins}:${elap.seconds
+        .toString(10)
+        .padStart(2, "0")}`;
+
+      this.animationHandler = requestAnimationFrame(update);
+    };
+
+    this.animationHandler = requestAnimationFrame(update);
+  }
+
+  disconnectedCallback() {
+    if (this.animationHandler) {
+      cancelAnimationFrame(this.animationHandler);
+    }
+  }
+
+  attributeChangedCallback(attributeName, _, newValue) {
+    if (attributeName === "data-video-duration") {
+      this.duration.set(parseFloat(newValue));
+    }
+    if (attributeName === "data-video-start-time") {
+      this.startTime.set(parseFloat(newValue));
+    }
+  }
+}
+
+customElements.define("acmi-reverb-timer", ReverbTimer);
