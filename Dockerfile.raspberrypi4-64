@@ -1,6 +1,6 @@
 # base-image for python on any machine using a template variable,
 # see more about dockerfile templates here: https://www.balena.io/docs/learn/develop/dockerfile/
-FROM balenalib/raspberrypi3:buster
+FROM balenalib/raspberrypi4-64:bullseye
 
 # use `install_packages` if you need to install dependencies,
 # for instance if you need git, just uncomment the line below.
@@ -9,10 +9,12 @@ RUN install_packages \
   chromium-browser \
   rpi-chromium-mods \
   libgles2-mesa \
+  libgl1-mesa-dri \
   libsdl2-dev \
-  lsb-release \xserver-xorg \
+  lsb-release xserver-xorg \
+  xserver-xorg-video-all \
   xinit lxsession desktop-file-utils \
-  raspberrypi-ui-mods rpd-icons \
+  raspberrypi-ui-mods \
   gtk2-engines-clearlookspix \
   matchbox-keyboard \
   unclutter \
