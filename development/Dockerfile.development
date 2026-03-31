@@ -1,8 +1,10 @@
-FROM balenalib/raspberrypi3-python:3.7.3-buster-run
+FROM python:3.13-slim
 
-RUN install_packages apt-utils g++ build-essential
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    apt-utils g++ build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1
 
 COPY ./requirements/base.txt /code/requirements/base.txt
 COPY ./requirements/test.txt /code/requirements/test.txt
