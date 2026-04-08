@@ -5,3 +5,4 @@ isort<5
 pylint
 pytest
 pytest-flask
+setuptools
