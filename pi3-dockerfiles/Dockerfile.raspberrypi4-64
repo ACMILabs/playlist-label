@@ -1,12 +1,12 @@
 # base-image for python on any machine using a template variable,
 # see more about dockerfile templates here: https://www.balena.io/docs/learn/develop/dockerfile/
-FROM balenalib/raspberrypi3:buster
+FROM debian:bullseye
 
 # use `install_packages` if you need to install dependencies,
 # for instance if you need git, just uncomment the line below.
-RUN install_packages \
+RUN apt-get update && apt-get install -y --no-install-recommends \
   g++ python3-pip python3-setuptools python3-dev build-essential \
-  chromium-browser \
+  chromium \
   rpi-chromium-mods \
   libgles2-mesa \
   libsdl2-dev \
