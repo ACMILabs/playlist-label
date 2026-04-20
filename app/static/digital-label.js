@@ -21,6 +21,8 @@
  *   - data-xos-endpoint         — XOS API base URL
  *   - data-xos-media-player     — media player ID to subscribe to
  *   - data-ignore-media-player  — if present, skip MQTT connection
+ *   - data-override-duration    — if present (ms), initialise timer before MQTT arrives
+ *   - data-override-title       — if present, display instead of playlist title
  */
 import { computed, effect, signal } from "./signals.js";
 import "./reverb-timer.js";
@@ -37,7 +39,28 @@ const OBSERVED_ATTRIBUTES = [
   "data-xos-endpoint",
   "data-xos-media-player",
   "data-ignore-media-player",
+  "data-override-duration",
+  "data-override-title",
 ];
+const SECOND = 1_000;
+const MINUTE = 60 * SECOND;
+/**
+ * milliseconds into a human-readable duration string.
+ * @param {number} millis
+ * @returns {string} e.g. "Duration: 3 minutes 25 seconds"
+ */
+function formatDurationText(millis) {
+  const seconds = Math.floor((millis % MINUTE) / SECOND);
+  const mins = Math.floor(millis / MINUTE);
+  const parts = ["Duration:"];
+  if (mins > 0) {
+    parts.push(`${mins} minute${mins !== 1 ? "s" : ""}`);
+  }
+  if (seconds > 0 || mins === 0) {
+    parts.push(`${seconds} second${seconds !== 1 ? "s" : ""}`);
+  }
+  return parts.join(" ");
+}
 
 class DigitalLabel extends HTMLElement {
   static observedAttributes = OBSERVED_ATTRIBUTES;
@@ -54,17 +77,14 @@ class DigitalLabel extends HTMLElement {
   /** @type {Element | null} */
   creditLineElem = this.querySelector(".credit-line");
 
+  /** @type {Element | null} */
+  durationLineElem = this.querySelector(".duration");
+
   /**
    * Reactive state for each observed data attribute.
    * @type {Record<string, import("./signals.js").Signal<string>>}
    */
   dataState = {};
-
-  /** Timer parameters derived from MQTT playback messages */
-  timerParams = signal({
-    videoStartTime: Date.now(),
-    videoDuration: 60 * 1_000,
-  });
 
   /** @type {Paho.MQTT.Client | null} */
   client = null;
@@ -140,30 +160,43 @@ class DigitalLabel extends HTMLElement {
       const firstItem = label.playlist_labels[0];
       const { work } = firstItem.label;
 
-      this.titleElem.textContent = label.title;
+      // Title: use override if set, else playlist title
+      const overrideTitle = this.dataState["data-override-title"].get();
+      this.titleElem.textContent = overrideTitle || label.title;
 
-      const authorParts = [work.creator_credit, work.headline_credit].filter(
-        Boolean
-      );
-      this.authorElem.textContent = authorParts.join(", ");
+      // Author: creator_credit_for_label is trusted HTML (e.g. "<p>Name, Year</p>")
+      // Extract text since authorElem is a <p> and nesting <p> is invalid
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = work.creator_credit_for_label ?? "";
+      this.authorElem.textContent = tempDiv.textContent;
+
+      // Duration line: cleared here; set by receivedMessage or override-duration effect
+      this.durationLineElem.textContent = "";
 
       this.contentElem.innerHTML = firstItem.label.columns[0].content;
-      this.creditLineElem.innerHTML = work.credit_line;
+
+      // Credit line: headline_credit_for_label, optionally preceded by work title
+      const workTitleHtml = overrideTitle ? `<p>${work.title}</p>` : "";
+      this.creditLineElem.innerHTML =
+        workTitleHtml + (work.headline_credit_for_label ?? "");
+    });
+
+    // Initialise timer from override-duration if set (MQTT may later override)
+    effect(() => {
+      const overrideDuration = parseFloat(
+        this.dataState["data-override-duration"].get()
+      );
+      if (overrideDuration && this.timer) {
+        this.timer.dataset.videoDuration = overrideDuration;
+        this.timer.dataset.videoStartTime = Date.now();
+        this.durationLineElem.textContent = formatDurationText(overrideDuration);
+      }
     });
 
     // Connect to MQTT if media player is not being ignored
     effect(() => {
       if (!this.dataState["data-ignore-media-player"].get()) {
         this.connectToMQTT();
-      }
-    });
-
-    // Forward timer parameters to the child timer element
-    effect(() => {
-      if (this.timer) {
-        const { videoDuration, videoStartTime } = this.timerParams.get();
-        this.timer.dataset.videoDuration = videoDuration;
-        this.timer.dataset.videoStartTime = videoStartTime;
       }
     });
   }
@@ -191,10 +224,15 @@ class DigitalLabel extends HTMLElement {
     const { duration } = data;
     const elapsedDuration = duration * data.playback_position;
     const startTime = Date.now() - elapsedDuration;
-    this.timerParams.set({
-      videoStartTime: startTime,
-      videoDuration: duration,
-    });
+
+    if (this.durationLineElem) {
+      this.durationLineElem.textContent = formatDurationText(duration);
+    }
+
+    if (this.timer) {
+      this.timer.dataset.videoDuration = duration;
+      this.timer.dataset.videoStartTime = startTime;
+    }
   }
 }
 

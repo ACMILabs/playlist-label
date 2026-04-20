@@ -14,7 +14,7 @@ from peewee import (CharField, FloatField, IntegerField, Model,
                     OperationalError, SqliteDatabase)
 from playhouse.shortcuts import model_to_dict
 from sentry_sdk.integrations.flask import FlaskIntegration
-
+from segno import make_qr
 from app.errors import HTTPError
 
 XOS_API_ENDPOINT = os.getenv('XOS_API_ENDPOINT')
@@ -36,6 +36,10 @@ BALENA_SERVICE_NAME = os.getenv('BALENA_SERVICE_NAME')
 BALENA_SUPERVISOR_ADDRESS = os.getenv('BALENA_SUPERVISOR_ADDRESS')
 BALENA_SUPERVISOR_API_KEY = os.getenv('BALENA_SUPERVISOR_API_KEY')
 DEBUG = os.getenv('DEBUG', 'false').lower() == "true"
+HIDE_TIMER = os.getenv('HIDE_TIMER', 'false').lower() == 'true'
+OVERRIDE_DURATION = os.getenv('OVERRIDE_DURATION', '')  # milliseconds; initialises timer before MQTT arrives
+OVERRIDE_TITLE = os.getenv('OVERRIDE_TITLE', '')
+QR_URL = os.getenv('QR_URL', '')
 CACHE_DIR = os.getenv('CACHE_DIR', '/data/')
 
 LABEL_TEMPLATE = os.getenv('LABEL_TEMPLATE', 'playlist.html')
@@ -58,6 +62,7 @@ app = Flask(__name__)  # pylint: disable=C0103
 CACHED_PLAYLIST_JSON = f'playlist_{XOS_PLAYLIST_ID}.json'
 # instantiate the peewee database
 db = SqliteDatabase('message.db')  # pylint: disable=C0103
+
 
 
 class Message(Model):  # pylint: disable=R0903
@@ -253,7 +258,13 @@ def playlist_label():
     try:
         with open(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}', encoding='utf-8') as json_file:
             json_data = json.load(json_file)
-
+        
+        if QR_URL:
+            qrcode = make_qr(QR_URL, error="M")
+            text = qrcode.svg_inline(dark="#aaa", light="#bbb", border=0, draw_transparent=True, omitsize=True)
+            text = text.replace('#aaa', "var(--figure, black)")
+            text = text.replace('#bbb', "var(--ground, white)")
+            json_data['qr_text'] = text
         # Remove playlist items that don't have a label
         for item in list(json_data['playlist_labels']):
             if item['label'] is None:
@@ -276,6 +287,10 @@ def playlist_label():
                 'playlist_endpoint': f'{XOS_API_ENDPOINT}playlists/',
                 'media_player_id': XOS_MEDIA_PLAYER_ID
             },
+            hide_timer=HIDE_TIMER,
+            override_duration=OVERRIDE_DURATION,
+            override_title=OVERRIDE_TITLE,
+            ignore_media_player=HIDE_TIMER,
             is_preview='false',
             collect_classname=collect_classname
         )

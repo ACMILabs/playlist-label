@@ -27,6 +27,8 @@
           "creator_credit": "Daniel Bronsema, Lachlan Dickie and Chris Hill",
           "credit_line": "",
           "headline_credit": "Australia, 2006",
+          "creator_credit_for_label": "<p>Daniel Bronsema, Lachlan Dickie and Chris Hill, Australia, 2006</p>",
+          "headline_credit_for_label": "<p>Courtesy of the artists</p>",
           "thumbnail": {
             "image_url": "file://../../data/sample.jpg",
             "has_video": false

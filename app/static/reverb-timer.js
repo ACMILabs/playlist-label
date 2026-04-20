@@ -42,6 +42,17 @@ function formatDurationText(mins, seconds) {
   }
   return parts.join(" ");
 }
+/**
+ * Returns milliseconds formatted as remaining minutes
+ *
+ * @param {number} millis
+ * @return {string}
+ */
+function formatRemainingText(millis) {
+  const mins = Math.ceil(millis / 1000 / 60);
+
+  return `Starts again in <br>${mins} ${mins > 1 ? "minutes" : "minute"}`;
+}
 
 class ReverbTimer extends HTMLElement {
   static observedAttributes =
@@ -86,7 +97,7 @@ class ReverbTimer extends HTMLElement {
 
   connectedCallback() {
     this.elapsedElem = this.querySelector(".ticker");
-    this.durationElem = this.querySelector(".subtitle");
+    this.remainingElem = this.querySelector(".subtitle");
 
     const update = () => {
       const elapsed = (Date.now() - this.startTime.get()) % this.duration.get();
@@ -97,9 +108,12 @@ class ReverbTimer extends HTMLElement {
 
       // Update duration text
       const durat = this.durationData.get();
-      this.durationElem.textContent = formatDurationText(
+      this.remainingElem.textContent = formatDurationText(
         durat.mins,
         durat.seconds
+      );
+      this.remainingElem.innerHTML = formatRemainingText(
+        Math.max(this.duration.get() - elapsed, 1)
       );
 
       // Update elapsed ticker (MM:SS)

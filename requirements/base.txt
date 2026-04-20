@@ -3,3 +3,4 @@ requests
 kombu
 peewee
 sentry-sdk[flask]
+segno

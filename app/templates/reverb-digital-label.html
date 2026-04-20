@@ -4,7 +4,7 @@
 
   Usage: Set LABEL_TEMPLATE=reverb-digital-label.html in environment config.
 -->
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -26,11 +26,13 @@
       data-xos-endpoint="{{ xos.playlist_endpoint }}"
       data-xos-media-player="{{ xos.media_player_id }}"
       {% if ignore_media_player %}data-ignore-media-player{% endif %}
+      {% if override_duration %}data-override-duration="{{ override_duration }}"{% endif %}
+      {% if override_title %}data-override-title="{{ override_title }}"{% endif %}
     >
       <main>
         <!-- SVG ring countdown timer -->
         <acmi-reverb-timer>
-          <div class="timer">
+          <div class="timer"{% if hide_timer %} style="visibility:hidden"{% endif %}>
             <svg viewBox="0 0 100 100">
               <circle
                 cx="50"
@@ -43,7 +45,7 @@
               <circle
                 cx="50"
                 cy="50"
-                style="stroke-dasharray: var(--disk-ratio, 30 70); stroke-dashoffset: 25;"
+                style="stroke-dasharray: var(--disk-ratio, 30 70); stroke-dashoffset: 25"
                 pathLength="100"
                 class="foreground"
                 stroke="var(--text-color, white)"
@@ -51,27 +53,38 @@
               />
             </svg>
             <pre class="ticker">00&#58;00</pre>
-            <p class="subtitle">Duration</p>
+            <p class="subtitle">Starts Again in 32 minutes</p>
           </div>
         </acmi-reverb-timer>
 
-        <!-- Label metadata -->
-        <section class="header-block">
-          <h1 class="title">{{ playlist_json.title }}</h1>
-          <p class="author">
-            {{ playlist_json.playlist_labels[0].label.work.creator_credit }},&nbsp;{{ playlist_json.playlist_labels[0].label.work.headline_credit }}
-          </p>
+        <!-- Body block -->
+        <section class="body-block">
+          <!-- Title block -->
+          <section class="title-block">
+            <h1 class="title">{{ override_title if override_title else playlist_json.title }}</h1>
+            <p class="author">{{ playlist_json.playlist_labels[0].label.work.creator_credit_for_label|default('')|striptags }}</p>
+          </section>
+
+          <div class="content">
+            {{ playlist_json.playlist_labels[0].label.columns[0].content|safe }}
+          </div>
         </section>
 
-        <!-- Primary description content -->
-        <section class="content">
-          {{ playlist_json.playlist_labels[0].label.columns[0].content|safe }}
-        </section>
-
-        <!-- Credit line -->
-        <section class="credit-line">
-          {{ playlist_json.playlist_labels[0].label.work.credit_line|safe }}
-        </section>
+        <!-- Bottom-left stack: QR block (optional) above tombstone -->
+        <div class="bottom-block">
+          {% if playlist_json.qr_text %}
+          <section class="qr-block">
+            {{ playlist_json.qr_text|safe }}
+            <div>Scan to access artwork labels and captions</div>
+          </section>
+          {% endif %}
+          <section class="tombstone-block">
+            <div class="credit-line">
+              {% if override_title %}<p>{{ playlist_json.playlist_labels[0].label.work.title }}</p>{% endif %}
+              {{ playlist_json.playlist_labels[0].label.work.headline_credit_for_label|default('')|safe }}
+            </div>
+          </section>
+        </div>
       </main>
     </acmi-digital-label>
 

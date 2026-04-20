@@ -242,3 +242,123 @@ def test_tap_received_while_processing_still_creates(client):
     )
 
     assert response.status_code == 201
+
+
+# ── Reverb digital label template tests ──────────────────────────────────────
+
+# Minimal playlist JSON for reverb template tests — self-contained, no cache setup needed.
+REVERB_TEST_PLAYLIST = {
+    "id": 1,
+    "title": "Test playlist",
+    "playlist_labels": [
+        {
+            "label": {
+                "id": 1,
+                "columns": [{"content": "<p>Body text</p>", "style": "standard"}],
+                "work": {
+                    "id": 1,
+                    "title": "Test work",
+                    "creator_credit_for_label": "<p>Test Artist, 2023</p>",
+                    "headline_credit_for_label": "<p>Courtesy of the artist</p>",
+                },
+            }
+        }
+    ],
+}
+
+
+def reverb_client_get(client, tmp_path, extra_patches=None):
+    """
+    Helper: write REVERB_TEST_PLAYLIST to a temp cache dir and GET '/'.
+    extra_patches is a dict of {target: value} applied via patch.
+    """
+    import json as _json
+    cache_file = tmp_path / 'playlist_1.json'
+    cache_file.write_text(_json.dumps(REVERB_TEST_PLAYLIST))
+    patches = {'app.main.CACHE_DIR': str(tmp_path) + '/'}
+    if extra_patches:
+        patches.update(extra_patches)
+    with MagicMock():
+        ctx_managers = [patch(k, v) for k, v in patches.items()]
+        for cm in ctx_managers:
+            cm.start()
+        try:
+            response = client.get('/')
+        finally:
+            for cm in ctx_managers:
+                cm.stop()
+    return response
+
+
+@patch('app.main.LABEL_TEMPLATE', 'reverb-digital-label.html')
+def test_reverb_label_content_mapping(client, tmp_path):
+    """
+    Test that creator_credit_for_label and headline_credit_for_label
+    are rendered in the reverb template (tags stripped for author).
+    """
+    response = reverb_client_get(client, tmp_path)
+    data = response.data.decode('utf-8')
+
+    assert response.status_code == 200
+    assert 'Test Artist, 2023' in data          # creator_credit_for_label, tags stripped
+    assert 'Courtesy of the artist' in data     # headline_credit_for_label
+    assert 'Test playlist' in data              # playlist title
+
+
+@patch('app.main.LABEL_TEMPLATE', 'reverb-digital-label.html')
+@patch('app.main.HIDE_TIMER', True)
+def test_reverb_label_hide_timer(client, tmp_path):
+    """
+    Test that HIDE_TIMER=True hides the timer and adds data-ignore-media-player.
+    """
+    response = reverb_client_get(client, tmp_path)
+    data = response.data.decode('utf-8')
+
+    assert response.status_code == 200
+    assert 'visibility:hidden' in data
+    assert 'data-ignore-media-player' in data
+
+
+@patch('app.main.LABEL_TEMPLATE', 'reverb-digital-label.html')
+@patch('app.main.OVERRIDE_TITLE', 'My Override Title')
+def test_reverb_label_override_title(client, tmp_path):
+    """
+    Test that OVERRIDE_TITLE replaces the playlist title, sets the data attribute,
+    and prepends the work title to the credit-line.
+    """
+    response = reverb_client_get(client, tmp_path)
+    data = response.data.decode('utf-8')
+
+    assert response.status_code == 200
+    assert 'My Override Title' in data
+    assert 'data-override-title="My Override Title"' in data
+    assert 'Test work' in data                  # work title prepended to credit-line
+
+
+@patch('app.main.LABEL_TEMPLATE', 'reverb-digital-label.html')
+@patch('app.main.OVERRIDE_DURATION', '21600000')
+def test_reverb_label_override_duration(client, tmp_path):
+    """
+    Test that OVERRIDE_DURATION passes data-override-duration to the template.
+    MQTT is NOT disabled — it can still override at runtime.
+    """
+    response = reverb_client_get(client, tmp_path)
+    data = response.data.decode('utf-8')
+
+    assert response.status_code == 200
+    assert 'data-override-duration="21600000"' in data
+    assert 'data-ignore-media-player' not in data
+
+
+@patch('app.main.LABEL_TEMPLATE', 'reverb-digital-label.html')
+@patch('app.main.QR_URL', 'https://example.com/work/123/')
+def test_reverb_label_qr_url(client, tmp_path):
+    """
+    Test that setting QR_URL generates a QR block in the response.
+    """
+    response = reverb_client_get(client, tmp_path)
+    data = response.data.decode('utf-8')
+
+    assert response.status_code == 200
+    assert 'qr-block' in data
+    assert 'Scan to access artwork labels and captions' in data
