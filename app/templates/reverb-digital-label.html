@@ -4,7 +4,7 @@
 
   Usage: Set LABEL_TEMPLATE=reverb-digital-label.html in environment config.
 -->
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -25,14 +25,31 @@
       data-mqtt-password="{{ mqtt.password }}"
       data-xos-endpoint="{{ xos.playlist_endpoint }}"
       data-xos-media-player="{{ xos.media_player_id }}"
-      {% if ignore_media_player %}data-ignore-media-player{% endif %}
-      {% if override_duration %}data-override-duration="{{ override_duration }}"{% endif %}
-      {% if override_title %}data-override-title="{{ override_title }}"{% endif %}
+      {%
+      if
+      ignore_media_player
+      %}data-ignore-media-player{%
+      endif
+      %}
+      {%
+      if
+      override_duration
+      %}data-override-duration="{{ override_duration }}"
+      {%
+      endif
+      %}
+      {%
+      if
+      override_title
+      %}data-override-title="{{ override_title }}"
+      {%
+      endif
+      %}
     >
       <main>
         <!-- SVG ring countdown timer -->
         <acmi-reverb-timer>
-          <div class="timer"{% if hide_timer %} style="visibility:hidden"{% endif %}>
+          <div class="timer" {% if hide_timer %} style="visibility: hidden" {% endif %}>
             <svg viewBox="0 0 100 100">
               <circle
                 cx="50"
@@ -62,7 +79,11 @@
           <!-- Title block -->
           <section class="title-block">
             <h1 class="title">{{ override_title if override_title else playlist_json.title }}</h1>
-            <p class="author">{{ playlist_json.playlist_labels[0].label.work.creator_credit_for_label|default('')|striptags }}</p>
+            <p class="author">
+              {{
+              playlist_json.playlist_labels[0].label.work.creator_credit_for_label|default('')|striptags
+              }}
+            </p>
           </section>
 
           <div class="content">
@@ -75,15 +96,33 @@
           {% if playlist_json.qr_text %}
           <section class="qr-block">
             {{ playlist_json.qr_text|safe }}
-            <div>Scan to access artwork labels and captions</div>
-          </section>
-          {% endif %}
-          <section class="tombstone-block">
-            <div class="credit-line">
-              {% if override_title %}<p>{{ playlist_json.playlist_labels[0].label.work.title }}</p>{% endif %}
-              {{ playlist_json.playlist_labels[0].label.work.headline_credit_for_label|default('')|safe }}
+            <div class="icons">
+              {% include "translate-ACMI.svg" %} {% if show_caption_icon%} {% include
+              "closed-captioning_ACMI.svg" %} {% endif %}
+            </div>
+            <div class="langs">
+              <span>English</span>
+              <span lang="cmn-hans">简体字</span>
+              <span lang="hi">हिन्दी</span>
+              <span lang="pa">ਪੰਜਾਬੀ</span>
+            </div>
+            <div class="qr-desc">
+              Scan to access artwork labels {% if show_caption_icon %} and captions{% endif %}
             </div>
           </section>
+          {% endif %}
+          {% if playlist_json.playlist_labels[0].label.work.headline_credit_for_label %}
+            
+          <section class="tombstone-block">
+            <div class="credit-line">
+              {% if override_title %}
+              <p>{{ playlist_json.playlist_labels[0].label.work.title }}</p>
+              {% endif %} {{
+                playlist_json.playlist_labels[0].label.work.headline_credit_for_label|default('')|safe
+              }}
+            </div>
+          </section>
+          {% endif %}
         </div>
       </main>
     </acmi-digital-label>

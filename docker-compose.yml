@@ -1,0 +1,38 @@
+version: '2'
+
+volumes:
+  settings:
+  data:
+
+services:
+  browser:
+    image: bh.cr/balenalabs/browser-aarch64
+    privileged: true
+    volumes:
+      - 'settings:/data'
+    environment:
+      KIOSK: "1"
+      SHOW_CURSOR: "0"
+      ENABLE_GPU: "1"
+    ports:
+      - "35173:35173"
+      - "5011:5011"
+
+  playlist-label:
+    container_name: book
+    build: .
+    ports:
+      - "8081:801"
+    privileged: true
+    volumes:
+      - 'data:/data'
+    environment:
+      - UDEV=1
+      - TZ=Australia/Melbourne
+    labels:
+      io.balena.features.kernel-modules: '1'
+      io.balena.features.firmware: '1'
+      io.balena.features.dbus: '1'
+      io.balena.features.supervisor-api: '1'
+      io.balena.features.balena-api: '1'
+      io.balena.features.sysfs: '1'

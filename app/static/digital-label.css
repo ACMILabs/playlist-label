@@ -88,10 +88,10 @@ acmi-digital-label {
   --timer-bottom-gap: 55px;
 
   /* Title block */
-  --title-block-top-margin: 560px;
+  --title-block-top-margin: 460px;
   --title-block-text-size: 90px;
   --title-block-line-height: 1.33;
-  --title-block-bottom-gap: 200px;
+  --title-block-bottom-gap: 100px;
 
   /* Body text */
   --body-text-size: 64px;
@@ -105,8 +105,8 @@ acmi-digital-label {
 
   /* QR block */
   --tombstone-qr-gap: 100px;
-  --qr-code-width: 134px;
-  --qr-code-description-gap: 45px;
+  --qr-code-width: 172px;
+  --qr-code-description-gap: 32px;
 }
 
 body {
@@ -129,9 +129,9 @@ main {
   container-name: main;
   container-type: size;
   grid-template:
-    'title  title'  calc(var(--title-block-top-margin) * var(--width-ratio))
-    'body   body'   1fr
-    'bottom .'      max-content
+    'title  title' calc(var(--title-block-top-margin) * var(--width-ratio))
+    'body   body' 1fr
+    'bottom bottom' max-content
     / 1fr calc(var(--next-start-time-width) * var(--width-ratio));
 }
 
@@ -183,7 +183,7 @@ acmi-reverb-timer {
   display: grid;
   height: max-content;
   grid-template:
-    'ring'     calc(var(--timer-diameter) * var(--width-ratio))
+    'ring' calc(var(--timer-diameter) * var(--width-ratio))
     'subtitle' auto / var(--d);
   justify-self: end;
   gap: calc(var(--timer-bottom-gap) * var(--width-ratio));
@@ -221,7 +221,6 @@ svg {
 
 .body-block {
   grid-area: body;
-  
 }
 
 .content {
@@ -242,31 +241,53 @@ svg {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  align-self: self-end;
   gap: calc(var(--tombstone-qr-gap) * var(--width-ratio));
-  width: calc(var(--tombstone-block-width) * var(--width-ratio));
+  /* width: calc(var(--tombstone-block-width) * var(--width-ratio)); */
+  width:100%
 }
 
 /* ─── QR block ─── */
 
 .qr-block {
-  display: flex;
-  flex-direction: row;
-  align-items: end;
-  gap: calc(var(--qr-code-description-gap) * var(--width-ratio));
+  display: grid;
+  grid-template:
+    'qr icons' 1fr
+    'qr langs' 1fr
+    'qr desc ' min-content / calc(var(--qr-code-width) * var(--width-ratio)) auto;
+  height: calc(var(--qr-code-width) * var(--width-ratio));
+  column-gap: calc(var(--qr-code-description-gap) * var(--width-ratio));
   font-size: calc(var(--tombstone-text-size) * var(--width-ratio));
   line-height: var(--next-start-time-line-height);
 }
+.qr-desc {
+  grid-area: desc;
+  align-self: self-end;
+  align-self: center;
 
+}
 .segno {
   --figure: var(--text-color);
   --ground: var(--background-color);
-  width: calc(var(--qr-code-width) * var(--width-ratio));
+  width: 100%;
   height: auto;
   flex-shrink: 0;
+  grid-area: qr;
+}
+
+.langs {
+  grid-area: langs;
+  align-self: center;
+  font-size: calc(27px * var(--width-ratio));
+
+  span {
+    border: solid calc(4px * var(--width-ratio)) var(--fade-color);
+    padding-inline: calc(8px * var(--width-ratio));
+    padding-block: calc(2px * var(--width-ratio));
+  }
 }
 
 /* ─── Tombstone block ─── */
-
 
 .tombstone-block * {
   margin-block: 0;
@@ -274,12 +295,44 @@ svg {
 
 .qr-block,
 .tombstone-block {
-  font-family: 'Söhne Mono', monospace, Arial, Helvetica, sans-serif;
+  font-family: 'Söhne Mono', 'Nimbus Mono PS', 'Courier New', monospace;
   font-weight: 400;
   font-size: calc(var(--tombstone-text-size) * var(--width-ratio));
   line-height: var(--tombstone-line-height);
+  grid-column: 1/3;
 }
 
+
+.qr-block .icons {
+  display: flex;
+  grid-area: icons;
+  flex-flow: row;
+  justify-items: start;
+  align-items: start;
+  align-self: self-end;
+  gap: calc(12px *  var(--width-ratio));
+  height: min-content;
+  svg {
+    width: calc((var(--qr-code-width) * var(--width-ratio)) / 2.5);
+    margin: 0;
+  }
+}
 p {
   margin-block-start: 0;
+}
+
+
+acmi-interactive-icon {
+  display: inline;
+
+  svg {
+    width: calc(var(--body-text-size) * var(--width-ratio) * var(--body-line-height))
+  }
+}
+
+p:has(acmi-interactive-icon) {
+  display: flex;
+  flex-flow: row wrap;
+  gap: calc(12px * var(--width-ratio));
+  align-items: center;
 }

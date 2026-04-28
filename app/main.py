@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import random
 import socket
 import time
 from threading import Thread
@@ -37,6 +38,7 @@ BALENA_SUPERVISOR_ADDRESS = os.getenv('BALENA_SUPERVISOR_ADDRESS')
 BALENA_SUPERVISOR_API_KEY = os.getenv('BALENA_SUPERVISOR_API_KEY')
 DEBUG = os.getenv('DEBUG', 'false').lower() == "true"
 HIDE_TIMER = os.getenv('HIDE_TIMER', 'false').lower() == 'true'
+SHOW_CAPTION_ICON = os.getenv('SHOW_CAPTION_ICON', 'false').lower() == 'true'
 OVERRIDE_DURATION = os.getenv('OVERRIDE_DURATION', '')  # milliseconds; initialises timer before MQTT arrives
 OVERRIDE_TITLE = os.getenv('OVERRIDE_TITLE', '')
 QR_URL = os.getenv('QR_URL', '')
@@ -64,7 +66,6 @@ CACHED_PLAYLIST_JSON = f'playlist_{XOS_PLAYLIST_ID}.json'
 db = SqliteDatabase('message.db')  # pylint: disable=C0103
 
 
-
 class Message(Model):  # pylint: disable=R0903
     datetime = CharField(primary_key=True)
     label_id = IntegerField()
@@ -89,15 +90,15 @@ class PlaylistLabel():
         self.errors_history = {}
 
     @staticmethod
-    def process_media(body, message):
+    def process_media(json_body, message):
         """
         Store the message received from RabbitMQ.
         """
         try:
             message.ack()
-
+            body = json.loads(json_body)
             Message.create(
-                datetime=body['datetime'],
+                datetime=body['datetime'] + str(random.randint(0,65536)),
                 playlist_id=body.get('playlist_id', 0),
                 media_player_id=body.get('media_player_id', 0),
                 label_id=body.get('label_id', 0),
@@ -260,7 +261,7 @@ def playlist_label():
             json_data = json.load(json_file)
         
         if QR_URL:
-            qrcode = make_qr(QR_URL, error="M")
+            qrcode = make_qr(QR_URL, error="L")
             text = qrcode.svg_inline(dark="#aaa", light="#bbb", border=0, draw_transparent=True, omitsize=True)
             text = text.replace('#aaa', "var(--figure, black)")
             text = text.replace('#bbb', "var(--ground, white)")
@@ -289,6 +290,7 @@ def playlist_label():
             },
             hide_timer=HIDE_TIMER,
             override_duration=OVERRIDE_DURATION,
+            show_caption_icon=SHOW_CAPTION_ICON,
             override_title=OVERRIDE_TITLE,
             ignore_media_player=HIDE_TIMER,
             is_preview='false',
