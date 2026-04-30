@@ -28,14 +28,6 @@ To run the development container:
 
 You should then be able to see the Flask server running at: http://localhost:8081
 
-### Rebuild the development base image
-
-If you change any of the requirements you'll need to re-build the development container's base image `acmilabs/playlistlabel-development:v1`, it's built from `development/Dockerfile.development`. To re-build it run:
-
-Re-build it: `docker build --file development/Dockerfile.development -t acmilabs/playlistlabel-development:v1 .`
-
-Push the new image to Docker Hub: `docker push acmilabs/playlistlabel-development:v1`
-
 ## Run tests locally
 
 To run the python tests:

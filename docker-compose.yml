@@ -19,7 +19,7 @@ services:
     container_name: book
     build: .
     ports:
-      - "8081:801"
+      - "8081:8081"
     privileged: true
     volumes:
       - 'data:/data'

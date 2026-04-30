@@ -72,8 +72,7 @@ disable=raw-checker-failed,
         missing-docstring,
         unspecified-encoding,
         missing-timeout,
-        broad-exception-raised,
-        too-many-positional-arguments
+        broad-exception-raised
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -452,8 +451,7 @@ valid-metaclass-classmethod-first-arg=cls
 [DESIGN]
 
 # Maximum number of arguments for function / method.
-max-args=6
-max-positional-arguments=6
+max-args=5
 
 # Maximum number of attributes for a class (see R0902).
 max-attributes=7
