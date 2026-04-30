@@ -1,8 +1,7 @@
 FROM python:3.13-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    make \
-    && rm -rf /var/lib/apt/lists/*
+    make 
 
 ENV PYTHONUNBUFFERED=1
 
