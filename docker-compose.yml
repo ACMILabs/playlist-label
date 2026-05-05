@@ -16,7 +16,7 @@ services:
       ENABLE_GPU: "1"
 
   playlist-label:
-    container_name: book
+    container_name: playlistlabel
     build: .
     ports:
       - "8081:8081"
