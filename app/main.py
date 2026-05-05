@@ -154,7 +154,7 @@ class PlaylistLabel():
                 self.consume(conn)
 
     def send_error(self, error_name, error, on_rep=5, every=100, units='seconds'):
-        # pylint: disable=too-many-arguments
+        # pylint: disable=too-many-arguments,too-many-positional-arguments
         """
         Attempt to send an error to sentry.
         Send to Sentry for the first time when calling send_error for the `on_rep`th time.

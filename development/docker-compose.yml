@@ -8,6 +8,7 @@ services:
       args:
         IS_LOCAL_ENV: "true"
     hostname: playlistlabel
+    privileged: true
     container_name: playlistlabel
     env_file: ../config.env
     volumes:
