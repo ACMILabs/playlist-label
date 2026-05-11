@@ -1,6 +1,7 @@
 flask
 requests
 kombu
+paho-mqtt
 peewee
 sentry-sdk[flask]
 segno

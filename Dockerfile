@@ -10,4 +10,4 @@ COPY . /code/
 WORKDIR /code/
 
 # pi4.sh will run when container starts up on the device
-CMD ["bash","scripts/pi5.sh"]
+CMD ["bash","scripts/pi.sh"]

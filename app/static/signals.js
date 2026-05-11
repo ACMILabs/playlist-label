@@ -1,125 +1,101 @@
-// @ts-check
+/* eslint-disable max-classes-per-file */
+/** @extends EventTarget */
+class Signal extends EventTarget {
+  #value;
 
-/**
- * @typedef {{get: () => T; set: (newValue:T) => void; trackedSignals?: Set<any>}} Signal<T>
- * @template T
- */
-/**
- * @typedef {{get: () => T; set?: (newValue:T) => void; trackedSignals?: Set<any>}} Computed<T>
- * @template T
- */
+  /**
+   * @param {T} value
+   */
+  constructor(value) {
+    super();
+    this.#value = value;
+  }
 
-/**
- * @type {((signal: any) => void) | null}
- */
-let Listener = null;
-// Track what signals are accessed in the Listener
-let accessedSignals = new Set();
-// Track what current signal is being written to
-/**
- * @type {Signal<any> | null}
- */
-let writingSignal = null;
-/**
- * Signal
- * @template T
- * @param initialValue {T}
- * @return {Signal<T>}
- */
-function signal(initialValue) {
-  let value = initialValue;
-  const subscribers = new Set();
-  /** @type {Signal<T>} */
-  const obj = {
-    get: () => {
-      if (Listener) {
-        subscribers.add(Listener);
-        accessedSignals.add(obj);
-      }
-      return value;
-    },
-    set: (newValue) => {
-      /* A computed value should not update `writingSignal`, 
-			as its state is purely internal and should be marked as "read-only" */
-      const isInsideAComputed = !!obj.trackedSignals;
-      value = newValue;
-      if (!isInsideAComputed) {
-        writingSignal = obj;
-      }
-      subscribers.forEach((fn) => fn(obj));
-      if (!isInsideAComputed) {
-        writingSignal = null;
-      }
-    },
-  };
-  return obj;
+  /**
+   * @returns {T}
+   */
+  get value() {
+    return this.#value;
+  }
+
+  /**
+   * @param {T} value
+   */
+  set value(value) {
+    if (this.#value === value) return;
+    this.#value = value;
+    this.dispatchEvent(new CustomEvent("change"));
+  }
+
+  /**
+   * @param {() => void} fn
+   * @returns {() => void}
+   */
+  effect(fn) {
+    fn();
+    this.addEventListener("change", fn);
+    return () => this.removeEventListener("change", fn);
+  }
+
+  /**
+   * @returns {T}
+   */
+  valueOf() {
+    return this.#value;
+  }
+
+  /**
+   * @returns {string}
+   */
+  toString() {
+    return String(this.#value);
+  }
+}
+/** @extends Signal<T> */
+class Computed extends Signal {
+  /**
+   * @param {() => T} fn
+   * @param {Signal<unknown>[]} deps
+   */
+  constructor(fn, deps) {
+    super(fn());
+    const listener = () => {
+      this.value = fn();
+    };
+    deps.forEach((dep) => dep.addEventListener("change", listener));
+    this.#dispose = () =>
+      deps.forEach((dep) => dep.removeEventListener("change", listener));
+  }
+
+  #dispose;
+
+  dispose() {
+    this.#dispose();
+  }
 }
 /**
- *
- *
- * @param fn {() => void | (() => void)}
- * @return {*}
- */
-function effect(fn) {
-  let trackedSignals = new Set();
-  let seen = new Set();
-  /** @type {Set<Signal<any> | Computed<any>> | null} */
-  let relatedSignals = null;
-  // Setup the listener that will be called when a signal is accessed
-  Listener = (currentSignal) => {
-    // We have "seen" this signal
-    seen.add(currentSignal);
-    // Check to see if we need to "see" any related signals before running the function
-    // and cache the results until the next run
-    if (!relatedSignals) {
-      relatedSignals = new Set();
-      trackedSignals.forEach((signalLike) => {
-        if (signalLike.trackedSignals?.has(writingSignal)) {
-          relatedSignals?.add(currentSignal);
-        } else if (signalLike === writingSignal) {
-          relatedSignals?.add(signalLike);
-        }
-      });
-    }
-    // Have we seen all the signals we need to? If so, run the function and cleanup
-    if (seen.size === relatedSignals?.size) {
-      fn();
-      seen = new Set();
-      relatedSignals = null;
-    }
-  };
-  // Trigger the effect for the first time. This also starts auto-tracking and stores vars in `accessedSignals`
-  fn();
-  // Keep a copy of the accessed signals for reference in the `Listener` later
-  trackedSignals = new Set(accessedSignals);
-  // Cleanup
-  Listener = null;
-  accessedSignals = new Set();
-  // Return the tracked signals for the effect so it can be used in the `Listener` later
-  return {
-    trackedSignals,
-  };
-}
-/**
- *
+ * Creates a reactive variable (signal) with the given data.
+ * What are signals?: https://www.dhiwise.com/post/how-to-implement-signals-in-javascript-for-event-handling
  * @template T
- * @param fn {() => T}
- * @return {Computed<T>}
+ * @param {T} data
+ * @returns {Signal<T>}
  */
-function computed(fn) {
-  const valueSignal = signal(fn());
-  const { trackedSignals } = effect(() => {
-    valueSignal.set(fn());
-  });
-  // Assign the tracked signals to the value signal so it can be used in the `Listener` of the effect,
-  // and avoid updating the `writingSignal` when the value signal is updated
-  Object.assign(valueSignal, {
-    trackedSignals,
-  });
-  return {
-    get: valueSignal.get,
-    trackedSignals,
-  };
+export const signal = (data) => new Signal(data);
+/**
+ * Creates a computed signal that recomputes its value when any of the dependencies change.
+ * @template T
+ * @param {() => T} fn - Function that computes the value of the signal.
+ * @param {Signal<unknown>[]} deps - Dependencies of the computed signal that trigger a recompute when they change.
+ * @returns {Computed<T>}
+ */
+export const computed = (fn, deps) => new Computed(fn, deps);
+/**
+ * Creates an effect that runs the given function when any of the dependencies change.
+ * @param {Signal<unknown>[]} deps - Dependencies of the effect that trigger a recompute when they change.
+ * @param {() => void} fn - Function to run when the dependencies change.
+ * @returns {() => void}
+ */
+export function effect(deps, fn) {
+  const removeListeners = deps.map((dep) => dep.effect(fn));
+  return () => removeListeners.forEach((removeListener) => removeListener());
 }
-
-export { signal, computed, effect };

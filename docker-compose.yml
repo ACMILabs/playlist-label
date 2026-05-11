@@ -6,7 +6,10 @@ volumes:
 
 services:
   browser:
-    image: bh.cr/balenalabs/browser-aarch64
+    # Built from ./browser rather than pulled from a registry so we can layer in
+    # socat and the debug startup script on top of the balena browser base image.
+    build: ./browser
+    container_name: browser
     privileged: true
     volumes:
       - 'settings:/data'
@@ -14,7 +17,16 @@ services:
       KIOSK: "1"
       SHOW_CURSOR: "0"
       ENABLE_GPU: "1"
+      # Tells the balena browser base image to enable the Chrome DevTools Protocol
+      # (CDP) on this internal port.  The debug startup script (run_debug.sh) then
+      # proxies it out to the external port 9222 when DEBUG=true.
+      REMOTE_DEBUG_PORT: "35173"
     ports:
+      # Chrome DevTools Protocol — connect Chrome DevTools or Playwright here
+      # when DEBUG=true.  socat inside the container forwards 9222 → 35173.
+      - "9222:9222"
+      # Direct CDP port (also exposed so tools that want the raw internal port
+      # can connect without going through the socat proxy).
       - "35173:35173"
       - "5011:5011"
 

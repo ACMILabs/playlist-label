@@ -42,7 +42,33 @@
   font-display: block;
   src: url('TestSöhneMono-Buch.otf') format('opentype');
 }
-
+@font-face {
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src:
+    url(noto-sans-sc-chinese-simplified-400-normal.woff2) format('woff2'),
+    url(noto-sans-sc-chinese-simplified-400-normal.woff) format('woff');
+}
+@font-face {
+  font-family: 'Noto Sans Devanagari';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src:
+    url(noto-sans-devanagari-devanagari-400-normal.woff2) format('woff2'),
+    url(noto-sans-devanagari-devanagari-400-normal.woff) format('woff');
+}
+@font-face {
+  font-family: 'Noto Sans Gurmukhi';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src:
+    url(noto-sans-gurmukhi-gurmukhi-400-normal.woff2) format('woff2'),
+    url(noto-sans-gurmukhi-gurmukhi-400-normal.woff) format('woff');
+}
 acmi-digital-label {
   display: contents;
 }
@@ -242,9 +268,8 @@ svg {
   flex-direction: column;
   align-items: flex-start;
   align-self: self-end;
-  gap: calc(var(--tombstone-qr-gap) * var(--width-ratio));
   /* width: calc(var(--tombstone-block-width) * var(--width-ratio)); */
-  width:100%
+  width: 100%;
 }
 
 /* ─── QR block ─── */
@@ -252,19 +277,22 @@ svg {
 .qr-block {
   display: grid;
   grid-template:
-    'qr icons' 1fr
-    'qr langs' 1fr
-    'qr desc ' min-content / calc(var(--qr-code-width) * var(--width-ratio)) auto;
+    'desc desc' min-content
+    'qr icons' auto
+    'qr langs ' min-content / calc(var(--qr-code-width) * var(--width-ratio)) auto;
   height: calc(var(--qr-code-width) * var(--width-ratio));
   column-gap: calc(var(--qr-code-description-gap) * var(--width-ratio));
   font-size: calc(var(--tombstone-text-size) * var(--width-ratio));
   line-height: var(--next-start-time-line-height);
+  margin-block-end: calc(var(--tombstone-qr-gap) * var(--width-ratio));
 }
 .qr-desc {
-  grid-area: desc;
-  align-self: self-end;
-  align-self: center;
-
+  margin-block-end: calc(var(--qr-code-description-gap) * var(--width-ratio));
+  font-family: 'Söhne Mono', 'Noto Sans Gurmukhi', 'Noto Sans Devanagari', 'Noto Sans SC',
+    'Nimbus Mono PS', 'Courier New', monospace;
+  font-weight: 400;
+  font-size: calc(var(--tombstone-text-size) * var(--width-ratio));
+  line-height: var(--tombstone-line-height);
 }
 .segno {
   --figure: var(--text-color);
@@ -278,10 +306,10 @@ svg {
 .langs {
   grid-area: langs;
   align-self: center;
-  font-size: calc(27px * var(--width-ratio));
+  /* font-size: calc(27px * var(--width-ratio)); */
 
   span {
-    border: solid calc(4px * var(--width-ratio)) var(--fade-color);
+    /* border: solid calc(4px * var(--width-ratio)) var(--fade-color); */
     padding-inline: calc(8px * var(--width-ratio));
     padding-block: calc(2px * var(--width-ratio));
   }
@@ -295,13 +323,13 @@ svg {
 
 .qr-block,
 .tombstone-block {
-  font-family: 'Söhne Mono', 'Nimbus Mono PS', 'Courier New', monospace;
+  font-family: 'Söhne Mono', 'Noto Sans Gurmukhi', 'Noto Sans Devanagari', 'Noto Sans SC',
+    'Nimbus Mono PS', 'Courier New', monospace;
   font-weight: 400;
   font-size: calc(var(--tombstone-text-size) * var(--width-ratio));
   line-height: var(--tombstone-line-height);
   grid-column: 1/3;
 }
-
 
 .qr-block .icons {
   display: flex;
@@ -310,10 +338,10 @@ svg {
   justify-items: start;
   align-items: start;
   align-self: self-end;
-  gap: calc(12px *  var(--width-ratio));
+  gap: calc(12px * var(--width-ratio));
   height: min-content;
   svg {
-    width: calc((var(--qr-code-width) * var(--width-ratio)) / 2.5);
+    width: calc((var(--qr-code-width) * var(--width-ratio)) / 2.3);
     margin: 0;
   }
 }
@@ -321,12 +349,11 @@ p {
   margin-block-start: 0;
 }
 
-
 acmi-interactive-icon {
   display: inline;
 
   svg {
-    width: calc(var(--body-text-size) * var(--width-ratio) * var(--body-line-height))
+    width: calc(var(--body-text-size) * var(--width-ratio) * var(--body-line-height));
   }
 }
 
