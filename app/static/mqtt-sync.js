@@ -50,8 +50,6 @@ class MQTTSync extends HTMLElement {
     this.eventSource = new EventSource("/api/playback-stream/");
 
     this.eventSource.onmessage = (event) => {
-      console.log(event);
-
       const data = JSON.parse(event.data);
       const { duration, playback_position: playbackPosition } = data;
       const startTime = Date.now() - duration * playbackPosition;
@@ -59,8 +57,6 @@ class MQTTSync extends HTMLElement {
     };
 
     this.eventSource.onerror = (e) => {
-      console.log(e);
-
       // EventSource automatically reconnects after errors — no manual retry needed.
     };
   }

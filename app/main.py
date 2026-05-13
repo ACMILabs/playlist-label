@@ -2,7 +2,6 @@ import datetime
 import json
 import os
 import random
-from statistics import median
 import time
 from threading import Thread
 
@@ -36,7 +35,6 @@ BALENA_SUPERVISOR_ADDRESS = os.getenv('BALENA_SUPERVISOR_ADDRESS')
 BALENA_SUPERVISOR_API_KEY = os.getenv('BALENA_SUPERVISOR_API_KEY')
 DEBUG = os.getenv('DEBUG', 'false').lower() == "true"
 HIDE_TIMER = os.getenv('HIDE_TIMER', 'false').lower() == 'true'
-SHOW_CAPTION_ICON = os.getenv('SHOW_CAPTION_ICON', 'false').lower() == 'true'
 OVERRIDE_DURATION = os.getenv('OVERRIDE_DURATION', '')  # milliseconds; initialises timer before MQTT arrives
 OVERRIDE_TITLE = os.getenv('OVERRIDE_TITLE', '')
 QR_URL_OVERRIDE = os.getenv('QR_URL_OVERRIDE', '')
@@ -121,11 +119,46 @@ def on_mqtt_disconnect(client, userdata, rc):  # pylint: disable=unused-argument
         print(f'[mqtt] Unexpected disconnect (rc={rc}), will auto-reconnect')
 
 
+_mqtt_digest = {'count': 0, 'sse_count': 0, 'last_body': None, 'clients': set()}
+
+
+def _work_title(label_id):
+    try:
+        with open(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}', encoding='utf-8') as f:
+            data = json.load(f)
+        for item in data.get('playlist_labels', []):
+            label = item.get('label') or {}
+            if label.get('id') == label_id:
+                return (label.get('work') or {}).get('title', '')
+    except Exception:  # pylint: disable=broad-except
+        pass
+    return ''
+
+
+def _mqtt_log_thread():
+    while True:
+        time.sleep(5)
+        count = _mqtt_digest['count']
+        sse_count = _mqtt_digest['sse_count']
+        body = _mqtt_digest['last_body']
+        clients = sorted(_mqtt_digest['clients'])
+        _mqtt_digest['count'] = 0
+        _mqtt_digest['sse_count'] = 0
+        if count:
+            label_id = body.get('label_id')
+            title = _work_title(label_id) if label_id else ''
+            print(f'[mqtt] {count} message(s), {sse_count} SSE send(s) to {clients} '
+                  f'| work="{title}" '
+                  f'| duration={body.get("duration")} playback_position={body.get("playback_position")}')
+        else:
+            print('[mqtt] No messages received')
+
+
 def on_mqtt_message(client, userdata, msg):  # pylint: disable=unused-argument
     try:
         body = json.loads(msg.payload.decode())
-        print(f'[mqtt] Message received on {msg.topic}: duration={body.get("duration")} '
-              f'playback_position={body.get("playback_position")}')
+        _mqtt_digest['count'] += 1
+        _mqtt_digest['last_body'] = body
         store_playback_message(body)
     except Exception as exc:  # pylint: disable=broad-except
         print(f'[mqtt] Error parsing message: {exc}')
@@ -174,7 +207,7 @@ def playlist_label():
             json_data = json.load(json_file)
         
         if show_qr_code:
-            qrcode = make_qr(QR_CODE_URL, error="L")
+            qrcode = make_qr(QR_CODE_URL, error="H")
             text = qrcode.svg_inline(dark="#aaa", light="#bbb", border=0, draw_transparent=True, omitsize=True)
             text = text.replace('#aaa', "var(--figure, black)")
             text = text.replace('#bbb', "var(--ground, white)")
@@ -291,25 +324,28 @@ def playback_stream(client_ip):
     Replaces direct browser WebSocket MQTT connection.
     """
     print(f'[sse] Client connected: {client_ip}')
-    last_datetime = None
-    while True:
-        try:
-            msg = Message.select().order_by(Message.datetime.desc()).first()
-            if msg and msg.datetime != last_datetime:
-                last_datetime = msg.datetime
-                data = json.dumps({
-                    'duration': msg.duration,
-                    'playback_position': msg.playback_position,
-                })
-                print(f'[sse] Sending to {client_ip}: duration={msg.duration} '
-                      f'playback_position={msg.playback_position}')
-                yield f'data: {data}\n\n'
-        except OperationalError as exception:
-            template = 'An exception of type {0} {1!r} occurred in playback_stream.'
-            message = template.format(type(exception).__name__, exception.args)
-            if DEBUG:
-                print(message)
-        time.sleep(0.5)
+    _mqtt_digest['clients'].add(client_ip)
+    try:
+        last_datetime = None
+        while True:
+            try:
+                msg = Message.select().order_by(Message.datetime.desc()).first()
+                if msg and msg.datetime != last_datetime:
+                    last_datetime = msg.datetime
+                    data = json.dumps({
+                        'duration': msg.duration,
+                        'playback_position': msg.playback_position,
+                    })
+                    _mqtt_digest['sse_count'] += 1
+                    yield f'data: {data}\n\n'
+            except OperationalError as exception:
+                template = 'An exception of type {0} {1!r} occurred in playback_stream.'
+                message = template.format(type(exception).__name__, exception.args)
+                if DEBUG:
+                    print(message)
+            time.sleep(0.5)
+    finally:
+        _mqtt_digest['clients'].discard(client_ip)
 
 
 @app.route('/api/playback-stream/')
@@ -326,7 +362,9 @@ if __name__ == '__main__':
         pass  # column already exists
     HasTapped.create(has_tapped=0, tap_successful=0, tap_processing=0)
     if XOS_MEDIA_PLAYER_ID:
-        Thread(target=start_mqtt, daemon=True).start()
+        if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+            Thread(target=start_mqtt, daemon=True).start()
+            Thread(target=_mqtt_log_thread, daemon=True).start()
     else:
         print('[mqtt] XOS_MEDIA_PLAYER_ID not set — skipping MQTT connection')
     app.run(host='0.0.0.0', port=PLAYLIST_LABEL_PORT, threaded=True)

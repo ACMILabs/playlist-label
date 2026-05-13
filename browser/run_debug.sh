@@ -14,7 +14,7 @@
 # Start the normal balena browser startup script in the background so Chromium
 # launches as usual (kiosk mode, GPU acceleration, etc.).
 bash /usr/src/app/start.sh &
-
+sleep 10;
 # Forward any TCP connection on the external port 9222 to the internal Chrome
 # DevTools Protocol port (35173).  The `fork` flag allows multiple simultaneous
 # CDP clients (e.g. DevTools + Playwright) to connect at the same time.

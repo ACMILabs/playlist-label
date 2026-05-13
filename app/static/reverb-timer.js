@@ -7,6 +7,7 @@ import { computed, signal } from "./signals.js";
  *
  *   - `data-video-duration`   — total duration in milliseconds
  *   - `data-video-start-time` — timestamp (ms since epoch) when playback started
+ *   - `data-hidden`           — when present, hides the timer (sets visibility: hidden)
  *
  * Elapsed time is calculated as `(Date.now() - startTime) % duration` so the
  * timer loops automatically. The SVG ring progress and text are updated every
