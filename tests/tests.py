@@ -44,16 +44,18 @@ def mocked_requests_post(*args, **kwargs):
     raise Exception("No mocked sample data for request: "+args[0])
 
 
+@patch('app.cache.XOS_API_ENDPOINT', 'https://xos.acmi.net.au/api/')
 @patch('requests.get', MagicMock(side_effect=mocked_requests_get))
-def test_create_cache(capsys):
+def test_create_cache(capsys, tmp_path):
     """
     Test the create_cache method downloads an XOS Playlist and saves it to the cache directory.
     """
-    # capsys.disabled forwards stdout and stderr
-    with capsys.disabled():
-        create_cache()
-        with open(f'{main.CACHE_DIR}playlist_1.json', 'r') as playlist_cache:
-            playlist = json.loads(playlist_cache.read())['playlist_labels']
+    with patch('app.cache.CACHE_DIR', str(tmp_path) + '/'):
+        # capsys.disabled forwards stdout and stderr
+        with capsys.disabled():
+            create_cache()
+            with open(f'{tmp_path}/playlist_1.json', 'r') as playlist_cache:
+                playlist = json.loads(playlist_cache.read())['playlist_labels']
         assert len(playlist) == 3
         assert playlist[0]['label']['title'] == '<p>Test pattern</p>'
 
@@ -77,49 +79,62 @@ def test_process_media():
     assert message_broker_json['label_id'] == saved_message.label_id
 
 
-def test_route_playlist_label(client):
+@patch('app.main.XOS_MEDIA_PLAYER_ID', '8')
+@patch('app.main.RABBITMQ_MQTT_HOST', 'track.acmi.net.au')
+def test_route_playlist_label(client, tmp_path):
     """
     Test that the root route renders the expected data.
     """
+    import json as _json
+    (tmp_path / 'playlist_1.json').write_text(_json.dumps(
+        {"id": 1, "title": "Test", "playlist_labels": []}))
+    with patch('app.main.CACHE_DIR', str(tmp_path) + '/'):
+        response = client.get('/')
 
-    response = client.get('/')
-
-    assert b'"xos_media_player_id": "%s"' % main.XOS_MEDIA_PLAYER_ID.encode() in response.data
+    assert b'"xos_media_player_id": "8"' in response.data
     assert b'"mqtt_host": "track.acmi.net.au"' in response.data
     assert response.status_code == 200
 
 
+@patch('app.cache.XOS_API_ENDPOINT', 'https://xos.acmi.net.au/api/')
 @patch('requests.get', MagicMock(side_effect=mocked_requests_get))
-def test_route_playlist_label_with_no_label(client):
+def test_route_playlist_label_with_no_label(client, tmp_path):
     """
     Test that the playlist route returns the expected data
     when a playlist item doesn't have a label.
     """
 
     cache.XOS_PLAYLIST_ID = 2
-    create_cache()
-    response = client.get('/')
+    cache_dir = str(tmp_path) + '/'
+    with patch('app.cache.CACHE_DIR', cache_dir), patch('app.main.CACHE_DIR', cache_dir):
+        create_cache()
+        response = client.get('/')
     response_data = response.data.decode('utf-8')
 
     assert 'resource' not in response_data
     assert response.status_code == 200
 
 
+@patch('app.cache.XOS_API_ENDPOINT', 'https://xos.acmi.net.au/api/')
 @patch('requests.get', MagicMock(side_effect=mocked_requests_get))
-def test_route_playlist_json(client):
+def test_route_playlist_json(client, tmp_path):
     """
     Test that the playlist route returns the expected data.
     """
 
     cache.XOS_PLAYLIST_ID = 1
-    create_cache()
-    response = client.get('/api/playlist/')
+    cache_dir = str(tmp_path) + '/'
+    with patch('app.cache.CACHE_DIR', cache_dir), patch('app.main.CACHE_DIR', cache_dir):
+        create_cache()
+        response = client.get('/api/playlist/')
 
     assert b'Test pattern' in response.data
     assert response.status_code == 200
 
 
 @pytest.mark.usefixtures('database')
+@patch('app.main.AUTH_TOKEN', 'testtoken')
+@patch('app.main.XOS_TAPS_ENDPOINT', 'https://xos.acmi.net.au/api/taps/')
 @patch('requests.post', MagicMock(side_effect=mocked_requests_post))
 def test_route_collect_item(client):
     """
@@ -200,6 +215,7 @@ def test_send_error_sends_on_repetition_and_repeat_every_1_second(capture_except
 
 
 @pytest.mark.usefixtures('database')
+@patch('app.main.AUTH_TOKEN', 'testtoken')
 @patch('app.main.XOS_TAPS_ENDPOINT', 'https://xos.acmi.net.au/api/bad-uri/')
 @patch('requests.post', MagicMock(side_effect=mocked_requests_post))
 def test_tap_received_xos_error(client):
@@ -223,6 +239,8 @@ def test_tap_received_xos_error(client):
 
 
 @pytest.mark.usefixtures('database')
+@patch('app.main.AUTH_TOKEN', 'testtoken')
+@patch('app.main.XOS_TAPS_ENDPOINT', 'https://xos.acmi.net.au/api/taps/')
 @patch('requests.post', MagicMock(side_effect=mocked_requests_post))
 def test_tap_received_while_processing_still_creates(client):
     """
@@ -351,14 +369,15 @@ def test_reverb_label_override_duration(client, tmp_path):
 
 
 @patch('app.main.LABEL_TEMPLATE', 'reverb-digital-label.html')
-@patch('app.main.QR_URL', 'https://example.com/work/123/')
+@patch('app.main.show_qr_code', True)
+@patch('app.main.QR_CODE_URL', 'https://example.com/work/123/')
 def test_reverb_label_qr_url(client, tmp_path):
     """
-    Test that setting QR_URL generates a QR block in the response.
+    Test that setting a QR URL generates a QR code in the response.
     """
     response = reverb_client_get(client, tmp_path)
     data = response.data.decode('utf-8')
 
     assert response.status_code == 200
     assert 'qr-block' in data
-    assert 'Scan to access artwork labels and captions' in data
+    assert 'data-qr-svg' in data

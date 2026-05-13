@@ -19,13 +19,14 @@
     <acmi-mqtt-sync
       {%- if xos.media_player_id %} data-xos-media-player="{{ xos.media_player_id }}"{% endif %}
       {%- if override_duration %} data-override-duration="{{ override_duration }}"{% endif %}
+      {%- if ignore_media_player %} data-ignore-media-player{% endif %}
     >
       <acmi-digital-label
         {%- if override_title %} data-override-title="{{ override_title }}"{% endif %}
       >
         <main>
           <!-- SVG ring countdown timer -->
-          <acmi-reverb-timer>
+          <acmi-reverb-timer{%- if hide_timer %} style="visibility:hidden"{% endif %}>
             <div class="timer">
               <svg viewBox="0 0 100 100">
                 <circle
