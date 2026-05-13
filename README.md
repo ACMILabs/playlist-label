@@ -28,14 +28,6 @@ To run the development container:
 
 You should then be able to see the Flask server running at: http://localhost:8081
 
-### Rebuild the development base image
-
-If you change any of the requirements you'll need to re-build the development container's base image `acmilabs/playlistlabel-development:v1`, it's built from `development/Dockerfile.development`. To re-build it run:
-
-Re-build it: `docker build --file development/Dockerfile.development -t acmilabs/playlistlabel-development:v1 .`
-
-Push the new image to Docker Hub: `docker push acmilabs/playlistlabel-development:v1`
-
 ## Run tests locally
 
 To run the python tests:
@@ -104,3 +96,24 @@ hdmi_mode=87
 disable_overscan=1
 hdmi_timings=1920 0 88 44 148 720 0 4 5 36 0 0 0 60 0 100980000 1
 ```
+
+## Digital Label (Reverb)
+
+The Reverb digital labels run on Raspberry Pi 5, connected via HDMI to a 43" 4K portrait screen at each station. Development lives on the long-lived `digital-label` branch, all feature branches PR into `digital-label`, not `main`.
+
+### Balena fleets
+
+Two fleets, device type `Raspberry Pi 5 & CM5`:
+
+* `s__digital-label-pi-5` staging devices
+* `p__digital-label-pi-5` production devices
+
+### Environment variables
+
+Fleet-wide (set in Balena fleet settings): `AUTH_TOKEN`, `RABBITMQ_MQTT_HOST`, `RABBITMQ_MQTT_PORT`, `RABBITMQ_MEDIA_PLAYER_USER`, `RABBITMQ_MEDIA_PLAYER_PASS`, `XOS_API_ENDPOINT`, `LABEL_TEMPLATE`, `SENTRY_ID`.
+
+Per-device (set as each station is handed over by AV): `XOS_MEDIA_PLAYER_ID`, `XOS_PLAYLIST_ID`.
+
+### Deployment
+
+Push to `digital-label` deploy to staging (`s__digital-label-pi-5`). Once validated, create a GitHub release on `digital-label` with a semver tag, then run `balena push p__digital-label-pi-5` from your machine.

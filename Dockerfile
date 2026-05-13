@@ -9,5 +9,5 @@ RUN pip3 install -Ur /code/requirements/prod.txt
 COPY . /code/
 WORKDIR /code/
 
-# pi4.sh will run when container starts up on the device
+# pi.sh will run when container starts up on the device
 CMD ["bash","scripts/pi.sh"]
