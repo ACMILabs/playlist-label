@@ -16,10 +16,10 @@ import { computed, signal } from "./signals.js";
  * Expects this internal DOM structure (provided by the parent template):
  *
  *   <acmi-reverb-timer>
- *     <div class="timer">
+ *     <div class="timer-block">
  *       <svg>…</svg>
- *       <pre class="ticker">00:00</pre>
- *       <p class="subtitle">Duration</p>
+ *       <pre class="countdown">00:00</pre>
+ *       <p class="next-start-time">Duration</p>
  *     </div>
  *   </acmi-reverb-timer>
  *
@@ -100,8 +100,8 @@ class ReverbTimer extends HTMLElement {
   }, [this.ratio]);
 
   connectedCallback() {
-    this.elapsedElem = this.querySelector(".ticker");
-    this.remainingElem = this.querySelector(".subtitle");
+    this.elapsedElem = this.querySelector(".countdown");
+    this.remainingElem = this.querySelector(".next-start-time");
 
     const update = () => {
       const elapsed = (Date.now() - this.startTime.value) % this.duration.value;

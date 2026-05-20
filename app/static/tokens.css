@@ -1,0 +1,91 @@
+@import url("./reset.css");
+
+/* ============================================================
+   @property registrations
+   ============================================================ */
+
+@property --width-ratio {
+  syntax: "<number>";
+  initial-value: 1;
+  inherits: true;
+}
+
+@property --ring-value {
+  syntax: "<number>";
+  initial-value: 1;
+  inherits: true;
+}
+
+/* ============================================================
+   Tier 1 — Primitives
+   Edit here to shift the whole system
+   ============================================================ */
+
+/* Scale + Colour */
+:root {
+  --ideal-width: 2160px;
+  --width-ratio: calc(100vw / var(--ideal-width));
+  --text-color: #e3e3e3;
+  --fade-color: #444;
+  --background-color: #0f0f0f;
+}
+
+/* Type scale + Leading */
+:root {
+  --text-xs: 36px;
+  --text-sm: 52px;
+  --text-md: 64px;
+  --text-lg: 90px;
+  --leading-tight: 1.2;
+  --leading-body: 1.4;
+  --leading-title: 1.33;
+}
+
+/* ============================================================
+   Tier 2 — Component tokens
+   Change one component without touching another
+   ============================================================ */
+
+/* Layout + Timer size */
+:root {
+  --label-horizontal-margin: 240px;
+  --label-vertical-margin: 240px;
+  --timer-diameter: 260px;
+  --timer-text-size: var(--text-sm);
+  --timer-line-height: var(--leading-tight);
+  --ring-size: 12px;
+}
+
+/* Timer gap + Next start time */
+:root {
+  --ring-value: calc((var(--ring-size) / var(--timer-diameter)) * 100);
+  --timer-bottom-gap: 55px;
+  --next-start-time-width: 405px;
+  --next-start-time-text-size: var(--text-xs);
+  --next-start-time-line-height: var(--leading-tight);
+}
+
+/* Title block + Body text */
+:root {
+  --title-block-top-margin: 460px;
+  --title-block-text-size: var(--text-lg);
+  --title-block-line-height: var(--leading-title);
+  --title-block-bottom-gap: 100px;
+  --body-text-size: var(--text-md);
+  --body-line-height: var(--leading-body);
+  --body-paragraph-bottom-margin: 64px;
+}
+
+/* Tombstone + QR block + Interactive icon */
+:root {
+  --tombstone-text-size: var(--text-xs);
+  --tombstone-line-height: var(--leading-tight);
+  --qr-text-size: var(--text-xs);
+  --tombstone-qr-gap: 100px;
+  --qr-code-width: 172px;
+  --qr-code-description-gap: 32px;
+  --langs-padding-inline: 8px;
+  --langs-padding-block: 2px;
+  --icons-gap: 12px;
+  --interactive-icon-gap: 12px;
+}

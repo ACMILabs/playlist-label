@@ -3,6 +3,7 @@ import { effect, signal } from "./signals.js";
 import { labelSignal, playbackSignal } from "./context.js";
 import "./reverb-timer.js";
 import "./interactive-icon.js";
+import "./listening-bottom.js";
 
 class DigitalLabel extends HTMLElement {
   static observedAttributes = ["data-label-json", "data-override-title"];
@@ -18,11 +19,11 @@ class DigitalLabel extends HTMLElement {
   connectedCallback() {
     this.titleElem = this.querySelector(".title");
     this.authorElem = this.querySelector(".author");
-    this.contentElem = this.querySelector(".content");
+    this.contentElem = this.querySelector(".body-copy");
     this.creditLineElem = this.querySelector(".credit-line");
     this.timer = this.querySelector("acmi-reverb-timer");
     this.qrBlock = this.querySelector("acmi-qr-block");
-
+    this.lrBottomBlock = this.querySelector("acmi-listening-room-bottom");
     const mqttSync = this.closest("acmi-mqtt-sync");
     if (!mqttSync?.hasAttribute("data-xos-media-player")) {
       this.timer?.setAttribute("data-hidden", "");
@@ -55,6 +56,12 @@ class DigitalLabel extends HTMLElement {
           const workTitleHtml = overrideTitle ? `<p>${work.title}</p>` : "";
           this.creditLineElem.innerHTML =
             workTitleHtml + (work.headline_credit_for_label ?? "");
+        }
+        if (this.lrBottomBlock) {
+          const lrSVG = label.qr_lr;
+          if (lrSVG) {
+            this.lrBottomBlock.setSVGText(lrSVG);
+          }
         }
 
         if (this.qrBlock) {

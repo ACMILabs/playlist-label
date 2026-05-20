@@ -34,15 +34,17 @@ class QRBlock extends HTMLElement {
     }
 
     this.style.display = "";
-    this.innerHTML = `
-      <div class="qr-desc">Scan to access artwork labels${
-        showCaption ? " and captions" : ""
-      }</div>
+    this.innerHTML = /* html */ `
       <section class="qr-block">
         ${qrSvg}
+        <div class="info">
         <div class="icons">
           ${TRANSLATE_SVG}
           ${showCaption ? CAPTION_SVG : ""}
+        </div>
+        <div class="qr-desc">Scan to access artwork labels${
+          showCaption ? " and captions" : ""
+        }</div>
         </div>
         <div class="langs">
           <span>English</span>

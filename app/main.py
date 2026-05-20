@@ -5,7 +5,6 @@ import socket
 import time
 from threading import Thread
 import kombu
-import paho.mqtt.client as mqtt
 import requests
 import sentry_sdk
 from flask import Flask, Response, jsonify, render_template, request
@@ -16,6 +15,7 @@ from playhouse.shortcuts import model_to_dict
 from sentry_sdk.integrations.flask import FlaskIntegration
 from segno import make_qr
 from app.errors import HTTPError
+from app.playback_sync import PlaybackSync
 
 XOS_API_ENDPOINT = os.getenv('XOS_API_ENDPOINT')
 XOS_TAPS_ENDPOINT = os.getenv('XOS_TAPS_ENDPOINT', f'{XOS_API_ENDPOINT}taps/')
@@ -30,7 +30,8 @@ RABBITMQ_MEDIA_PLAYER_PASS = os.getenv('RABBITMQ_MEDIA_PLAYER_PASS')
 AMQP_PORT = os.getenv('AMQP_PORT')
 RABBITMQ_RETRY_SECONDS = int(os.getenv('RABBITMQ_RETRY_SECONDS', '2'))
 SENTRY_ID = os.getenv('SENTRY_ID')
-
+PROGRAMMING_MESSAGE = os.getenv('PROGRAMMING_MESSAGE', None);
+PROGRAMMING_URL = os.getenv('PROGRAMMING_URL', None)
 BALENA_APP_ID = os.getenv('BALENA_APP_ID')
 BALENA_SERVICE_NAME = os.getenv('BALENA_SERVICE_NAME')
 BALENA_SUPERVISOR_ADDRESS = os.getenv('BALENA_SUPERVISOR_ADDRESS')
@@ -41,11 +42,12 @@ HIDE_TIMER = os.getenv('HIDE_TIMER', 'false').lower() == 'true'
 OVERRIDE_DURATION = os.getenv('OVERRIDE_DURATION', '')
 OVERRIDE_TITLE = os.getenv('OVERRIDE_TITLE', '')
 QR_URL_OVERRIDE = os.getenv('QR_URL_OVERRIDE', '')
+LISTEING_ROOM_QR_CODE = "https://risingmelbourne.fillout.com/t/4qKipy8T3rus"
 CACHE_DIR = os.getenv('CACHE_DIR', '/data/')
 
 LABEL_TEMPLATE = os.getenv('LABEL_TEMPLATE', 'playlist.html')
 COLLECT_POSITION = os.getenv('COLLECT_POSITION', None)
-
+LABEL_MODE = os.getenv('LABEL_MODE', 'normal')
 # Setup Sentry
 sentry_sdk.init(
     dsn=SENTRY_ID,
@@ -255,79 +257,7 @@ class PlaylistLabel():
             return None
 
 
-
-def on_mqtt_connect(client, userdata, flags, rc):  # pylint: disable=unused-argument
-    if rc == 0:
-        print(f'[mqtt] Connected to {RABBITMQ_MQTT_HOST}:{RABBITMQ_MQTT_PORT}')
-        client.subscribe(MQTT_TOPIC)
-        print(f'[mqtt] Subscribed to {MQTT_TOPIC}')
-    else:
-        print(
-            f'[mqtt] Connection refused (rc={rc}) — check credentials and host')
-
-
-def on_mqtt_disconnect(client, userdata, rc):  # pylint: disable=unused-argument
-    if rc != 0:
-        print(f'[mqtt] Unexpected disconnect (rc={rc}), will auto-reconnect')
-
-
-_mqtt_digest = {'count': 0, 'sse_count': 0, 'last_body': None, 'clients': set()}
-
-
-def _work_title(label_id):
-    try:
-        with open(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}', encoding='utf-8') as f:
-            data = json.load(f)
-        for item in data.get('playlist_labels', []):
-            label = item.get('label') or {}
-            if label.get('id') == label_id:
-                return (label.get('work') or {}).get('title', '')
-    except Exception:  # pylint: disable=broad-except
-        pass
-    return ''
-
-
-def _mqtt_log_thread():
-    while True:
-        time.sleep(5)
-        count = _mqtt_digest['count']
-        sse_count = _mqtt_digest['sse_count']
-        body = _mqtt_digest['last_body']
-        clients = sorted(_mqtt_digest['clients'])
-        _mqtt_digest['count'] = 0
-        _mqtt_digest['sse_count'] = 0
-        if count:
-            label_id = body.get('label_id')
-            title = _work_title(label_id) if label_id else ''
-            print(f'[mqtt] {count} message(s), {sse_count} SSE send(s) to {clients} '
-                  f'| work="{title}" '
-                  f'| duration={body.get("duration")} playback_position={body.get("playback_position")}')
-        else:
-            print('[mqtt] No messages received')
-
-
-def on_mqtt_message(client, userdata, msg):  # pylint: disable=unused-argument
-    try:
-        body = json.loads(msg.payload.decode())
-        _mqtt_digest['count'] += 1
-        _mqtt_digest['last_body'] = body
-    except Exception as exc:  # pylint: disable=broad-except
-        print(f'[mqtt] Error parsing message: {exc}')
-
-
-def start_mqtt():
-    """Connect to the MQTT broker via TCP and subscribe to the playback topic."""
-    client = mqtt.Client()
-    client.username_pw_set(RABBITMQ_MEDIA_PLAYER_USER,
-                           RABBITMQ_MEDIA_PLAYER_PASS)
-    client.on_connect = on_mqtt_connect
-    client.on_disconnect = on_mqtt_disconnect
-    client.on_message = on_mqtt_message
-    client.reconnect_delay_set(min_delay=RABBITMQ_RETRY_SECONDS, max_delay=60)
-
-    print(f'[mqtt] Connecting to {RABBITMQ_MQTT_HOST}:{RABBITMQ_MQTT_PORT}...')
-    client.connect_async(RABBITMQ_MQTT_HOST, int(RABBITMQ_MQTT_PORT))
-    client.loop_forever()
+global sync
 
 
 @app.errorhandler(HTTPError)
@@ -357,9 +287,16 @@ def playlist_label():
     try:
         with open(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}', encoding='utf-8') as json_file:
             json_data = json.load(json_file)
+        if LABEL_MODE == 'listening-room':
+            qrcode = make_qr(LISTEING_ROOM_QR_CODE, error="L")
+            text = qrcode.svg_inline(dark="#aaa", light="#bbb", border=0,
+                                     draw_transparent=True, omitsize=True)
+            text = text.replace('#aaa', "var(--figure, black)")
+            text = text.replace('#bbb', "var(--ground, white)")
+            json_data['qr_lr'] = text
 
         if show_qr_code:
-            qrcode = make_qr(QR_CODE_URL, error="H")
+            qrcode = make_qr(QR_CODE_URL, error="L")
             text = qrcode.svg_inline(dark="#aaa", light="#bbb", border=0,
                                      draw_transparent=True, omitsize=True)
             text = text.replace('#aaa', "var(--figure, black)")
@@ -393,7 +330,9 @@ def playlist_label():
             override_title=OVERRIDE_TITLE,
             ignore_media_player=HIDE_TIMER,
             is_preview='false',
-            collect_classname=collect_classname
+            collect_classname=collect_classname,
+            label_mode=LABEL_MODE,
+            programming_message=PROGRAMMING_MESSAGE
         )
     except FileNotFoundError:
         print(
@@ -473,28 +412,17 @@ def tap_source():
 
 
 def playback_stream(client_ip):
-    """
-    SSE generator that streams the latest playback message to the browser.
-    Yields immediately if a message already exists, then polls for changes.
-    Replaces direct browser WebSocket MQTT connection.
-    """
-    print(f'[sse] Client connected: {client_ip}')
-    _mqtt_digest['clients'].add(client_ip)
-    try:
-        last_body = None
+    last_body = None
+    with sync.client(client_ip):
         while True:
-            body = _mqtt_digest['last_body']
-            if body is not None and body is not last_body:
+            body = sync.wait(last_body)
+            if body is not None:
                 last_body = body
                 data = json.dumps({
                     'duration': body.get('duration'),
                     'playback_position': body.get('playback_position'),
                 })
-                _mqtt_digest['sse_count'] += 1
                 yield f'data: {data}\n\n'
-            time.sleep(0.5)
-    finally:
-        _mqtt_digest['clients'].discard(client_ip)
 
 
 @app.route('/api/playback-stream/')
@@ -514,8 +442,16 @@ if __name__ == '__main__':
     if XOS_MEDIA_PLAYER_ID:
         if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
             if LABEL_TEMPLATE == 'reverb-digital-label.html':
-                Thread(target=start_mqtt, daemon=True).start()
-                Thread(target=_mqtt_log_thread, daemon=True).start()
+                # global sync  # pylint: disable=global-statement
+                sync = PlaybackSync(
+                    host=RABBITMQ_MQTT_HOST,
+                    port=RABBITMQ_MQTT_PORT,
+                    user=RABBITMQ_MEDIA_PLAYER_USER,
+                    password=RABBITMQ_MEDIA_PLAYER_PASS,
+                    topic=MQTT_TOPIC,
+                    retry_seconds=RABBITMQ_RETRY_SECONDS,
+                )
+                sync.start()
             else:
                 playlistlabel = PlaylistLabel()  # pylint: disable=C0103
                 Thread(target=playlistlabel.get_events).start()

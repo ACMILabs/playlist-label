@@ -1,0 +1,28 @@
+{% from 'reverb/_layout.html' import label_layout with context %}
+{% call label_layout() %}
+  <acmi-reverb-timer{%- if hide_timer %} style="visibility:hidden"{% endif %}>
+    <div class="timer-block">
+      <svg viewBox="0 0 100 100">
+        <circle
+          cx="50"
+          cy="50"
+          pathLength="50"
+          fill="none"
+          stroke="var(--fade-color, grey)"
+          class="background"
+        />
+        <circle
+          cx="50"
+          cy="50"
+          style="stroke-dasharray: var(--disk-ratio, 30 70); stroke-dashoffset: 25"
+          pathLength="100"
+          class="foreground"
+          stroke="var(--text-color, white)"
+          fill="none"
+        />
+      </svg>
+      <pre class="countdown">00&#58;00</pre>
+      <p class="next-start-time">Starts Again in 32 minutes</p>
+    </div>
+  </acmi-reverb-timer>
+{% endcall %}

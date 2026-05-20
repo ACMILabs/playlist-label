@@ -1,0 +1,47 @@
+{% macro label_layout(mid_slot='', bottom_extra='') %}
+<main>
+  {{ caller() }}
+
+  <section class="content-area">
+    <section class="title-block">
+      <h1 class="title">{{ override_title if override_title else playlist_json.title }}</h1>
+      <p class="author">
+        {{ playlist_json.playlist_labels[0].label.work.creator_credit_for_label|default('')|striptags }}
+      </p>
+    </section>
+
+    {{ mid_slot|safe }}
+
+    <div class="body-copy">
+      {{ playlist_json.playlist_labels[0].label.columns[0].content|safe }}
+    </div>
+
+    <section class="tombstone-block">
+    <div class="credit-line">
+        {% if override_title %}
+        <p>{{ playlist_json.playlist_labels[0].label.work.title }}</p>
+        {% endif %}
+        {% if playlist_json.playlist_labels[0].label.work.headline_credit_for_label %}
+        {{ playlist_json.playlist_labels[0].label.work.headline_credit_for_label|default('')|safe }}
+         {% endif %}
+      </div>
+    </section>
+  </section>
+
+  <div class="bottom-area">
+
+    <acmi-qr-block
+      {%- if playlist_json.qr_text %} data-qr-svg="{{ playlist_json.qr_text }}"{% endif %}
+      {%- if show_caption_icon %} data-show-caption-icon{% endif %}
+    ></acmi-qr-block>
+
+    {% if programming_message %}
+      <acmi-listening-room-bottom data-text="{{programming_message}}" data-qr="false"></acmi-listening-room-bottom>
+
+      
+    
+   {% endif %}
+    {{ bottom_extra|safe }} 
+  </div>
+</main>
+{% endmacro %}

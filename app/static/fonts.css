@@ -1,0 +1,69 @@
+@font-face {
+  font-family: FaktPro;
+  src: url("FaktPro-Normal.otf") format("opentype");
+}
+
+@font-face {
+  font-family: FaktPro;
+  font-style: italic;
+  src: url("FaktPro-NormalItalic.otf") format("opentype");
+}
+
+@font-face {
+  font-family: FaktPro;
+  font-weight: bold;
+  src: url("FaktPro-Bold.otf") format("opentype");
+}
+
+@font-face {
+  font-family: FaktPro;
+  font-weight: bold;
+  font-style: italic;
+  src: url("FaktPro-BoldItalic.otf") format("opentype");
+}
+
+@font-face {
+  font-family: PxGrotesk;
+  src: url("PxGrotesk-Bold.otf") format("opentype");
+}
+
+@font-face {
+  font-family: PxGrotesk;
+  font-style: italic;
+  src: url("PxGrotesk-BoldIta.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Söhne Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url("TestSöhneMono-Buch.otf") format("opentype");
+}
+
+@font-face {
+  font-family: "Noto Sans SC";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("noto-sans-sc-chinese-simplified-400-normal.woff2") format("woff2"),
+    url("noto-sans-sc-chinese-simplified-400-normal.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Noto Sans Devanagari";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("noto-sans-devanagari-devanagari-400-normal.woff2") format("woff2"),
+    url("noto-sans-devanagari-devanagari-400-normal.woff") format("woff");
+}
+
+@font-face {
+  font-family: "Noto Sans Gurmukhi";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url("noto-sans-gurmukhi-gurmukhi-400-normal.woff2") format("woff2"),
+    url("noto-sans-gurmukhi-gurmukhi-400-normal.woff") format("woff");
+}
