@@ -17,6 +17,8 @@ body {
 main {
   margin-inline: calc(var(--label-horizontal-margin) * var(--width-ratio));
   margin-block: calc(var(--label-vertical-margin) * var(--width-ratio));
+  margin-block-start: calc(
+    (var(--label-vertical-margin) * var(--width-ratio)) - (var(--offset-top-margin, 0) * 1px * var(--width-ratio)));
   height: 100%;
   display: grid;
   container-type: size;

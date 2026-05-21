@@ -38,7 +38,8 @@ BALENA_SUPERVISOR_ADDRESS = os.getenv('BALENA_SUPERVISOR_ADDRESS')
 BALENA_SUPERVISOR_API_KEY = os.getenv('BALENA_SUPERVISOR_API_KEY')
 DEBUG = os.getenv('DEBUG', 'false').lower() == "true"
 HIDE_TIMER = os.getenv('HIDE_TIMER', 'false').lower() == 'true'
-HIDE_CAPTION = os.getenv('HIDE_TIMER', 'false').lower() == 'true'
+HIDE_CAPTION = os.getenv('HIDE_CAPTION', 'false').lower() == 'true'
+OFFSET_TOP_MARGIN = os.getenv('OFFSET_TOP_MARGIN', '0')
 # milliseconds; initialises timer before MQTT arrives
 OVERRIDE_DURATION = os.getenv('OVERRIDE_DURATION', '')
 OVERRIDE_TITLE = os.getenv('OVERRIDE_TITLE', '')
@@ -127,7 +128,6 @@ class PlaylistLabel():
                 video_buffer=body.get('video_buffer', 0),
             )
 
-
             delete_records = Message.delete().where(
                 Message.datetime.not_in(
                     Message.select(Message.datetime).order_by(
@@ -149,7 +149,6 @@ class PlaylistLabel():
         try:
             conn.ensure_connection(max_retries=3)
             with conn.Consumer(PLAYBACK_QUEUE, callbacks=[self.process_media]):
-
 
                 while True:
                     try:
@@ -277,8 +276,8 @@ def playlist_label():
                 time_override=LISTENING_ROOM_TIME_OVERRIDE,
                 custom_event_start_time=LISTENING_ROOM_CUSTOM_EVENT_START_TIME,
                 parent_id=LISTENING_ROOM_PARENT_ID,
-            ))
 
+            ))
 
         if show_qr_code:
             qrcode = make_qr(QR_CODE_URL, error="L")
@@ -288,12 +287,9 @@ def playlist_label():
             text = text.replace('#bbb', "var(--ground, white)")
             json_data['qr_text'] = text
 
-
         for item in list(json_data['playlist_labels']):
             if item['label'] is None:
                 json_data['playlist_labels'].remove(item)
-
-
 
         collect_classname = f'collect {COLLECT_POSITION}' if COLLECT_POSITION else 'collect'
 
@@ -319,7 +315,8 @@ def playlist_label():
             is_preview='false',
             collect_classname=collect_classname,
             label_mode=LABEL_MODE,
-            programming_message=PROGRAMMING_MESSAGE
+            programming_message=PROGRAMMING_MESSAGE,
+            offset_top_margin=OFFSET_TOP_MARGIN
         )
     except FileNotFoundError:
         print(
@@ -430,7 +427,6 @@ def events():
 
 if __name__ == '__main__':
     db.create_tables([Message, HasTapped])
-
 
     try:
         db.execute_sql(

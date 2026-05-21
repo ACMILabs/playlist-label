@@ -43,7 +43,7 @@ class QRBlock extends HTMLElement {
           ${showCaption ? CAPTION_SVG : ""}
         </div>
         <div class="qr-desc">Scan to access ${
-          hideArtworkLabel ? "label" : "artwork labels"
+          hideArtworkLabel ? "label" : "artwork label"
         }${showCaption ? " and captions" : ""}</div>
         </div>
         <div class="langs">
