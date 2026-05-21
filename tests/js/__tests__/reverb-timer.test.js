@@ -15,7 +15,7 @@ afterEach(() => {
 
 function makeTimer() {
   const elem = document.createElement("acmi-reverb-timer");
-  elem.innerHTML = `<pre class="ticker"></pre><p class="subtitle"></p>`;
+  elem.innerHTML = `<pre class="countdown"></pre><p class="next-start-time"></p>`;
   document.body.appendChild(elem);
   return elem;
 }
@@ -48,7 +48,7 @@ describe("acmi-reverb-timer", () => {
       // Invoke the rAF callback manually
       rafCallback();
 
-      const ticker = elem.querySelector(".ticker");
+      const ticker = elem.querySelector(".countdown");
       expect(ticker.textContent).toBe("0:05");
       expect(elem.style.getPropertyValue("--disk-ratio")).toBeTruthy();
     });

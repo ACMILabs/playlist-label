@@ -30,7 +30,7 @@ RABBITMQ_MEDIA_PLAYER_PASS = os.getenv('RABBITMQ_MEDIA_PLAYER_PASS')
 AMQP_PORT = os.getenv('AMQP_PORT')
 RABBITMQ_RETRY_SECONDS = int(os.getenv('RABBITMQ_RETRY_SECONDS', '2'))
 SENTRY_ID = os.getenv('SENTRY_ID')
-PROGRAMMING_MESSAGE = os.getenv('PROGRAMMING_MESSAGE', None);
+PROGRAMMING_MESSAGE = os.getenv('PROGRAMMING_MESSAGE', None)
 PROGRAMMING_URL = os.getenv('PROGRAMMING_URL', None)
 BALENA_APP_ID = os.getenv('BALENA_APP_ID')
 BALENA_SERVICE_NAME = os.getenv('BALENA_SERVICE_NAME')
@@ -38,6 +38,7 @@ BALENA_SUPERVISOR_ADDRESS = os.getenv('BALENA_SUPERVISOR_ADDRESS')
 BALENA_SUPERVISOR_API_KEY = os.getenv('BALENA_SUPERVISOR_API_KEY')
 DEBUG = os.getenv('DEBUG', 'false').lower() == "true"
 HIDE_TIMER = os.getenv('HIDE_TIMER', 'false').lower() == 'true'
+HIDE_CAPTION = os.getenv('HIDE_TIMER', 'false').lower() == 'true'
 # milliseconds; initialises timer before MQTT arrives
 OVERRIDE_DURATION = os.getenv('OVERRIDE_DURATION', '')
 OVERRIDE_TITLE = os.getenv('OVERRIDE_TITLE', '')
@@ -48,7 +49,14 @@ CACHE_DIR = os.getenv('CACHE_DIR', '/data/')
 LABEL_TEMPLATE = os.getenv('LABEL_TEMPLATE', 'playlist.html')
 COLLECT_POSITION = os.getenv('COLLECT_POSITION', None)
 LABEL_MODE = os.getenv('LABEL_MODE', 'normal')
-# Setup Sentry
+LISTENING_ROOM_MODE_OVERRIDE = os.getenv('LISTENING_ROOM_MODE_OVERRIDE', None)
+LISTENING_ROOM_TIME_OVERRIDE = os.getenv('LISTENING_ROOM_TIME_OVERRIDE', None)
+LISTENING_ROOM_CUSTOM_EVENT_START_TIME = os.getenv('LISTENING_ROOM_CUSTOM_EVENT_START_TIME')
+LISTENING_ROOM_PARENT_ID = os.getenv('LISTENING_ROOM_PARENT_ID', None)
+LISTENING_ROOM_EVENTS_API = os.getenv(
+    'LISTENING_ROOM_EVENTS_API',
+    'https://admin.acmi.net.au/api/v2/events/',
+)
 sentry_sdk.init(
     dsn=SENTRY_ID,
     integrations=[FlaskIntegration()]
@@ -77,8 +85,8 @@ QR_CODE_LABEL_ONLY = (f'https://www.acmi.net.au/media-player'
 
 QR_CODE_URL = QR_CODE_MEDIA_PLAYER if XOS_MEDIA_PLAYER_ID is not None else QR_CODE_LABEL_ONLY if XOS_PLAYLIST_ID != '1' else QR_URL_OVERRIDE
 app = Flask(__name__)  # pylint: disable=C0103
+
 CACHED_PLAYLIST_JSON = f'playlist_{XOS_PLAYLIST_ID}.json'
-# instantiate the peewee database
 db = SqliteDatabase('message.db')  # pylint: disable=C0103
 
 
@@ -97,10 +105,7 @@ class Message(Model):  # pylint: disable=R0903
 
 
 class PlaylistLabel():
-    """
-    A playlist label that communicates with XOS to download labels,
-    and sends lens taps back to XOS with the label tapped.
-    """
+    """Playlist label: downloads labels from XOS and forwards lens taps."""
 
     def __init__(self):
         self.playlist = None
@@ -108,9 +113,7 @@ class PlaylistLabel():
 
     @staticmethod
     def process_media(body, message):
-        """
-        Store the message received from RabbitMQ.
-        """
+        """Store the message received from RabbitMQ."""
         try:
             message.ack()
 
@@ -123,7 +126,8 @@ class PlaylistLabel():
                 audio_buffer=body.get('audio_buffer', 0),
                 video_buffer=body.get('video_buffer', 0),
             )
-            # clear out other messages beyond the last 5
+
+
             delete_records = Message.delete().where(
                 Message.datetime.not_in(
                     Message.select(Message.datetime).order_by(
@@ -139,15 +143,14 @@ class PlaylistLabel():
             sentry_sdk.capture_exception(exception)
 
     def consume(self, conn):
-        """
-        Try to consume from RabbitMQ queue and store the received message.
-        """
+        """Consume from the RabbitMQ queue."""
         connection_errors = conn.connection_errors + \
             (kombu.exceptions.OperationalError,)
         try:
             conn.ensure_connection(max_retries=3)
             with conn.Consumer(PLAYBACK_QUEUE, callbacks=[self.process_media]):
-                # Process messages and handle events on all channels
+
+
                 while True:
                     try:
                         conn.drain_events(timeout=2)
@@ -168,7 +171,6 @@ class PlaylistLabel():
                                         exception, every=3600)
                         conn.heartbeat_check()
         except connection_errors as conn_error:
-            # error with the connection, wait and try to connect again
             print(f'Error connecting to RabbitMQ server: {conn_error}')
             self.send_error('rabbitmq_conn_error',
                             conn_error, on_rep=3, every=3600)
@@ -176,36 +178,14 @@ class PlaylistLabel():
             time.sleep(RABBITMQ_RETRY_SECONDS)
 
     def get_events(self):
-        """
-        Create a connection to RabbitMQ server and try to consume.
-        """
+        """Connect to RabbitMQ and consume."""
         while True:
             with Connection(AMQP_URL, heartbeat=5, connect_timeout=5) as conn:
                 self.consume(conn)
 
     def send_error(self, error_name, error, on_rep=5, every=100, units='seconds'):
         # pylint: disable=too-many-arguments
-        """
-        Attempt to send an error to sentry.
-        Send to Sentry for the first time when calling send_error for the `on_rep`th time.
-        Subsequently, send to Sentry on every `every` `units` (e.g every 100 seconds)
-        if the error has not been fixed.
-
-        This function helps to not report sporadic connection errors that are automatically
-        resolved.
-        Also, if an error is persistent, this function helps to not flood Sentry.
-
-        :param error_name: The name of the error used to keep a history
-        :type error_name: str
-        :param error: The error that is being sent to Sentry
-        :type error: :class:`Exception`
-        :param on_rep: The repetition when the error is actually sent for the first time to Sentry
-        :type on_rep: int
-        :param every: The number of instances or seconds a error is re-sent to Sentry
-        :type every: int
-        :param units: Either 'instances' or 'seconds' to be used alonside the `every` arg
-        :type units: str
-        """
+        """Rate-limited error reporting to Sentry."""
         try:
             error_history = self.errors_history[error_name]
         except KeyError:
@@ -241,16 +221,7 @@ class PlaylistLabel():
             print('Invalid units')
 
     def clear_error_history(self, error_name):
-        """
-        Remove the history of an error.
-        This method should be called whenever a problem (e.g. network disruption)
-        has been resolved.
-
-        :param error_name: The name given to the error in `send_error`.
-        :type error_name: str
-        :return: The error whose history was deleted.
-        :rtype: :class:`Exception`
-        """
+        """Remove the history of an error when it resolves."""
         try:
             return self.errors_history.pop(error_name)['error']
         except KeyError:
@@ -260,11 +231,24 @@ class PlaylistLabel():
 global sync
 
 
+def listening_room_json_additions(qr_code_url, mode_override, time_override,
+                                  custom_event_start_time, parent_id):
+    qrcode = make_qr(qr_code_url, error="L")
+    text = qrcode.svg_inline(dark="#aaa", light="#bbb", border=0,
+                             draw_transparent=True, omitsize=True)
+    text = text.replace('#aaa', "var(--figure, black)")
+    text = text.replace('#bbb', "var(--ground, white)")
+    return {
+        'qr_lr': text,
+        'LISTENING_ROOM_MODE_OVERRIDE': mode_override,
+        'LISTENING_ROOM_TIME_OVERRIDE': time_override,
+        'LISTENING_ROOM_CUSTOM_EVENT_START_TIME': custom_event_start_time,
+        'LISTENING_ROOM_PARENT_ID': parent_id,
+    }
+
+
 @app.errorhandler(HTTPError)
 def handle_http_error(error):
-    """
-    Format error for response.
-    """
     response = jsonify(error.to_dict())
     response.status_code = error.status_code
     sentry_sdk.capture_exception(error)
@@ -282,18 +266,19 @@ class HasTapped(Model):  # pylint: disable=R0903
 
 @app.route('/')
 def playlist_label():
-    # Read in the cached JSON
     json_data = {}
     try:
         with open(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}', encoding='utf-8') as json_file:
             json_data = json.load(json_file)
         if LABEL_MODE == 'listening-room':
-            qrcode = make_qr(LISTEING_ROOM_QR_CODE, error="L")
-            text = qrcode.svg_inline(dark="#aaa", light="#bbb", border=0,
-                                     draw_transparent=True, omitsize=True)
-            text = text.replace('#aaa', "var(--figure, black)")
-            text = text.replace('#bbb', "var(--ground, white)")
-            json_data['qr_lr'] = text
+            json_data.update(listening_room_json_additions(
+                qr_code_url=LISTEING_ROOM_QR_CODE,
+                mode_override=LISTENING_ROOM_MODE_OVERRIDE,
+                time_override=LISTENING_ROOM_TIME_OVERRIDE,
+                custom_event_start_time=LISTENING_ROOM_CUSTOM_EVENT_START_TIME,
+                parent_id=LISTENING_ROOM_PARENT_ID,
+            ))
+
 
         if show_qr_code:
             qrcode = make_qr(QR_CODE_URL, error="L")
@@ -302,12 +287,14 @@ def playlist_label():
             text = text.replace('#aaa', "var(--figure, black)")
             text = text.replace('#bbb', "var(--ground, white)")
             json_data['qr_text'] = text
-        # Remove playlist items that don't have a label
+
+
         for item in list(json_data['playlist_labels']):
             if item['label'] is None:
                 json_data['playlist_labels'].remove(item)
 
-        # Calculate classnames
+
+
         collect_classname = f'collect {COLLECT_POSITION}' if COLLECT_POSITION else 'collect'
 
         return render_template(
@@ -326,7 +313,7 @@ def playlist_label():
             },
             hide_timer=HIDE_TIMER,
             override_duration=OVERRIDE_DURATION,
-            show_caption_icon=XOS_MEDIA_PLAYER_ID is not None,
+            show_caption_icon=XOS_MEDIA_PLAYER_ID is not None and HIDE_CAPTION is False,
             override_title=OVERRIDE_TITLE,
             ignore_media_player=HIDE_TIMER,
             is_preview='false',
@@ -342,7 +329,6 @@ def playlist_label():
 
 @app.route('/api/playlist/')
 def playlist_json():
-    # Read in the cached JSON
     json_data = {}
     try:
         with open(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}', encoding='utf-8') as json_file:
@@ -355,9 +341,7 @@ def playlist_json():
 
 @app.route('/api/taps/', methods=['POST'])
 def collect_item():
-    """
-    Collect a tap and forward it on to XOS with the label ID.
-    """
+    """Forward a lens tap to XOS."""
     tap_to_process = HasTapped.get_or_none(tap_processing=0)
     if tap_to_process:
         tap_to_process.tap_processing = 1
@@ -430,9 +414,24 @@ def playback_source():
     return Response(playback_stream(request.remote_addr), mimetype="text/event-stream")
 
 
+@app.route('/api/events/')
+def events():
+    """Proxy for the ACMI events API."""
+    try:
+        response = requests.get(LISTENING_ROOM_EVENTS_API, params=request.args, timeout=10)
+        return Response(
+            response.content,
+            status=response.status_code,
+            content_type=response.headers.get('Content-Type', 'application/json'),
+        )
+    except requests.exceptions.RequestException as exc:
+        return jsonify({'error': str(exc)}), 502
+
+
 if __name__ == '__main__':
     db.create_tables([Message, HasTapped])
-    # Add duration column to existing databases that predate this field.
+
+
     try:
         db.execute_sql(
             'ALTER TABLE message ADD COLUMN duration INTEGER DEFAULT 0')

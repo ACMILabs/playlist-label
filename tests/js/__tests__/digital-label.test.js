@@ -10,7 +10,7 @@ function makeElement(wrapInMqttSync = false, mqttSyncAttrs = {}) {
   inner.innerHTML = `
     <h1 class="title"></h1>
     <p class="author"></p>
-    <div class="content"></div>
+    <div class="body-copy"></div>
     <acmi-reverb-timer></acmi-reverb-timer>
     <acmi-qr-block></acmi-qr-block>
     <div class="credit-line"></div>
@@ -46,7 +46,7 @@ describe("acmi-digital-label", () => {
       expect(elem.querySelector(".author").textContent).toContain(
         "Daniel Bronsema"
       );
-      expect(elem.querySelector(".content").innerHTML).toContain("Music video");
+      expect(elem.querySelector(".body-copy").innerHTML).toContain("Music video");
       expect(elem.querySelector(".credit-line").innerHTML).toContain(
         "Courtesy of the artists"
       );
@@ -109,7 +109,7 @@ describe("acmi-digital-label", () => {
       elem.setAttribute("data-label-json", JSON.stringify(playlistJson));
 
       expect(elem.querySelector(".title").textContent).toBe("Default playlist");
-      expect(elem.querySelector(".content").innerHTML).toContain("Music video");
+      expect(elem.querySelector(".body-copy").innerHTML).toContain("Music video");
     });
   });
 

@@ -1,9 +1,5 @@
 @import url("./reset.css");
 
-/* ============================================================
-   @property registrations
-   ============================================================ */
-
 @property --width-ratio {
   syntax: "<number>";
   initial-value: 1;
@@ -16,11 +12,6 @@
   inherits: true;
 }
 
-/* ============================================================
-   Tier 1 — Primitives
-   Edit here to shift the whole system
-   ============================================================ */
-
 /* Scale + Colour */
 :root {
   --ideal-width: 2160px;
@@ -28,6 +19,7 @@
   --text-color: #e3e3e3;
   --fade-color: #444;
   --background-color: #0f0f0f;
+  --lr-title-bg-color: #6d716e;
 }
 
 /* Type scale + Leading */
@@ -40,11 +32,6 @@
   --leading-body: 1.4;
   --leading-title: 1.33;
 }
-
-/* ============================================================
-   Tier 2 — Component tokens
-   Change one component without touching another
-   ============================================================ */
 
 /* Layout + Timer size */
 :root {

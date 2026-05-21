@@ -33,6 +33,7 @@
     <acmi-qr-block
       {%- if playlist_json.qr_text %} data-qr-svg="{{ playlist_json.qr_text }}"{% endif %}
       {%- if show_caption_icon %} data-show-caption-icon{% endif %}
+      {%- if label_mode == 'listening-room'%}data-hide-artwork{% endif %}
     ></acmi-qr-block>
 
     {% if programming_message %}

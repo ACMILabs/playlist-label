@@ -8,6 +8,7 @@ import pytest
 from app import cache, main
 from app.cache import create_cache
 from app.main import HasTapped, Message, PlaylistLabel
+from app.playback_sync import PlaybackSync
 
 
 class MockResponse:
@@ -47,11 +48,8 @@ def mocked_requests_post(*args, **kwargs):
 @patch('app.cache.XOS_API_ENDPOINT', 'https://xos.acmi.net.au/api/')
 @patch('requests.get', MagicMock(side_effect=mocked_requests_get))
 def test_create_cache(capsys, tmp_path):
-    """
-    Test the create_cache method downloads an XOS Playlist and saves it to the cache directory.
-    """
+    """Downloads an XOS Playlist and saves it to cache."""
     with patch('app.cache.CACHE_DIR', str(tmp_path) + '/'):
-        # capsys.disabled forwards stdout and stderr
         with capsys.disabled():
             create_cache()
             with open(f'{tmp_path}/playlist_1.json', 'r') as playlist_cache:
@@ -62,9 +60,7 @@ def test_create_cache(capsys, tmp_path):
 
 @pytest.mark.usefixtures('database')
 def test_process_media():
-    """
-    Test the process_media function creates a valid Message.
-    """
+    """process_media creates a valid Message."""
 
     with open('tests/data/message.json', 'r') as the_file:
         message_broker_json = json.loads(the_file.read())
@@ -82,9 +78,7 @@ def test_process_media():
 @patch('app.main.XOS_MEDIA_PLAYER_ID', '8')
 @patch('app.main.RABBITMQ_MQTT_HOST', 'track.acmi.net.au')
 def test_route_playlist_label(client, tmp_path):
-    """
-    Test that the root route renders the expected data.
-    """
+    """Root route renders expected data."""
     import json as _json
     (tmp_path / 'playlist_1.json').write_text(_json.dumps(
         {"id": 1, "title": "Test", "playlist_labels": []}))
@@ -99,10 +93,7 @@ def test_route_playlist_label(client, tmp_path):
 @patch('app.cache.XOS_API_ENDPOINT', 'https://xos.acmi.net.au/api/')
 @patch('requests.get', MagicMock(side_effect=mocked_requests_get))
 def test_route_playlist_label_with_no_label(client, tmp_path):
-    """
-    Test that the playlist route returns the expected data
-    when a playlist item doesn't have a label.
-    """
+    """Playlist items without labels are excluded."""
 
     cache.XOS_PLAYLIST_ID = 2
     cache_dir = str(tmp_path) + '/'
@@ -118,9 +109,7 @@ def test_route_playlist_label_with_no_label(client, tmp_path):
 @patch('app.cache.XOS_API_ENDPOINT', 'https://xos.acmi.net.au/api/')
 @patch('requests.get', MagicMock(side_effect=mocked_requests_get))
 def test_route_playlist_json(client, tmp_path):
-    """
-    Test that the playlist route returns the expected data.
-    """
+    """Playlist JSON route returns expected data."""
 
     cache.XOS_PLAYLIST_ID = 1
     cache_dir = str(tmp_path) + '/'
@@ -137,9 +126,7 @@ def test_route_playlist_json(client, tmp_path):
 @patch('app.main.XOS_TAPS_ENDPOINT', 'https://xos.acmi.net.au/api/taps/')
 @patch('requests.post', MagicMock(side_effect=mocked_requests_post))
 def test_route_collect_item(client):
-    """
-    Test that the collect a tap route forwards the expected data to XOS.
-    """
+    """Tap route forwards data to XOS."""
 
     with open('tests/data/lens_tap.json', 'r') as the_file:
         lens_tap_data = the_file.read()
@@ -160,56 +147,42 @@ def test_route_collect_item(client):
 
 @patch('sentry_sdk.capture_exception', side_effect=MagicMock())
 def test_send_error_sends_on_repetition_and_repeat_every(capture_exception):
-    """
-    Test that the send_error function only sends the error
-    on repetition 5 and every 20 times.
-    """
+    """Sends on repetition 5, then every 20 instances."""
     playlist_label = PlaylistLabel()
 
-    # call send_error 4 times and assert it doesn't send the error
     for _ in range(4):
         playlist_label.send_error('rmq_conn', None, on_rep=5, every=20, units='instances')
     assert capture_exception.call_count == 0
 
-    # make sure the error is sent on the 5th time
     playlist_label.send_error('rmq_conn', None, on_rep=5, every=20, units='instances')
     assert capture_exception.call_count == 1
 
-    # make sure the error is not sent before another 20 times
     for _ in range(19):
         playlist_label.send_error('rmq_conn', None, on_rep=5, every=20, units='instances')
     assert capture_exception.call_count == 1
 
-    # make sure the error is sent on the next 20th time
     playlist_label.send_error('rmq_conn', None, on_rep=5, every=20, units='instances')
     assert capture_exception.call_count == 2
 
 
 @patch('sentry_sdk.capture_exception', side_effect=MagicMock())
 def test_send_error_sends_on_repetition_and_repeat_every_1_second(capture_exception):
-    """
-    Test that the send_error function only sends the error
-    on repetition 5 and every second.
-    """
+    """Sends on repetition 5, then every 1 second."""
     playlist_label = PlaylistLabel()
 
-    # call send_error 4 times and assert it doesn't send the error
     for _ in range(4):
         playlist_label.send_error('rmq_conn', None, on_rep=5, every=1, units='seconds')
     assert capture_exception.call_count == 0
 
-    # make sure the error is sent on the 5th time
     playlist_label.send_error('rmq_conn', None, on_rep=5, every=1, units='seconds')
     assert capture_exception.call_count == 1
 
-    # make sure the error is not sent before 1 second has passed
     for _ in range(10):
         playlist_label.send_error('rmq_conn', None, on_rep=5, every=1, units='seconds')
     assert capture_exception.call_count == 1
 
     time.sleep(1.5)
 
-    # make sure the error is sent after 1 second
     playlist_label.send_error('rmq_conn', None, on_rep=5, every=1, units='seconds')
     assert capture_exception.call_count == 2
 
@@ -219,9 +192,7 @@ def test_send_error_sends_on_repetition_and_repeat_every_1_second(capture_except
 @patch('app.main.XOS_TAPS_ENDPOINT', 'https://xos.acmi.net.au/api/bad-uri/')
 @patch('requests.post', MagicMock(side_effect=mocked_requests_post))
 def test_tap_received_xos_error(client):
-    """
-    Test that a tap fails correctly for an XOS error
-    """
+    """Tap fails correctly on XOS error."""
     with open('tests/data/lens_tap.json', 'r') as the_file:
         lens_tap_data = the_file.read()
 
@@ -243,9 +214,7 @@ def test_tap_received_xos_error(client):
 @patch('app.main.XOS_TAPS_ENDPOINT', 'https://xos.acmi.net.au/api/taps/')
 @patch('requests.post', MagicMock(side_effect=mocked_requests_post))
 def test_tap_received_while_processing_still_creates(client):
-    """
-    Test that if an old tap is still being processed by the UI, new taps are still created
-    """
+    """New taps still created while old tap is processing."""
     has_tapped = HasTapped.get_or_none(tap_processing=0)
     has_tapped.tap_processing = 1
     has_tapped.save()
@@ -262,9 +231,6 @@ def test_tap_received_while_processing_still_creates(client):
     assert response.status_code == 201
 
 
-# ── Reverb digital label template tests ──────────────────────────────────────
-
-# Minimal playlist JSON for reverb template tests — self-contained, no cache setup needed.
 REVERB_TEST_PLAYLIST = {
     "id": 1,
     "title": "Test playlist",
@@ -286,10 +252,7 @@ REVERB_TEST_PLAYLIST = {
 
 
 def reverb_client_get(client, tmp_path, extra_patches=None):
-    """
-    Helper: write REVERB_TEST_PLAYLIST to a temp cache dir and GET '/'.
-    extra_patches is a dict of {target: value} applied via patch.
-    """
+    """Write test playlist to cache and GET '/'."""
     import json as _json
     cache_file = tmp_path / 'playlist_1.json'
     cache_file.write_text(_json.dumps(REVERB_TEST_PLAYLIST))
@@ -310,10 +273,7 @@ def reverb_client_get(client, tmp_path, extra_patches=None):
 
 @patch('app.main.LABEL_TEMPLATE', 'reverb-digital-label.html')
 def test_reverb_label_content_mapping(client, tmp_path):
-    """
-    Test that creator_credit_for_label and headline_credit_for_label
-    are rendered in the reverb template (tags stripped for author).
-    """
+    """Credits are rendered in the reverb template."""
     response = reverb_client_get(client, tmp_path)
     data = response.data.decode('utf-8')
 
@@ -326,9 +286,7 @@ def test_reverb_label_content_mapping(client, tmp_path):
 @patch('app.main.LABEL_TEMPLATE', 'reverb-digital-label.html')
 @patch('app.main.HIDE_TIMER', True)
 def test_reverb_label_hide_timer(client, tmp_path):
-    """
-    Test that HIDE_TIMER=True hides the timer and adds data-ignore-media-player.
-    """
+    """HIDE_TIMER hides the timer."""
     response = reverb_client_get(client, tmp_path)
     data = response.data.decode('utf-8')
 
@@ -340,10 +298,7 @@ def test_reverb_label_hide_timer(client, tmp_path):
 @patch('app.main.LABEL_TEMPLATE', 'reverb-digital-label.html')
 @patch('app.main.OVERRIDE_TITLE', 'My Override Title')
 def test_reverb_label_override_title(client, tmp_path):
-    """
-    Test that OVERRIDE_TITLE replaces the playlist title, sets the data attribute,
-    and prepends the work title to the credit-line.
-    """
+    """OVERRIDE_TITLE replaces the playlist title."""
     response = reverb_client_get(client, tmp_path)
     data = response.data.decode('utf-8')
 
@@ -356,10 +311,7 @@ def test_reverb_label_override_title(client, tmp_path):
 @patch('app.main.LABEL_TEMPLATE', 'reverb-digital-label.html')
 @patch('app.main.OVERRIDE_DURATION', '21600000')
 def test_reverb_label_override_duration(client, tmp_path):
-    """
-    Test that OVERRIDE_DURATION passes data-override-duration to the template.
-    MQTT is NOT disabled — it can still override at runtime.
-    """
+    """OVERRIDE_DURATION sets the data attribute."""
     response = reverb_client_get(client, tmp_path)
     data = response.data.decode('utf-8')
 
@@ -372,12 +324,65 @@ def test_reverb_label_override_duration(client, tmp_path):
 @patch('app.main.show_qr_code', True)
 @patch('app.main.QR_CODE_URL', 'https://example.com/work/123/')
 def test_reverb_label_qr_url(client, tmp_path):
-    """
-    Test that setting a QR URL generates a QR code in the response.
-    """
+    """QR URL generates a QR code."""
     response = reverb_client_get(client, tmp_path)
     data = response.data.decode('utf-8')
 
     assert response.status_code == 200
     assert 'qr-block' in data
     assert 'data-qr-svg' in data
+
+
+def make_sync():
+    return PlaybackSync(host='x', port=1883, user='u', password='p', topic='t')
+
+
+def test_playback_sync_wait_returns_body_after_receive():
+    """receive() then wait() returns the parsed body."""
+    sync = make_sync()
+    sync.receive(b'{"duration": 100, "playback_position": 42}')
+    body = sync.wait(last_body=None, timeout=1)
+    assert body['duration'] == 100
+    assert body['playback_position'] == 42
+
+
+def test_playback_sync_wait_returns_none_on_timeout():
+    """wait() returns None on timeout."""
+    sync = make_sync()
+    body = sync.wait(last_body=None, timeout=0.05)
+    assert body is None
+
+
+def test_playback_sync_wait_skips_already_seen_body():
+    """wait() returns None when body hasn't changed."""
+    sync = make_sync()
+    sync.receive(b'{"duration": 100, "playback_position": 0}')
+    first = sync.wait(last_body=None, timeout=1)
+    assert first is not None
+    second = sync.wait(last_body=first, timeout=0.05)
+    assert second is None
+
+
+def test_playback_sync_wait_returns_new_body_after_update():
+    """New receive() unblocks wait() with updated body."""
+    sync = make_sync()
+    sync.receive(b'{"duration": 100, "playback_position": 0}')
+    first = sync.wait(last_body=None, timeout=1)
+    sync.receive(b'{"duration": 100, "playback_position": 10}')
+    second = sync.wait(last_body=first, timeout=1)
+    assert second['playback_position'] == 10
+
+
+def test_playback_sync_receive_ignores_invalid_json():
+    """Bad JSON doesn't raise."""
+    sync = make_sync()
+    sync.receive(b'not json')
+    assert sync.wait(last_body=None, timeout=0.05) is None
+
+
+def test_playback_sync_client_context_tracks_ip():
+    """client() tracks IP on enter, removes on exit."""
+    sync = make_sync()
+    with sync.client('1.2.3.4'):
+        assert '1.2.3.4' in sync._clients
+    assert '1.2.3.4' not in sync._clients

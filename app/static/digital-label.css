@@ -1,11 +1,6 @@
 @import url('./tokens.css');
 @import url('./fonts.css');
 
-/* ============================================================
-   C — Composition
-   Layout primitives only. No colour, no typography.
-   ============================================================ */
-
 body {
   width: 100vw;
   margin-block: 0;
@@ -71,10 +66,6 @@ svg {
   height: 100%;
 }
 
-/* --- Interactive icon ---
-   Placed before .qr-block .info/.icons to respect specificity order:
-   acmi-interactive-icon svg (0,1,1) < .qr-block .info svg (0,2,1) */
-
 acmi-interactive-icon {
   display: contents;
   color: var(--text-color);
@@ -116,13 +107,6 @@ acmi-interactive-icon {
   }
 }
 
-/* ============================================================
-   B — Blocks
-   One section per component block.
-   ============================================================ */
-
-/* --- Timer --- */
-
 acmi-reverb-timer {
   --d: calc(var(--next-start-time-width) * var(--width-ratio));
 
@@ -157,8 +141,6 @@ acmi-reverb-timer {
   line-height: var(--next-start-time-line-height);
 }
 
-/* --- Title block --- */
-
 .title-block * {
   margin-block: 0;
 }
@@ -178,8 +160,6 @@ acmi-reverb-timer {
 .author {
   text-transform: capitalize;
 }
-
-/* --- Body copy --- */
 
 p {
   margin-block-start: 0;
@@ -202,8 +182,6 @@ p {
   text-wrap: pretty;
 }
 
-/* --- Tombstone --- */
-
 .tombstone-block * {
   margin-block: 0;
 }
@@ -217,8 +195,6 @@ p {
   line-height: var(--tombstone-line-height);
   grid-column: 1 / 3;
 }
-
-/* --- QR block --- */
 
 .qr-desc {
   font-family: 'Söhne Mono', 'Noto Sans Gurmukhi', 'Noto Sans Devanagari', 'Noto Sans SC',
@@ -251,11 +227,6 @@ p {
   }
 }
 
-/* ============================================================
-   E — Exceptions
-   Custom element transparency and global resets.
-   ============================================================ */
-
 acmi-digital-label,
 acmi-mqtt-sync {
   display: contents;
@@ -283,5 +254,44 @@ acmi-listening-room-bottom {
   & .ticket-icon {
     height: calc(var(--body-text-size) * var(--width-ratio) * 2 * var(--body-line-height));
     aspect-ratio: 1/1;
+  }
+}
+
+acmi-listening-room-top {
+  /* display: flex; */
+  grid-column: 1 / span 2;
+  /* width: 100%; */
+  /* height: 100%; */
+  
+}
+
+acmi-digital-label .lr-top {
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: left;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+
+
+  h2 {
+    font-size: calc(var(--width-ratio) * var(--body-text-size));
+    text-align: justify;
+    text-align-last: justify;
+    width: 100%;
+    font-family: 'Söhne Mono', monospace, Arial, Helvetica, sans-serif;
+    font-weight: normal;
+    padding: calc(3rem * var(--width-ratio)) calc(5rem * var(--width-ratio));
+    color: var(--text-color);
+    background-color: var(--lr-title-bg-color);
+    box-sizing: border-box;
+    margin-block: calc(2rem * var(--width-ratio));
+  }
+
+  .lr-top-doors, .lr-top-recording {
+    text-align: left;
+    font-family: 'Söhne Mono', monospace, Arial, Helvetica, sans-serif;
+    font-size: calc(var(--width-ratio) * var(--tombstone-text-size) * 1.1)
+    
   }
 }

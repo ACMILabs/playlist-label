@@ -10,8 +10,11 @@
     "lint-test": "npm run lint && npm run test"
   },
   "devDependencies": {
+    "@projectwallace/stylelint-plugin": "^0.4.3",
     "jest": "*",
-    "jest-fetch-mock": "*"
+    "jest-fetch-mock": "*",
+    "stylelint": "^17.11.1",
+    "stylelint-config-standard": "^40.0.0"
   },
   "jest": {
     "cacheDirectory": "/tmp/jest_0",

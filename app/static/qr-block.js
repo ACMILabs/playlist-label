@@ -27,7 +27,7 @@ class QRBlock extends HTMLElement {
   render() {
     const qrSvg = this.getAttribute("data-qr-svg");
     const showCaption = this.hasAttribute("data-show-caption-icon");
-
+    const hideArtworkLabel = this.hasAttribute("data-hide-artwork");
     if (!qrSvg) {
       this.style.display = "none";
       return;
@@ -42,9 +42,9 @@ class QRBlock extends HTMLElement {
           ${TRANSLATE_SVG}
           ${showCaption ? CAPTION_SVG : ""}
         </div>
-        <div class="qr-desc">Scan to access artwork labels${
-          showCaption ? " and captions" : ""
-        }</div>
+        <div class="qr-desc">Scan to access ${
+          hideArtworkLabel ? "label" : "artwork labels"
+        }${showCaption ? " and captions" : ""}</div>
         </div>
         <div class="langs">
           <span>English</span>

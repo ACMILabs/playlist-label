@@ -1,9 +1,3 @@
-<!--
-  Reverb Digital Label Template
-  =============================
-
-  Usage: Set LABEL_TEMPLATE=reverb-digital-label.html in environment config.
--->
 <!doctype html>
 <html lang="en">
   <head>
@@ -23,20 +17,20 @@
     >
       <acmi-digital-label
         {%- if override_title %} data-override-title="{{ override_title }}"{% endif %}
+        data-label-mode="{{label_mode}}"
       >
         {% include 'reverb/label-content.html' %}
       </acmi-digital-label>
     </acmi-mqtt-sync>
-
-    <!-- Inject full playlist JSON and load modules -->
+    <script src="/static/temporal.js"></script>
     <script type="module">
       const json = {{ playlist_json_rendered|safe }};
-      // Set before import — elements upgrade asynchronously and replay observed-attribute changes.
       document.querySelector("acmi-digital-label").setAttribute("data-label-json", JSON.stringify(json));
       import("/static/mqtt-sync.js");
       import("/static/digital-label.js");
       import("/static/qr-block.js");
       {% if label_mode != 'normal' %}import("/static/interactive-icon.js");{% endif %}
     </script>
+
   </body>
 </html>
