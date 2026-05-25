@@ -123,7 +123,12 @@ class DigitalLabel extends HTMLElement {
 
   #setupListeningRoom() {
     const parentId = computed(
-      () => labelSignal.value?.LISTENING_ROOM_PARENT_ID ?? null,
+      () =>
+        labelSignal.value?.LISTENING_ROOM_PARENT_ID
+          ? typeof labelSignal.value.LISTENING_ROOM_PARENT_ID === "string"
+            ? parseInt(labelSignal.value.LISTENING_ROOM_PARENT_ID, 10)
+            : labelSignal.value.LISTENING_ROOM_PARENT_ID
+          : null,
       [labelSignal]
     );
 
@@ -135,7 +140,14 @@ class DigitalLabel extends HTMLElement {
 
     this.#cleanups.push(
       effect([lrMode], () => {
-        this.setAttribute("data-lr-mode", lrMode.value);
+        document.startViewTransition(() => {
+          this.setAttribute("data-lr-mode", lrMode.value);
+          if (lrMode.mode !== "normal") {
+            this.setAttribute("data-dim-label", "");
+          } else {
+            this.removeAttribute("data-dim-label");
+          }
+        });
       })
     );
     this.#cleanups.push(
@@ -175,8 +187,19 @@ class DigitalLabel extends HTMLElement {
           if (cancelled) return;
 
           /** @type {import('./eventTimeManager.mjs').EventEntry[]} */
-          const {events} = manager;
+          const { events } = manager;
+          console.log(manager);
 
+          console.log(
+            events
+              .map(
+                (e) =>
+                  `${e.time.toLocaleString()} – ${e.title}${
+                    e.tags.includes("event_being_filmed") ? " (filmed)" : ""
+                  }`
+              )
+              .join("\n")
+          );
           const customStart =
             labelSignal.value?.LISTENING_ROOM_CUSTOM_EVENT_START_TIME;
           if (customStart) {

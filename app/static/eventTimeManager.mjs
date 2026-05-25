@@ -89,6 +89,7 @@ export default class EventTimeManager {
   async setup(fetchEvents) {
     let relevantEvents = [];
     const allEvents = await fetchEvents().catch(() => null);
+    console.log(this.eventParentID);
 
     if (allEvents == null) {
       console.log(`Couldn't get events from server, using cache`);

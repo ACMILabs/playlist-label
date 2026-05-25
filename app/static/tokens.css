@@ -1,13 +1,13 @@
-@import url("./reset.css");
+@import url('./reset.css');
 
 @property --width-ratio {
-  syntax: "<number>";
+  syntax: '<number>';
   initial-value: 1;
   inherits: true;
 }
 
 @property --ring-value {
-  syntax: "<number>";
+  syntax: '<number>';
   initial-value: 1;
   inherits: true;
 }
@@ -20,6 +20,7 @@
   --fade-color: #444;
   --background-color: #0f0f0f;
   --lr-title-bg-color: #6d716e;
+  --alert-bg-color: #575a58;
 }
 
 /* Type scale + Leading */

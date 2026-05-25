@@ -1,8 +1,11 @@
 // @ts-check
 import { effect } from "./signals.js";
 import { lrMode, isFilming, doorTime } from "./context.js";
+
 const RECORDING_NOTICE = "Please be aware this session is audio recorded";
 const FILMING_NOTICE = "Please be aware this session is being filmed";
+const lastminuteChange =
+  "Please be aware this session will be photographed and filmed";
 
 class ListeningRoomTop extends HTMLElement {
   /** @type {Array<() => void>} */
@@ -10,7 +13,9 @@ class ListeningRoomTop extends HTMLElement {
 
   connectedCallback() {
     this.#cleanups.push(
-      effect([lrMode, isFilming, doorTime], () => this.#render())
+      effect([lrMode, isFilming, doorTime], () =>
+        document.startViewTransition(() => this.#render())
+      )
     );
   }
 
@@ -28,9 +33,15 @@ class ListeningRoomTop extends HTMLElement {
       case "closed":
         this.setHTMLUnsafe(
           this.#renderWithSubtitles({
-            title: "WE ARE PREPARING FOR A SESSION",
+            title: "LISTENING ROOM CLOSED",
             doorTimeText: this.#formatDoorTime(door),
-            recordingNotice: filmed ? FILMING_NOTICE : RECORDING_NOTICE,
+            recordingNotice: Temporal.PlainDate.from("2026-05-22").equals(
+              Temporal.Now.plainDateISO()
+            )
+              ? lastminuteChange
+              : filmed
+              ? FILMING_NOTICE
+              : RECORDING_NOTICE,
           })
         );
         break;
@@ -40,7 +51,13 @@ class ListeningRoomTop extends HTMLElement {
           this.#renderWithSubtitles({
             title: "SESSION WILL BEGIN SOON",
             doorTimeText: this.#formatDoorTime(door),
-            recordingNotice: filmed ? FILMING_NOTICE : RECORDING_NOTICE,
+            recordingNotice: Temporal.PlainDate.from("2026-05-22").equals(
+              Temporal.Now.plainDateISO()
+            )
+              ? lastminuteChange
+              : filmed
+              ? FILMING_NOTICE
+              : RECORDING_NOTICE,
             doors: true,
           })
         );
@@ -50,7 +67,7 @@ class ListeningRoomTop extends HTMLElement {
         this.setHTMLUnsafe(`
           <div class="lr-top">
             <h2 class="lr-top-title">SESSION IS IN PROGRESS</h2>
-            <p class="lr-top-recording">No Entry</p>
+            <p class="lr-top-recording no-entry">Please do not enter</p>
           </div>
         `);
         break;
@@ -75,7 +92,7 @@ class ListeningRoomTop extends HTMLElement {
         ${
           doors
             ? ``
-            : `<p class="lr-top-doors">Doors will open for ticket holders at ${doorTimeText}
+            : `<p class="lr-top-doors">We are preparing for a session</p><p class="lr-top-doors">Doors will open for ticket holders at ${doorTimeText}
         </p>`
         }
         <p class="lr-top-recording">${recordingNotice}</p>

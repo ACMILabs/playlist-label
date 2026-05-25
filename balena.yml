@@ -1,0 +1,22 @@
+name: playlist-label
+type: sw.application
+version: 1.0.0
+description: >-
+  A Raspberry Pi-hosted web app that displays digital labels for ACMI exhibits,
+  synced to media playback via MQTT.
+assets:
+  repository:
+    type: blob.asset
+    data:
+      url: 'https://github.com/ACMILabs/playlist-label'
+data:
+  applicationEnvironmentVariables:
+    - XOS_API_ENDPOINT: 'https://xos.acmi.net.au/api/'
+    - RABBITMQ_MQTT_HOST: 'rabbit.acmi.net.au'
+    - RABBITMQ_MEDIA_PLAYER_USER: 'rabbitmq-user'
+    - RABBITMQ_MQTT_PORT: 15675
+    - CACHE_DIR: '/data/'
+    - LABEL_TEMPLATE: 'reverb-digital-label.html'
+  defaultDeviceType: raspberrypi5
+  supportedDeviceTypes:
+    - raspberrypi5
