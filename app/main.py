@@ -78,13 +78,13 @@ if XOS_MEDIA_PLAYER_ID:
         f'user={RABBITMQ_MEDIA_PLAYER_USER}')
     print(f'[config] Topic: {MQTT_TOPIC}')
 show_qr_code = QR_URL_OVERRIDE != '' or XOS_MEDIA_PLAYER_ID is not None or XOS_PLAYLIST_ID != '1'
-
+PLAYLIST_QR_CODE = f'https://www.acmi.net.au/access-guide/?scannedplaylist={XOS_PLAYLIST_ID}'
 QR_CODE_MEDIA_PLAYER = f'https://www.acmi.net.au/media-player/{XOS_MEDIA_PLAYER_ID}/'
 
 QR_CODE_LABEL_ONLY = (f'https://www.acmi.net.au/media-player'
                       f'/{XOS_PLAYLIST_ID}/?type=label&playlist={XOS_PLAYLIST_ID}')
 
-QR_CODE_URL = QR_CODE_MEDIA_PLAYER if XOS_MEDIA_PLAYER_ID is not None else QR_CODE_LABEL_ONLY if XOS_PLAYLIST_ID != '1' else QR_URL_OVERRIDE
+QR_CODE_URL = PLAYLIST_QR_CODE if XOS_PLAYLIST_ID != '1' else QR_URL_OVERRIDE
 app = Flask(__name__)  # pylint: disable=C0103
 
 CACHED_PLAYLIST_JSON = f'playlist_{XOS_PLAYLIST_ID}.json'
