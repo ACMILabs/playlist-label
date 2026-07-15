@@ -9,6 +9,12 @@ const CLOSED_TIME = Temporal.Duration.from({ minutes: 30 });
 const DOORS_TIME = Temporal.Duration.from({ minutes: 15 });
 // eslint-disable-next-line no-undef
 const DURATION = Temporal.Duration.from({ hours: 1 });
+// eslint-disable-next-line no-undef
+const T_DURATION = Temporal.Duration.from({ minutes: 30 });
+// eslint-disable-next-line no-undef
+const T_CLOSED_TIME = Temporal.Duration.from({ minutes: 25 });
+// eslint-disable-next-line no-undef
+const T_DOORS = Temporal.Duration.from({ minutes: 5 });
 
 /**
  * @param {number} offset
@@ -21,7 +27,7 @@ const getEventPage = async (offset, limit) => {
   eventUrl.searchParams.set("limit", limit.toString(10));
   eventUrl.searchParams.set(
     "fields",
-    "_,title,parent,first_performance,id,event_tags"
+    "title,parent,first_performance,id,event_tags"
   );
 
   return fetch(eventUrl, { method: "GET" })
@@ -89,7 +95,6 @@ export default class EventTimeManager {
   async setup(fetchEvents) {
     let relevantEvents = [];
     const allEvents = await fetchEvents().catch(() => null);
-    console.log(this.eventParentID);
 
     if (allEvents == null) {
       console.log(`Couldn't get events from server, using cache`);
@@ -144,9 +149,13 @@ export function getMode(now, events) {
   let doorTime = null;
 
   for (const event of events) {
-    const doorsOpen = event.time.subtract(DOORS_TIME);
-    const soundCheck = doorsOpen.subtract(CLOSED_TIME);
-    const endTime = event.time.add(DURATION);
+    const isThursday = event.time.dayOfWeek === 4;
+    const eventDuration = isThursday ? T_DURATION : DURATION;
+    const doorsOpen = event.time.subtract(isThursday ? T_DOORS : DOORS_TIME);
+    const soundCheck = doorsOpen.subtract(
+      isThursday ? T_CLOSED_TIME : CLOSED_TIME
+    );
+    const endTime = event.time.add(eventDuration);
 
     // eslint-disable-next-line no-undef
     if (Temporal.Instant.compare(now, endTime) === 1) continue;
@@ -155,7 +164,7 @@ export function getMode(now, events) {
     if (Temporal.Instant.compare(now, soundCheck) === -1) continue;
 
     title = event.title;
-    filmed = event.tags.includes("event_being_filmed");
+    filmed = false;
     doorTime = doorsOpen;
 
     // eslint-disable-next-line no-undef

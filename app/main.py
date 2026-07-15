@@ -78,13 +78,16 @@ if XOS_MEDIA_PLAYER_ID:
         f'user={RABBITMQ_MEDIA_PLAYER_USER}')
     print(f'[config] Topic: {MQTT_TOPIC}')
 show_qr_code = QR_URL_OVERRIDE != '' or XOS_MEDIA_PLAYER_ID is not None or XOS_PLAYLIST_ID != '1'
-PLAYLIST_QR_CODE = f'https://www.acmi.net.au/access-guide/?scannedplaylist={XOS_PLAYLIST_ID}'
+PLAYLIST_QR_CODES = dict(
+    [
+        [lang_code, f'https://www.acmi.net.au{"" if lang_code == "en" else f"/{lang_code}"}/access-guide/?scannedplaylist={XOS_PLAYLIST_ID}']
+        for lang_code in ["en", "zh-hans", "hi", "pa"]
+    ])
 QR_CODE_MEDIA_PLAYER = f'https://www.acmi.net.au/media-player/{XOS_MEDIA_PLAYER_ID}/'
 
 QR_CODE_LABEL_ONLY = (f'https://www.acmi.net.au/media-player'
                       f'/{XOS_PLAYLIST_ID}/?type=label&playlist={XOS_PLAYLIST_ID}')
 
-QR_CODE_URL = PLAYLIST_QR_CODE if XOS_PLAYLIST_ID != '1' else QR_URL_OVERRIDE
 app = Flask(__name__)  # pylint: disable=C0103
 
 CACHED_PLAYLIST_JSON = f'playlist_{XOS_PLAYLIST_ID}.json'
@@ -233,8 +236,8 @@ global sync
 def listening_room_json_additions(qr_code_url, mode_override, time_override,
                                   custom_event_start_time, parent_id):
     qrcode = make_qr(qr_code_url, error="L")
-    text = qrcode.svg_inline(dark="#aaa", light="#bbb", border=0,
-                             draw_transparent=True, omitsize=True)
+    text = qrcode.svg_inline(dark="#aaa", light="#bbb", border=1,
+                             draw_transparent=False, omitsize=True)
     text = text.replace('#aaa', "var(--figure, black)")
     text = text.replace('#bbb', "var(--ground, white)")
     return {
@@ -265,6 +268,7 @@ class HasTapped(Model):  # pylint: disable=R0903
 
 @app.route('/')
 def playlist_label():
+    print(f'show caption: {XOS_MEDIA_PLAYER_ID is not None and HIDE_CAPTION is False}')
     json_data = {}
     try:
         with open(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}', encoding='utf-8') as json_file:
@@ -280,12 +284,16 @@ def playlist_label():
             ))
 
         if show_qr_code:
-            qrcode = make_qr(QR_CODE_URL, error="L")
-            text = qrcode.svg_inline(dark="#aaa", light="#bbb", border=0,
-                                     draw_transparent=True, omitsize=True)
-            text = text.replace('#aaa', "var(--figure, black)")
-            text = text.replace('#bbb', "var(--ground, white)")
-            json_data['qr_text'] = text
+            qr_codes = {**PLAYLIST_QR_CODES}
+            for lang, url in qr_codes.items():
+                qrcode = make_qr(url, error="M")
+                text = qrcode.svg_inline(dark="#aaa", light="#bbb", border=1,
+                                         draw_transparent=False, omitsize=True)
+                text = text.replace('#bbb', "var(--ground, white)")
+                text = text.replace('#aaa', "var(--figure, black)")
+                qr_codes[lang] = text
+            
+            json_data['qr_text'] = json.dumps(qr_codes)
 
         for item in list(json_data['playlist_labels']):
             if item['label'] is None:

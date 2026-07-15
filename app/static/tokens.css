@@ -37,7 +37,7 @@
 /* Layout + Timer size */
 :root {
   --label-horizontal-margin: 240px;
-  --label-vertical-margin: 240px;
+  --label-vertical-margin: 180px;
   --timer-diameter: 260px;
   --timer-text-size: var(--text-sm);
   --timer-line-height: var(--leading-tight);

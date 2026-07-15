@@ -1,6 +1,6 @@
 name: playlist-label
 type: sw.application
-version: 1.1.0
+version: 1.2.0
 description: >-
   A Raspberry Pi-hosted web app that displays digital labels for ACMI exhibits,
   synced to media playback via MQTT.

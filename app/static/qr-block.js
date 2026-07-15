@@ -28,6 +28,8 @@ class QRBlock extends HTMLElement {
     const qrSvg = this.getAttribute("data-qr-svg");
     const showCaption = this.hasAttribute("data-show-caption-icon");
     const hideArtworkLabel = this.hasAttribute("data-hide-artwork");
+    console.log({ showCaption });
+
     if (!qrSvg) {
       this.style.display = "none";
       return;
@@ -36,25 +38,27 @@ class QRBlock extends HTMLElement {
     this.style.display = "";
     this.innerHTML = /* html */ `
       <section class="qr-block">
-        ${qrSvg}
+${qrcodes(JSON.parse(qrSvg))}
         <div class="info">
         <div class="icons">
           ${TRANSLATE_SVG}
           ${showCaption ? CAPTION_SVG : ""}
         </div>
+        
         <div class="qr-desc">Scan to access ${
           hideArtworkLabel ? "label" : "artwork label"
         }${showCaption ? " and captions" : ""}</div>
-        </div>
-        <div class="langs">
-          <span>English</span>
-          <span lang="cmn-hans">简体字</span>
-          <span lang="pa">ਪੰਜਾਬੀ</span>
-          <span lang="hi">हिन्दी</span>
-        </div>
+</div>
       </section>
     `;
   }
 }
-
+const qrcodes = (qrcodeObj) => {
+  return /**  html */ `
+  <div class="qr-card">${qrcodeObj.en}<span>English</span></div>
+  <div class="qr-card">${qrcodeObj["zh-hans"]}<span lang="cmn-hans">简体字</span></div>
+  <div class="qr-card">${qrcodeObj.pa}<span lang="pa">ਪੰਜਾਬੀ</span></div>
+  <div class="qr-card">${qrcodeObj.hi}<span lang="hi">हिन्दी</span></div>
+  `;
+};
 customElements.define("acmi-qr-block", QRBlock);

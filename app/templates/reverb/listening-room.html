@@ -1,7 +1,7 @@
 {% from 'reverb/_layout.html' import label_layout with context %}
 {% call label_layout(
   mid_slot='<acmi-listening-room-mid></acmi-listening-room-mid>',
-  bottom_extra='<acmi-listening-room-bottom></acmi-listening-room-bottom>'
+  bottom_extra='<acmi-listening-room-bottom data="{qr_code_url}"></acmi-listening-room-bottom>'
 ) %}
   <acmi-listening-room-top></acmi-listening-room-top>
 {% endcall %}

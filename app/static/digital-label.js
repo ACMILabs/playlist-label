@@ -188,7 +188,6 @@ class DigitalLabel extends HTMLElement {
 
           /** @type {import('./eventTimeManager.mjs').EventEntry[]} */
           const { events } = manager;
-          console.log(manager);
 
           console.log(
             events
@@ -196,7 +195,7 @@ class DigitalLabel extends HTMLElement {
                 (e) =>
                   `${e.time.toLocaleString()} – ${e.title}${
                     e.tags.includes("event_being_filmed") ? " (filmed)" : ""
-                  }`
+                  } duration: 60 mins`
               )
               .join("\n")
           );
