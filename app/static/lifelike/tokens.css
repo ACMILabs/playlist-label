@@ -1,0 +1,65 @@
+@import url("./fonts/fonts.css");
+@import url("./reset.css");
+:root {
+  /* One design pixel. `min()` fits the 2160 × 3840 */
+  --acmi-px: min(100cqi / 2160, 100cqb / 3840);
+
+  /* ---- Colour ---- */
+  --acmi-label-bg: #fff;
+  --acmi-label-fg: #000;
+  --acmi-timer-track: #929191;
+
+  /* ---- Type families ---- */
+  --acmi-label-font-body: 'FaktPro', sans-serif;
+  --acmi-label-font-display: 'ITC Benguiat', 'PxGroteskBold', 'FaktPro', sans-serif;
+  --acmi-label-font-timer: 'ITC Benguiat', sans-serif;
+
+  /* ---- Scales ---- */
+  --acmi-text-1: calc(42 * var(--acmi-px));
+  --acmi-text-2: calc(50 * var(--acmi-px));
+  --acmi-text-3: calc(60 * var(--acmi-px));
+  --acmi-text-4: calc(72 * var(--acmi-px));
+  --acmi-display-1: calc(120 * var(--acmi-px));
+  --acmi-display-2: calc(180 * var(--acmi-px));
+  --acmi-space-1: calc(84 * var(--acmi-px));
+  --acmi-space-2: calc(136 * var(--acmi-px));
+  --acmi-space-3: calc(186 * var(--acmi-px));
+  --acmi-space-4: calc(710 * var(--acmi-px));
+  --acmi-leading-1: 1;
+  --acmi-leading-2: 1.2;
+  --acmi-leading-3: 1.3;
+  --acmi-leading-4: 1.4;
+
+  /* ---- Type by role ---- */
+  --acmi-title-size: var(--acmi-display-2);
+  --acmi-title-leading: var(--acmi-leading-1);
+  --acmi-date-text-size: var(--acmi-display-1);
+  --acmi-date-text-leading: var(--acmi-leading-3);
+  --acmi-body-size: var(--acmi-text-4);
+  --acmi-body-leading: var(--acmi-leading-3);
+  --acmi-info-size: var(--acmi-text-3);
+  --acmi-info-leading: var(--acmi-leading-2);
+  --acmi-timer-elapsed-size: var(--acmi-text-2);
+  --acmi-timer-elapsed-leading: var(--acmi-leading-2);
+  --acmi-timer-restart-size: var(--acmi-text-1);
+  --acmi-timer-restart-leading: var(--acmi-leading-4);
+  --acmi-heading-size: var(--acmi-space-4);
+
+  /* ---- Space between blocks ----  */
+  --acmi-title-space-after: var(--acmi-space-1);
+  --acmi-date-text-space-after: var(--acmi-space-2);
+  --acmi-body-space-after: var(--acmi-space-3);
+  --acmi-info-space-after: var(--acmi-space-3);
+  --acmi-info-h-gap: calc(72 * var(--acmi-px));
+  --acmi-info-v-gap: calc(64 * var(--acmi-px));
+  --acmi-label-padding: calc(240 * var(--acmi-px));
+
+  /* ---- Fixed dimensions ---- */
+  --acmi-timer-band-height: calc(710 * var(--acmi-px));
+  --acmi-timer-column-width: calc(390 * var(--acmi-px));
+  --acmi-timer-size: calc(260 * var(--acmi-px));
+  --acmi-timer-gap: calc(64 * var(--acmi-px));
+  --acmi-timer-ring-width: 4;
+  --acmi-info-icon-column: calc(252 * var(--acmi-px));
+  --acmi-info-icon-size: calc(160 * var(--acmi-px));
+}

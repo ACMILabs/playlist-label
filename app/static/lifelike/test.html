@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery 4 label</title>
+  <link rel="stylesheet" href="./style.css">
+  <style>
+    body {
+      min-height: 100vh;
+    }
+    acmi-gallery-2-label {
+      margin-inline: auto;
+    }
+  </style>
+</head>
+<body>
+    <acmi-gallery-2-label
+      heading="Signs of Life"
+      credit=""
+      date-text=""
+      billing="World premiere"
+      body="&lt;p&gt;lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam &lt;em&gt;Signs of Life&lt;/em&gt;  quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.&lt;/p&gt;&lt;p&gt;Duis aute irure dolor in voluptate velit esse cillum dolore eu fugiat nulla pariatur. &lt;strong&gt;Excepteur sint occaecat&lt;/strong&gt; cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.&lt;/p&gt;"
+    >
+      <script type="application/json" data-prop="infoBlocks">
+        [
+          { "icon": "duration", "text": "12 minutes" },
+          { "icon": "strobe", "text": "Contains strobe lighting" },
+          { "icon": "caution", "text": "Contains themes some visitors may find confronting" }
+        ]
+      </script>
+      <script type="application/json" data-prop="timer">
+        { "ratio": 0.42, "elapsed": "5:03", "restart": "Starts again in 7 minutes" }
+      </script>
+    </acmi-gallery-2-label>
+
+
+  <script type="importmap">
+    {
+      "imports": {
+        "nanotags": "./vendor/nanotags.mjs",
+        "nanostores": "./vendor/nanostores.mjs"
+      }
+    }
+  </script>
+  <script type="module" src="./main.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+@import url("./tokens.css");
+
+/* Every style for the gallery 2 label lives here. The custom elements render
+   into the light dom, so each element is its own root: `acmi-title-block` is
+   the selector that the vue component wrote as `.acmi-title-block`. Parts
+   inside an element keep their block__element class. */
+
+
+[hidden] {
+  display: none !important;
+}
+/* ---- The label ---- */
+
+acmi-gallery-2-label {
+  display: block;
+  height: 100%;
+  container-type: size;
+  container-name: label;
+  aspect-ratio: 2160 / 3840;
+}
+
+.acmi-label {
+  box-sizing: border-box;
+  height: 100%;
+  display: block;
+  aspect-ratio: 9/16;
+  padding: var(--acmi-label-padding, 4rem);
+  background: var(--acmi-label-bg, #000);
+  color: var(--acmi-label-fg, #fff);
+  font-family: var(--acmi-label-font-body, 'Fakt', sans-serif);
+}
+
+.acmi-label header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-content: start;
+  gap: var(--acmi-label-gap, 2rem);
+  height: var(--acmi-heading-size);
+  
+}
+
+.acmi-label__timer {
+  grid-column: 2;
+  justify-self: end;
+}
+
+/* ---- Title ---- */
+
+acmi-title-block {
+  display: block;
+  margin-block-end: var(--acmi-title-space-after);
+  /* text-align: center; */
+  padding-block-end: var(--acmi-space-1);
+  /* border-block-end: calc(4 * var(--acmi-px, )) solid var(--acmi-label-fg); */
+}
+
+.acmi-title-block__credit,
+.acmi-title-block__heading {
+  margin: 0;
+  font-size: var(--acmi-title-size);
+  line-height: var(--acmi-title-leading);
+  font-family: var(--acmi-label-font-display);
+  text-transform: uppercase;
+}
+
+/* ---- Dates ---- */
+
+acmi-dates-block {
+  display: block;
+  font-size: var(--acmi-date-text-size);
+  line-height: var(--acmi-date-text-leading);
+  font-family: var(--acmi-label-font-display);
+  margin-block-end: var(--acmi-date-text-space-after);
+  font-weight: 700;
+}
+
+.acmi-dates-block__dates,
+.acmi-dates-block__billing {
+  margin: 0;
+}
+
+/* ---- Body copy ---- */
+
+acmi-body-copy {
+  display: block;
+  font-size: var(--acmi-body-size);
+  line-height: var(--acmi-body-leading);
+  margin-block-end: var(--acmi-body-space-after);
+  /* text-align: justify; */
+}
+
+acmi-body-copy > :first-child {
+  margin-block-start: 0;
+}
+
+acmi-body-copy > :last-child {
+  margin-block-end: 0;
+}
+
+/* ---- Info blocks ---- */
+
+acmi-info-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--acmi-info-h-gap, 0.5em);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+acmi-info-block {
+  display: flex;
+  align-items: center;
+  gap: var(--acmi-info-v-gap, 0.5em);
+  font-size: var(--acmi-info-size);
+  line-height: var(--acmi-info-leading);
+}
+
+.acmi-info-block__icon {
+  flex-shrink: 0;
+
+  --acmi-icon-size: var(--acmi-info-icon-size);
+}
+
+.acmi-info-block__text {
+  color: var(--acmi-info-color);
+}
+
+/* ---- Icon ---- */
+
+acmi-icon {
+  display: block;
+  flex: none;
+}
+
+acmi-icon > svg {
+  display: block;
+  width: auto;
+  height: var(--acmi-icon-size, 1em);
+}
+
+/* ---- Timer ring ---- */
+
+acmi-timer-ring {
+  display: grid;
+  grid-template-areas: 'ring' 'restart';
+  justify-items: center;
+  gap: var(--acmi-timer-gap, 0.5em);
+}
+
+.acmi-timer__ring {
+  grid-area: ring;
+  width: var(--acmi-timer-size, 6em);
+  height: var(--acmi-timer-size, 6em);
+  transform: rotate(-90deg);
+}
+
+.acmi-timer__track {
+  stroke: var(--acmi-timer-track, #444);
+  stroke-width: var(--acmi-timer-ring-width, 8);
+}
+
+.acmi-timer__progress {
+  --acmi-timer-circumference: calc(2 * (pi * 46));
+
+  stroke: var(--acmi-label-fg, #fff);
+  stroke-width: var(--acmi-timer-ring-width, 8);
+  stroke-dasharray: calc(var(--acmi-timer-ratio, 0) * var(--acmi-timer-circumference, 100))
+    var(--acmi-timer-circumference, 100);
+}
+
+.acmi-timer__elapsed {
+  grid-area: ring;
+  align-self: center;
+  margin: 0;
+  font-size: var(--acmi-timer-elapsed-size);
+  line-height: 1;
+  text-box: trim-both cap alphabetic;
+
+}
+
+.acmi-timer__restart {
+  grid-area: restart;
+  margin: 0;
+  text-align: center;
+  max-width: calc(1.1 * var(--acmi-timer-size, 6em));
+  text-wrap: pretty;
+  font-size: var(--acmi-timer-restart-size);
+  line-height: var(--acmi-timer-restart-leading);
+}
+
+/* ---- Error screen ---- */
+
+acmi-error-screen {
+  display: grid;
+  place-items: center;
+  min-height: 100%;
+}
+
+.acmi-error-screen__message {
+  margin: 0;
+  text-align: center;
+}
