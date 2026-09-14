@@ -30,13 +30,20 @@
   --acmi-leading-3: 1.3;
   --acmi-leading-4: 1.4;
 
-  /* ---- Type by role ---- */
-  --acmi-title-size: var(--acmi-display-2);
-  --acmi-title-leading: var(--acmi-leading-1);
+  /* ---- Type by role ----
+     Title, body and credit match the reverb label (`app/static/tokens.css`):
+     its --text-lg / --text-md / --text-xs at 2160 wide, with their leading.
+     The credit is reverb's tombstone; the duration line shares it. */
+  --acmi-title-size: calc(90 * var(--acmi-px));
+  --acmi-title-leading: 1.33;
   --acmi-date-text-size: var(--acmi-display-1);
   --acmi-date-text-leading: var(--acmi-leading-3);
-  --acmi-body-size: var(--acmi-text-4);
-  --acmi-body-leading: var(--acmi-leading-3);
+  --acmi-body-size: calc(64 * var(--acmi-px));
+  --acmi-body-leading: var(--acmi-leading-4);
+  --acmi-credit-size: calc(36 * var(--acmi-px));
+  --acmi-credit-leading: var(--acmi-leading-2);
+  --acmi-credit-font: var(--acmi-label-font-body);
+  --acmi-credit-space-before: calc(48 * var(--acmi-px));
   --acmi-info-size: var(--acmi-text-3);
   --acmi-info-leading: var(--acmi-leading-2);
   --acmi-timer-elapsed-size: var(--acmi-text-2);
@@ -62,4 +69,21 @@
   --acmi-timer-ring-width: 4;
   --acmi-info-icon-column: calc(252 * var(--acmi-px));
   --acmi-info-icon-size: calc(160 * var(--acmi-px));
+}
+
+/* ---- Playlist labels ---- */
+:root {
+  --acmi-preview-eyebrow-size: var(--acmi-text-2);
+  --acmi-preview-heading-size: var(--acmi-text-4);
+  --acmi-preview-credit-size: var(--acmi-text-3);
+  --acmi-preview-starts-in-size: var(--acmi-text-3);
+  --acmi-preview-gap: calc(24 * var(--acmi-px));
+  --acmi-stack-gap: var(--acmi-space-1);
+  --acmi-stack-space-before: var(--acmi-space-3);
+  --acmi-stack-rule-width: calc(4 * var(--acmi-px));
+  --acmi-stack-rule: var(--acmi-timer-track);
+  --acmi-aside-heading-size: var(--acmi-text-2);
+  --acmi-aside-body-size: var(--acmi-text-3);
+  --acmi-aside-gap: calc(32 * var(--acmi-px));
+  --acmi-aside-width: calc(900 * var(--acmi-px));
 }

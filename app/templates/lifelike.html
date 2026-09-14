@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ playlist_json.title }}</title>
+  <link rel="stylesheet" href="/static/lifelike/style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "nanotags": "/static/lifelike/vendor/nanotags.mjs",
+        "nanostores": "/static/lifelike/vendor/nanostores.mjs"
+      }
+    }
+  </script>
+</head>
+<body>
+  {# The stream only exists when a media player is configured, and HIDE_TIMER
+     is how a label opts out of it. No source, no connection. #}
+  <acmi-lifelike-label
+    variant="{{ label_mode }}"
+    {% if xos.media_player_id and not hide_timer %}playback-source="/api/playback-stream/"{% endif %}
+  >
+    <script type="application/json" data-prop="playlist">
+      {{ playlist_json_rendered | safe}}
+    </script>
+  </acmi-lifelike-label>
+  <script type="module" src="/static/lifelike/main.mjs"></script>
+</body>
+</html>

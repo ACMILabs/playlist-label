@@ -410,6 +410,7 @@ def playback_stream(client_ip):
                 data = json.dumps({
                     'duration': body.get('duration'),
                     'playback_position': body.get('playback_position'),
+                    'label_id': body.get('label_id'),
                 })
                 yield f'data: {data}\n\n'
 
@@ -444,7 +445,9 @@ if __name__ == '__main__':
     HasTapped.create(has_tapped=0, tap_successful=0, tap_processing=0)
     if XOS_MEDIA_PLAYER_ID:
         if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-            if LABEL_TEMPLATE == 'reverb-digital-label.html':
+            # Templates that read `/api/playback-stream/` need the MQTT
+            # client behind it. Everything else still consumes over AMQP.
+            if LABEL_TEMPLATE in ('reverb-digital-label.html', 'lifelike.html'):
                 # global sync  # pylint: disable=global-statement
                 sync = PlaybackSync(
                     host=RABBITMQ_MQTT_HOST,

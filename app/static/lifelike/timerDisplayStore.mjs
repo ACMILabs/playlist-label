@@ -1,17 +1,64 @@
 import { atom, onMount } from "nanostores";
 
 // ---- Playback, as stores ----
-/** The event name the stream sends. Comments are invisible to `EventSource`. */
-const PLAYBACK_EVENT = "playback";
+/**
+ * `/api/playback-stream/` sends its events unnamed, so `EventSource` hands
+ * them over as `message`. Comments are invisible to it.
+ */
+const PLAYBACK_EVENT = "message";
 const MS_PER_MINUTE = 60000;
 const MS_PER_SECOND = 1000;
 /** How long the label shows the timer after not hearing from the player. */
 
 export const STALE_AFTER_MS = 30000;
 /**
- * @typedef {{ durationMs: number, position: number }} PlaybackSnapshot
- * @typedef {{ ratio: number, elapsed: string, restart: string }} TimerDisplay
+ * @typedef {{ durationMs: number, position: number, labelId?: number }} PlaybackSnapshot
+ * @typedef {{ ratio: number, elapsed: string, restart: string, remainingSeconds: number }} TimerDisplay
  */
+
+// ---- Time, as text ----
+
+// Every string in the label that names a length of time is written here, so
+// they all round the same way and all read the same way. Components take the
+// number of seconds and call these; nothing else formats a duration.
+
+/** Whole minutes, never fewer than one. Under a minute still reads "1 minute". */
+export function minutesText(seconds) {
+  const minutes = Math.max(1, Math.floor(seconds / 60));
+  return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+}
+
+/** The line under the credit: "Duration: 12 minutes". Nothing when unknown. */
+export function durationText(seconds) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "";
+  return `Duration: ${minutesText(seconds)}`;
+}
+
+/**
+ * When a work further down the playlist comes round. Inside the last minute
+ * the number stops being useful, so it stops being given. Nothing at all
+ * when no time is known — no stream yet, or the player has gone quiet.
+ */
+export function startsInText(seconds) {
+  if (!Number.isFinite(seconds)) return "";
+  if (seconds < 60) return "Starts soon";
+  return `Starts in ${minutesText(seconds)}`;
+}
+
+/** When the work playing now comes round again, on a label that loops it alone. */
+export function restartText(seconds) {
+  if (!Number.isFinite(seconds)) return "";
+  return `Starts again in ${minutesText(seconds)}`;
+}
+
+/**
+ * The same line on a playlist, where "again" means after everything else
+ * has played: the rest of this work, then every other work in the loop.
+ */
+export function loopText(seconds) {
+  if (!Number.isFinite(seconds)) return "";
+  return `This work starts again in ${minutesText(seconds)}`;
+}
 /**
  * Reads one event's data into a snapshot, or nothing.
  *
@@ -29,11 +76,17 @@ export function readPlaybackEvent(data) {
 
   if (typeof parsed !== "object" || parsed === null) return undefined;
 
-  const { duration_ms: durationMs, position } = parsed;
+  // `duration` is milliseconds, whatever `Video.duration_secs` says: the
+  // server forwards the media player's mqtt body as-is. See `server.d.ts`.
+  const { duration: durationMs, playback_position: position, label_id: labelId } = parsed;
   if (!Number.isFinite(durationMs) || durationMs <= 0) return undefined;
   if (!Number.isFinite(position)) return undefined;
 
-  return { durationMs, position };
+  return {
+    durationMs,
+    position,
+    labelId: Number.isFinite(labelId) ? labelId : undefined,
+  };
 }
 /** Gets elapsed time since the last snapshot, as a ratio of the duration. */
 
@@ -56,13 +109,18 @@ export function toTimerDisplay(snapshot) {
   const minutes = Math.floor(elapsedMs / MS_PER_MINUTE);
   const seconds = Math.floor(elapsedMs / MS_PER_SECOND) % 60;
 
-  const remainingMs = snapshot.durationMs - elapsedMs;
-  const remainingMinutes = Math.max(1, Math.floor(remainingMs / MS_PER_MINUTE));
+  // Whole seconds, so this changes once a second rather than once a frame.
+  // Everything downstream of it — the stack's start times — is a computed
+  // store keyed on this number, and only recomputes when it moves.
+  const remainingSeconds = Math.round(
+    (snapshot.durationMs - elapsedMs) / MS_PER_SECOND,
+  );
 
   return {
     ratio,
     elapsed: `${minutes}:${seconds.toString().padStart(2, "0")}`,
-    restart: `Starts again in ${remainingMinutes} minute${remainingMinutes === 1 ? "" : "s"}`,
+    restart: restartText(remainingSeconds),
+    remainingSeconds,
   };
 }
 /**
@@ -104,6 +162,9 @@ export function playbackSnapshotStore($source) {
     const unsubscribe = $source.subscribe((source) => {
       stream?.close();
       stream = undefined;
+      // A new source knows nothing yet, and no source knows nothing at all:
+      // either way the last snapshot is not this player's.
+      $snapshot.set(undefined);
       if (!source) return;
 
       stream = new EventSource(source);

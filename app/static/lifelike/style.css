@@ -11,6 +11,13 @@
 }
 /* ---- The label ---- */
 
+/* The wrapper is not a box: the variant inside it is the container every
+   design pixel is measured against, and sizes from the page as it always
+   has. Swapping variants must not move anything. */
+acmi-lifelike-label {
+  display: contents;
+}
+
 acmi-gallery-2-label {
   display: block;
   height: 100%;
@@ -54,13 +61,34 @@ acmi-title-block {
   /* border-block-end: calc(4 * var(--acmi-px, )) solid var(--acmi-label-fg); */
 }
 
-.acmi-title-block__credit,
 .acmi-title-block__heading {
   margin: 0;
   font-size: var(--acmi-title-size);
   line-height: var(--acmi-title-leading);
   font-family: var(--acmi-label-font-display);
   text-transform: uppercase;
+}
+
+/* The two lines under the title read in the body's voice, at the body's
+   size: who made it, then how long it runs. */
+.acmi-title-block__credit,
+.acmi-title-block__duration {
+  margin: 0;
+  font-size: var(--acmi-credit-size);
+  line-height: var(--acmi-credit-leading);
+  font-family: var(--acmi-credit-font);
+}
+
+.acmi-title-block__credit {
+  margin-block-start: var(--acmi-credit-space-before);
+}
+
+.acmi-title-block__credit > :first-child {
+  margin-block-start: 0;
+}
+
+.acmi-title-block__credit > :last-child {
+  margin-block-end: 0;
 }
 
 /* ---- Dates ---- */
@@ -200,4 +228,130 @@ acmi-error-screen {
 .acmi-error-screen__message {
   margin: 0;
   text-align: center;
+}
+
+/* ---- Playlist labels ----
+
+   Same shell as the single-work label: the container the design pixel is
+   measured against, and the page-sized block inside it. What differs is
+   below the header — a current work, then the rest of the playlist. */
+
+acmi-playlist-label,
+acmi-nightmare-room-label {
+  display: block;
+  height: 100%;
+  container-type: size;
+  container-name: label;
+  aspect-ratio: 2160 / 3840;
+}
+
+/* The stack sits at the foot of the label whatever the body copy runs to,
+   so the visitor always finds "up next" in the same place. */
+acmi-playlist-label .acmi-label__content,
+acmi-nightmare-room-label .acmi-label__content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+acmi-playlist-label .acmi-label__stack,
+acmi-nightmare-room-label .acmi-label__stack {
+  margin-block-start: auto;
+  padding-block-start: var(--acmi-stack-space-before);
+}
+
+/* ---- Current work ---- */
+
+acmi-work-detail {
+  display: block;
+}
+
+/* ---- The stack ---- */
+
+acmi-work-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--acmi-stack-gap);
+}
+
+/* ---- One upcoming work ----
+
+   "Up next" / "Later", the title, who made it (up next only), and when it
+   starts. */
+
+acmi-work-preview {
+  display: block;
+  padding-block-start: var(--acmi-stack-gap);
+  border-block-start: var(--acmi-stack-rule-width) solid var(--acmi-stack-rule);
+}
+
+.acmi-work-preview__eyebrow {
+  margin: 0 0 var(--acmi-preview-gap);
+  font-size: var(--acmi-preview-eyebrow-size);
+  line-height: var(--acmi-leading-2);
+  font-family: var(--acmi-label-font-display);
+  text-transform: uppercase;
+}
+
+.acmi-work-preview__heading {
+  margin: 0;
+  font-size: var(--acmi-preview-heading-size);
+  line-height: var(--acmi-leading-1);
+  font-family: var(--acmi-label-font-display);
+  text-transform: uppercase;
+}
+
+.acmi-work-preview__credit,
+.acmi-work-preview__starts-in {
+  margin: var(--acmi-preview-gap) 0 0;
+  line-height: var(--acmi-leading-2);
+}
+
+.acmi-work-preview__credit {
+  font-size: var(--acmi-preview-credit-size);
+}
+
+.acmi-work-preview__credit > :first-child {
+  margin-block-start: 0;
+}
+
+.acmi-work-preview__credit > :last-child {
+  margin-block-end: 0;
+}
+
+.acmi-work-preview__starts-in {
+  font-size: var(--acmi-preview-starts-in-size);
+}
+
+/* ---- The panel beside the timer ---- */
+
+.acmi-label__aside {
+  grid-column: 1;
+  align-self: start;
+  max-width: var(--acmi-aside-width);
+}
+
+acmi-aside-panel {
+  display: block;
+}
+
+.acmi-aside-panel__heading {
+  margin: 0 0 var(--acmi-aside-gap);
+  font-size: var(--acmi-aside-heading-size);
+  line-height: var(--acmi-leading-2);
+  font-family: var(--acmi-label-font-display);
+  text-transform: uppercase;
+}
+
+.acmi-aside-panel__body {
+  font-size: var(--acmi-aside-body-size);
+  line-height: var(--acmi-leading-3);
+}
+
+.acmi-aside-panel__body > :first-child {
+  margin-block-start: 0;
+}
+
+.acmi-aside-panel__body > :last-child {
+  margin-block-end: 0;
 }
