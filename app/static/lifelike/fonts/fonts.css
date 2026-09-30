@@ -35,6 +35,27 @@
   src: url("./itc-benguiat-700-italic.woff2") format("woff2");
 }
 @font-face {
+  font-family: "ITC Benguiat Condensed";
+  font-weight: 400;
+  font-style: normal;
+  src: url("./itc-benguiat-condensed-400-normal.woff2") format("woff2"),
+    url("./itc-benguiat-condensed-400-normal.otf") format("opentype");
+}
+@font-face {
+  font-family: "ITC Benguiat Condensed";
+  font-weight: 500;
+  font-style: normal;
+  src: url("./itc-benguiat-condensed-500-normal.woff2") format("woff2"),
+    url("./itc-benguiat-condensed-500-normal.otf") format("opentype");
+}
+@font-face {
+  font-family: "ITC Benguiat Condensed";
+  font-weight: 700;
+  font-style: normal;
+  src: url("./itc-benguiat-condensed-700-normal.woff2") format("woff2"),
+    url("./itc-benguiat-condensed-700-normal.otf") format("opentype");
+}
+@font-face {
   font-family: FaktPro;
   src: url("./FaktPro-Normal.otf") format("opentype");
 }

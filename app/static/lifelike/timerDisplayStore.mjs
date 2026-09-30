@@ -1,6 +1,7 @@
 import { atom, onMount } from "nanostores";
 
 // ---- Playback, as stores ----
+
 /**
  * `/api/playback-stream/` sends its events unnamed, so `EventSource` hands
  * them over as `message`. Comments are invisible to it.
@@ -8,9 +9,13 @@ import { atom, onMount } from "nanostores";
 const PLAYBACK_EVENT = "message";
 const MS_PER_MINUTE = 60000;
 const MS_PER_SECOND = 1000;
-/** How long the label shows the timer after not hearing from the player. */
 
+/** How long the label shows the timer after not hearing from the player. */
 export const STALE_AFTER_MS = 30000;
+
+/** How long to wait before opening the stream again, once it has closed. */
+const RECONNECT_AFTER_MS = 5000;
+
 /**
  * @typedef {{ durationMs: number, position: number, labelId?: number }} PlaybackSnapshot
  * @typedef {{ ratio: number, elapsed: string, restart: string, remainingSeconds: number }} TimerDisplay
@@ -59,13 +64,13 @@ export function loopText(seconds) {
   if (!Number.isFinite(seconds)) return "";
   return `This work starts again in ${minutesText(seconds)}`;
 }
+
 /**
  * Reads one event's data into a snapshot, or nothing.
  *
  * @param {string} data
  * @returns {PlaybackSnapshot | undefined}
  */
-
 export function readPlaybackEvent(data) {
   let parsed;
   try {
@@ -88,20 +93,31 @@ export function readPlaybackEvent(data) {
     labelId: Number.isFinite(labelId) ? labelId : undefined,
   };
 }
-/** Gets elapsed time since the last snapshot, as a ratio of the duration. */
 
-export function positionAt(snapshot, sinceMs) {
+/**
+ * How far through the work, as a ratio of its duration, `sinceMs` after the
+ * snapshot. A work that loops comes round to the start again; one that
+ * does not stops at the end, until the player says what plays next.
+ *
+ * @param {PlaybackSnapshot} snapshot
+ * @param {number} sinceMs
+ * @param {boolean} loops
+ */
+export function positionAt(snapshot, sinceMs, loops) {
   const { durationMs, position } = snapshot;
-  const elapsed = (position * durationMs + sinceMs) % durationMs;
-  return (elapsed < 0 ? elapsed + durationMs : elapsed) / durationMs;
+  const elapsed = position * durationMs + sinceMs;
+  if (!loops) return Math.min(Math.max(elapsed / durationMs, 0), 1);
+
+  const wrapped = elapsed % durationMs;
+  return (wrapped < 0 ? wrapped + durationMs : wrapped) / durationMs;
 }
+
 /**
  * Turns a snapshot into display text.
  *
  * @param {PlaybackSnapshot} snapshot
  * @returns {TimerDisplay}
  */
-
 export function toTimerDisplay(snapshot) {
   const ratio = Math.min(Math.max(snapshot.position, 0), 1);
   const elapsedMs = ratio * snapshot.durationMs;
@@ -110,8 +126,8 @@ export function toTimerDisplay(snapshot) {
   const seconds = Math.floor(elapsedMs / MS_PER_SECOND) % 60;
 
   // Whole seconds, so this changes once a second rather than once a frame.
-  // Everything downstream of it — the stack's start times — is a computed
-  // store keyed on this number, and only recomputes when it moves.
+  // The start times down a playlist come from it, through the label's
+  // `seconds-until-next`, and are only worked out again when it moves.
   const remainingSeconds = Math.round(
     (snapshot.durationMs - elapsedMs) / MS_PER_SECOND,
   );
@@ -123,30 +139,36 @@ export function toTimerDisplay(snapshot) {
     remainingSeconds,
   };
 }
+
 /**
  * What the timer should read, given a snapshot and how long ago it arrived.
  * Nothing, once the player has been quiet for `STALE_AFTER_MS`.
  *
  * @param {PlaybackSnapshot | undefined} snapshot
  * @param {number} sinceMs
+ * @param {boolean} loops whether the work comes round again by itself
  * @returns {TimerDisplay | undefined}
  */
-
-export function timerAt(snapshot, sinceMs) {
+export function timerAt(snapshot, sinceMs, loops) {
   if (!snapshot || snapshot.durationMs <= 0) return undefined;
   if (sinceMs >= STALE_AFTER_MS) return undefined;
 
   return toTimerDisplay({
     durationMs: snapshot.durationMs,
-    position: positionAt(snapshot, sinceMs),
+    position: positionAt(snapshot, sinceMs, loops),
   });
 }
+
 /**
  * The latest position from the label's playback stream.
  *
  * The store opens the connection when something listens and closes it when
  * the last listener goes, which is how a label with no media player behaves:
  * the server renders no attribute, so nothing here ever opens.
+ *
+ * `EventSource` opens the stream again by itself after a dropped connection,
+ * but gives up for good on an error response — a 500 while the server
+ * restarts, say. A kiosk is never reloaded, so this opens it again instead.
  *
  * @param {import("nanostores").ReadableAtom<string>} $source
  * @returns {import("nanostores").ReadableAtom<PlaybackSnapshot | undefined>}
@@ -158,32 +180,54 @@ export function playbackSnapshotStore($source) {
   onMount($snapshot, () => {
     /** @type {EventSource | undefined} */
     let stream;
+    let reconnect = 0;
+    let failing = false;
+
+    /** @param {string} source */
+    function connect(source) {
+      const opened = new EventSource(source);
+      stream = opened;
+
+      opened.addEventListener(PLAYBACK_EVENT, (event) => {
+        if (failing) console.info("[acmi-label] playback stream open again");
+        failing = false;
+        const next = readPlaybackEvent(
+          /** @type {MessageEvent<string>} */ (event).data,
+        );
+        if (next) $snapshot.set(next);
+      });
+      opened.addEventListener("error", () => {
+        if (stream !== opened || opened.readyState !== EventSource.CLOSED) return;
+        if (!failing) {
+          console.warn(
+            `[acmi-label] playback stream closed, opening it again every ${RECONNECT_AFTER_MS / 1000}s`,
+          );
+        }
+        failing = true;
+        reconnect = setTimeout(() => connect(source), RECONNECT_AFTER_MS);
+      });
+    }
 
     const unsubscribe = $source.subscribe((source) => {
+      clearTimeout(reconnect);
       stream?.close();
       stream = undefined;
       // A new source knows nothing yet, and no source knows nothing at all:
       // either way the last snapshot is not this player's.
       $snapshot.set(undefined);
-      if (!source) return;
-
-      stream = new EventSource(source);
-      stream.addEventListener(PLAYBACK_EVENT, (event) => {
-        const next = readPlaybackEvent(
-                /** @type {MessageEvent<string>} */(event).data
-        );
-        if (next) $snapshot.set(next);
-      });
+      if (source) connect(source);
     });
 
     return () => {
       unsubscribe();
+      clearTimeout(reconnect);
       stream?.close();
     };
   });
 
   return $snapshot;
 }
+
 /**
  * The timer, advanced every frame while there is something to draw.
  *
@@ -192,9 +236,11 @@ export function playbackSnapshotStore($source) {
  * without playback costs no frames.
  *
  * @param {import("nanostores").ReadableAtom<PlaybackSnapshot | undefined>} $snapshot
+ * @param {{ loops?: boolean }} [options] whether the work comes round again
+ *   by itself — a single work does; a playlist's moves on to the next
  * @returns {import("nanostores").ReadableAtom<TimerDisplay | undefined>}
  */
-export function timerDisplayStore($snapshot) {
+export function timerDisplayStore($snapshot, { loops = true } = {}) {
   /** @type {import("nanostores").WritableAtom<TimerDisplay | undefined>} */
   const $display = atom(undefined);
 
@@ -211,7 +257,7 @@ export function timerDisplayStore($snapshot) {
 
     function tick() {
       frame = 0;
-      const next = timerAt(snapshot, performance.now() - takenAt);
+      const next = timerAt(snapshot, performance.now() - takenAt, loops);
 
       if (snapshot && !next && !stale) {
         stale = true;

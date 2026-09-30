@@ -4,6 +4,10 @@ import os
 import requests
 import sentry_sdk
 
+from app import dev_env
+
+dev_env.load()
+
 XOS_API_ENDPOINT = os.getenv('XOS_API_ENDPOINT')
 XOS_PLAYLIST_ID = os.getenv('XOS_PLAYLIST_ID', '1')
 SENTRY_ID = os.getenv('SENTRY_ID')

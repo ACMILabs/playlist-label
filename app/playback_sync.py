@@ -13,7 +13,7 @@ class PlaybackSync:
 
     def __init__(self, host, port, user, password, topic, retry_seconds=2):
         self._host = host
-        self._port = int(port)
+        self._port = port
         self._user = user
         self._password = password
         self._topic = topic
@@ -27,9 +27,13 @@ class PlaybackSync:
         self._count = 0
         self._sse_count = 0
 
-    def start(self):
-        """Start the MQTT and log threads."""
-        threading.Thread(target=self._mqtt_thread, daemon=True).start()
+    def start(self, mqtt=True):
+        """
+        Start the log thread, and the MQTT thread unless something else calls
+        receive() — the mock media player, say.
+        """
+        if mqtt:
+            threading.Thread(target=self._mqtt_thread, daemon=True).start()
         threading.Thread(target=self._log_thread, daemon=True).start()
 
     def receive(self, payload: bytes):
@@ -74,7 +78,7 @@ class PlaybackSync:
         client.on_message = self._on_mqtt_message
         client.reconnect_delay_set(min_delay=self._retry_seconds, max_delay=60)
         print(f'[mqtt] Connecting to {self._host}:{self._port}...')
-        client.connect_async(self._host, self._port)
+        client.connect_async(self._host, int(self._port))
         client.loop_forever()
 
     def _on_connect(self, client, userdata, flags, rc):  # pylint: disable=unused-argument

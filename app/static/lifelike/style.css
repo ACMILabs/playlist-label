@@ -1,220 +1,59 @@
 @import url("./tokens.css");
 
-/* Every style for the gallery 2 label lives here. The custom elements render
-   into the light dom, so each element is its own root: `acmi-title-block` is
-   the selector that the vue component wrote as `.acmi-title-block`. Parts
-   inside an element keep their block__element class. */
-
+/* Every style for the lifelike labels lives here. The custom elements render
+   into the light dom, so each element is its own root: `acmi-title` is the
+   selector. Parts inside an element keep a block__part class. */
 
 [hidden] {
   display: none !important;
 }
-/* ---- The label ---- */
 
-/* The wrapper is not a box: the variant inside it is the container every
-   design pixel is measured against, and sizes from the page as it always
-   has. Swapping variants must not move anything. */
+/* ---- The label ----
+
+   The wrapper is not a box: the label inside it is the container every
+   design pixel is measured against, and sizes from the page. Swapping
+   labels must not move anything. */
+
 acmi-lifelike-label {
   display: contents;
 }
 
-acmi-gallery-2-label {
+acmi-single-work,
+acmi-playlist-work,
+acmi-nightmare-room {
   display: block;
   height: 100%;
   container-type: size;
-  container-name: label;
   aspect-ratio: 2160 / 3840;
 }
 
+/* A word too long for its line — a url in a description — breaks rather
+   than running out sideways, where nothing clips it. */
 .acmi-label {
-  box-sizing: border-box;
   height: 100%;
-  display: block;
-  aspect-ratio: 9/16;
-  padding: var(--acmi-label-padding, 4rem);
-  background: var(--acmi-label-bg, #000);
-  color: var(--acmi-label-fg, #fff);
-  font-family: var(--acmi-label-font-body, 'Fakt', sans-serif);
+  padding: var(--acmi-label-padding);
+  background: var(--acmi-bg);
+  color: var(--acmi-fg);
+  font-family: var(--acmi-font-body);
+  overflow-wrap: break-word;
 }
 
-.acmi-label header {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-content: start;
-  gap: var(--acmi-label-gap, 2rem);
-  height: var(--acmi-heading-size);
-  
-}
-
-.acmi-label__timer {
-  grid-column: 2;
-  justify-self: end;
-}
-
-/* ---- Title ---- */
-
-acmi-title-block {
-  display: block;
-  margin-block-end: var(--acmi-title-space-after);
-  /* text-align: center; */
-  padding-block-end: var(--acmi-space-1);
-  /* border-block-end: calc(4 * var(--acmi-px, )) solid var(--acmi-label-fg); */
-}
-
-.acmi-title-block__heading {
-  margin: 0;
-  font-size: var(--acmi-title-size);
-  line-height: var(--acmi-title-leading);
-  font-family: var(--acmi-label-font-display);
-  text-transform: uppercase;
-}
-
-/* The two lines under the title read in the body's voice, at the body's
-   size: who made it, then how long it runs. */
-.acmi-title-block__credit,
-.acmi-title-block__duration {
-  margin: 0;
-  font-size: var(--acmi-credit-size);
-  line-height: var(--acmi-credit-leading);
-  font-family: var(--acmi-credit-font);
-}
-
-.acmi-title-block__credit {
-  margin-block-start: var(--acmi-credit-space-before);
-}
-
-.acmi-title-block__credit > :first-child {
-  margin-block-start: 0;
-}
-
-.acmi-title-block__credit > :last-child {
-  margin-block-end: 0;
-}
-
-/* ---- Dates ---- */
-
-acmi-dates-block {
-  display: block;
-  font-size: var(--acmi-date-text-size);
-  line-height: var(--acmi-date-text-leading);
-  font-family: var(--acmi-label-font-display);
-  margin-block-end: var(--acmi-date-text-space-after);
-  font-weight: 700;
-}
-
-.acmi-dates-block__dates,
-.acmi-dates-block__billing {
-  margin: 0;
-}
-
-/* ---- Body copy ---- */
-
-acmi-body-copy {
-  display: block;
-  font-size: var(--acmi-body-size);
-  line-height: var(--acmi-body-leading);
-  margin-block-end: var(--acmi-body-space-after);
-  /* text-align: justify; */
-}
-
-acmi-body-copy > :first-child {
-  margin-block-start: 0;
-}
-
-acmi-body-copy > :last-child {
-  margin-block-end: 0;
-}
-
-/* ---- Info blocks ---- */
-
-acmi-info-blocks {
+/* Copy too long for the label is cut, not scrolled: the kiosk cannot
+   scroll. The content is cut at its foot, inside the label's margin; a
+   label with a qr code cuts its copy above the code instead, in the block
+   that fills the room left there, so the code never moves. `labelShell`
+   warns in the console when either happens. */
+.acmi-label__content {
   display: flex;
   flex-direction: column;
-  gap: var(--acmi-info-h-gap, 0.5em);
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  height: 100%;
+  overflow-y: clip;
 }
 
-acmi-info-block {
-  display: flex;
-  align-items: center;
-  gap: var(--acmi-info-v-gap, 0.5em);
-  font-size: var(--acmi-info-size);
-  line-height: var(--acmi-info-leading);
-}
-
-.acmi-info-block__icon {
-  flex-shrink: 0;
-
-  --acmi-icon-size: var(--acmi-info-icon-size);
-}
-
-.acmi-info-block__text {
-  color: var(--acmi-info-color);
-}
-
-/* ---- Icon ---- */
-
-acmi-icon {
-  display: block;
-  flex: none;
-}
-
-acmi-icon > svg {
-  display: block;
-  width: auto;
-  height: var(--acmi-icon-size, 1em);
-}
-
-/* ---- Timer ring ---- */
-
-acmi-timer-ring {
-  display: grid;
-  grid-template-areas: 'ring' 'restart';
-  justify-items: center;
-  gap: var(--acmi-timer-gap, 0.5em);
-}
-
-.acmi-timer__ring {
-  grid-area: ring;
-  width: var(--acmi-timer-size, 6em);
-  height: var(--acmi-timer-size, 6em);
-  transform: rotate(-90deg);
-}
-
-.acmi-timer__track {
-  stroke: var(--acmi-timer-track, #444);
-  stroke-width: var(--acmi-timer-ring-width, 8);
-}
-
-.acmi-timer__progress {
-  --acmi-timer-circumference: calc(2 * (pi * 46));
-
-  stroke: var(--acmi-label-fg, #fff);
-  stroke-width: var(--acmi-timer-ring-width, 8);
-  stroke-dasharray: calc(var(--acmi-timer-ratio, 0) * var(--acmi-timer-circumference, 100))
-    var(--acmi-timer-circumference, 100);
-}
-
-.acmi-timer__elapsed {
-  grid-area: ring;
-  align-self: center;
-  margin: 0;
-  font-size: var(--acmi-timer-elapsed-size);
-  line-height: 1;
-  text-box: trim-both cap alphabetic;
-
-}
-
-.acmi-timer__restart {
-  grid-area: restart;
-  margin: 0;
-  text-align: center;
-  max-width: calc(1.1 * var(--acmi-timer-size, 6em));
-  text-wrap: pretty;
-  font-size: var(--acmi-timer-restart-size);
-  line-height: var(--acmi-timer-restart-leading);
+.acmi-label__fill {
+  flex: 1 1 0;
+  min-block-size: 0;
+  overflow-y: clip;
 }
 
 /* ---- Error screen ---- */
@@ -230,128 +69,426 @@ acmi-error-screen {
   text-align: center;
 }
 
-/* ---- Playlist labels ----
+/* ---- Icon ---- */
 
-   Same shell as the single-work label: the container the design pixel is
-   measured against, and the page-sized block inside it. What differs is
-   below the header — a current work, then the rest of the playlist. */
-
-acmi-playlist-label,
-acmi-nightmare-room-label {
+acmi-icon {
   display: block;
-  height: 100%;
-  container-type: size;
-  container-name: label;
-  aspect-ratio: 2160 / 3840;
+  flex: none;
 }
 
-/* The stack sits at the foot of the label whatever the body copy runs to,
-   so the visitor always finds "up next" in the same place. */
-acmi-playlist-label .acmi-label__content,
-acmi-nightmare-room-label .acmi-label__content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-acmi-playlist-label .acmi-label__stack,
-acmi-nightmare-room-label .acmi-label__stack {
-  margin-block-start: auto;
-  padding-block-start: var(--acmi-stack-space-before);
-}
-
-/* ---- Current work ---- */
-
-acmi-work-detail {
+acmi-icon > svg {
   display: block;
+  width: auto;
+  height: var(--acmi-icon-size, 1em);
 }
 
-/* ---- The stack ---- */
+/* ---- Timer ----
 
-acmi-work-stack {
-  display: flex;
-  flex-direction: column;
-  gap: var(--acmi-stack-gap);
+   The ring, the time inside it, the line under it. */
+
+acmi-timer {
+  display: grid;
+  grid-template-areas: "ring" "line";
+  justify-items: center;
+  gap: var(--acmi-timer-gap);
+  width: var(--acmi-timer-width);
 }
 
-/* ---- One upcoming work ----
-
-   "Up next" / "Later", the title, who made it (up next only), and when it
-   starts. */
-
-acmi-work-preview {
-  display: block;
-  padding-block-start: var(--acmi-stack-gap);
-  border-block-start: var(--acmi-stack-rule-width) solid var(--acmi-stack-rule);
+.acmi-timer__ring {
+  grid-area: ring;
+  width: var(--acmi-timer-size);
+  height: var(--acmi-timer-size);
+  transform: rotate(-90deg);
 }
 
-.acmi-work-preview__eyebrow {
-  margin: 0 0 var(--acmi-preview-gap);
-  font-size: var(--acmi-preview-eyebrow-size);
-  line-height: var(--acmi-leading-2);
-  font-family: var(--acmi-label-font-display);
-  text-transform: uppercase;
+.acmi-timer__track {
+  stroke: var(--acmi-timer-track);
+  stroke-width: var(--acmi-timer-ring-width);
 }
 
-.acmi-work-preview__heading {
+/* The progress circle's `pathLength` is 1, so the ratio is the dash. */
+.acmi-timer__progress {
+  stroke: var(--acmi-fg);
+  stroke-width: var(--acmi-timer-ring-width);
+  stroke-dasharray: var(--acmi-timer-ratio, 0) 1;
+}
+
+.acmi-timer__elapsed {
+  grid-area: ring;
+  align-self: center;
   margin: 0;
-  font-size: var(--acmi-preview-heading-size);
-  line-height: var(--acmi-leading-1);
-  font-family: var(--acmi-label-font-display);
-  text-transform: uppercase;
+  font-size: var(--acmi-timer-elapsed-size);
+  line-height: 1;
+  text-box: trim-both cap alphabetic;
 }
 
-.acmi-work-preview__credit,
-.acmi-work-preview__starts-in {
-  margin: var(--acmi-preview-gap) 0 0;
-  line-height: var(--acmi-leading-2);
+.acmi-timer__line {
+  grid-area: line;
+  margin: 0;
+  text-align: center;
+  text-wrap: pretty;
+  font-size: var(--acmi-timer-line-size);
+  line-height: var(--acmi-timer-line-leading);
 }
 
-.acmi-work-preview__credit {
-  font-size: var(--acmi-preview-credit-size);
+/* ---- Title ---- */
+
+acmi-title {
+  display: block;
+  margin-block-end: var(--acmi-title-space-after);
 }
 
-.acmi-work-preview__credit > :first-child {
+.acmi-title__heading {
+  margin: 0;
+  font-family: var(--acmi-font-display);
+  font-size: var(--acmi-title-size);
+  line-height: var(--acmi-title-leading);
+}
+
+/* ---- Tombstone ---- */
+
+acmi-tombstone {
+  display: block;
+  margin-block-end: var(--acmi-tombstone-space-after);
+  font-size: var(--acmi-tombstone-size);
+  line-height: var(--acmi-tombstone-leading);
+  text-wrap-style: pretty;
+}
+
+.acmi-tombstone__credit,
+.acmi-tombstone__duration {
+  margin: 0;
+}
+
+/* The credit is the cms's own markup, a paragraph or two: its first and
+   last lose the margins that would push the tombstone apart. */
+.acmi-tombstone__credit > :first-child {
   margin-block-start: 0;
 }
 
-.acmi-work-preview__credit > :last-child {
+.acmi-tombstone__credit > :last-child {
   margin-block-end: 0;
 }
 
-.acmi-work-preview__starts-in {
-  font-size: var(--acmi-preview-starts-in-size);
+/* ---- Description ---- */
+
+acmi-description {
+  display: block;
+  margin-block-end: var(--acmi-description-space-after);
+  font-size: var(--acmi-description-size);
+  line-height: var(--acmi-description-leading);
+  text-wrap: pretty;
 }
 
-/* ---- The panel beside the timer ---- */
+acmi-description > :first-child {
+  margin-block-start: 0;
+}
 
-.acmi-label__aside {
+acmi-description > :last-child {
+  margin-block-end: 0;
+}
+
+/* ---- Additional info ---- */
+
+acmi-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--acmi-info-row-gap);
+}
+
+acmi-info-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--acmi-info-icon-gap);
+  font-size: var(--acmi-info-size);
+  line-height: var(--acmi-info-leading);
+}
+
+.acmi-info-entry__icon {
+  --acmi-icon-size: var(--acmi-info-icon-size);
+}
+
+/* Trimmed to the letters, so the row centres the icon on the text you see
+   rather than on its line box. */
+.acmi-info-entry__text {
+  text-box: trim-both cap alphabetic;
+}
+
+/* ---- Header ----
+
+   A band of fixed height across the top of every label. The playlist's
+   title sits in its top left. A single work and a playlist put the timer
+   of the work playing now in the top right; the nightmare room puts its
+   info under the title. */
+
+.acmi-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 1fr;
+  column-gap: var(--acmi-header-gap);
+  row-gap: var(--acmi-header-gap);
+  align-items: start;
+  flex: none;
+  height: var(--acmi-header-height);
+}
+
+acmi-playlist-title {
+  display: block;
   grid-column: 1;
-  align-self: start;
-  max-width: var(--acmi-aside-width);
+  grid-row: 1;
 }
 
-acmi-aside-panel {
+.acmi-playlist-title__text {
+  margin: 0;
+  font-family: var(--acmi-font-decorative);
+  font-size: var(--acmi-playlist-title-size);
+  line-height: var(--acmi-playlist-title-leading);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.acmi-header__timer {
+  grid-column: 2;
+  grid-row: 1 / -1;
+}
+
+.acmi-header__info {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+/* ---- Qr block ----
+
+   The code, and beside it the captions icon and one line, in a row,
+   centred on the code. The svg's colours are the label's, through
+   --figure / --ground.
+
+   It sits at the foot of the label, fixed, whatever the copy above it
+   does, and takes no part in a rotation: it stays drawn live, under the
+   transition, which is cut off above it (see Rotating). */
+
+acmi-qr-block {
+  --figure: var(--acmi-fg);
+  --ground: var(--acmi-bg);
+
+  display: flex;
+  align-items: center;
+  gap: var(--acmi-qr-gap);
+  margin-block-start: var(--acmi-qr-space-before);
+  font-size: var(--acmi-qr-info-size);
+  line-height: var(--acmi-leading-2);
+}
+
+.acmi-qr-block__code {
+  flex: none;
+  width: var(--acmi-qr-size);
+  height: var(--acmi-qr-size);
+}
+
+.acmi-qr-block__code > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.acmi-qr-block__info {
+  display: flex;
+  align-items: center;
+  gap: var(--acmi-qr-gap);
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.acmi-qr-block__icon {
+  --acmi-icon-size: var(--acmi-qr-icon-size);
+}
+
+/* Trimmed to the letters, as the info rows are. */
+.acmi-qr-block__text {
+  text-box: trim-both cap alphabetic;
+}
+
+/* ---- Work body ---- */
+
+acmi-work-body {
   display: block;
 }
 
-.acmi-aside-panel__heading {
-  margin: 0 0 var(--acmi-aside-gap);
-  font-size: var(--acmi-aside-heading-size);
+/* ---- Single work ----
+
+   The body block under the header, with the qr code pinned to its foot:
+   the work fills the room above it (`acmi-label__fill`). */
+
+.acmi-body-block {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-block-size: 0;
+}
+
+/* ---- Playlist ----
+
+   The entries stack from the top, filling the room above the qr code at
+   the foot (`acmi-label__fill`). */
+
+acmi-playlist-entries {
+  display: flex;
+  flex-direction: column;
+  gap: var(--acmi-entry-gap);
+}
+
+/* ---- Playlist entry ----
+
+   The status line across the top, then the body on the left and the timer
+   in the right column. Every kind is the same grid: an entry that is not
+   playing yet just has less in its body, and the one playing now has no
+   timer of its own — the header has it — so its body takes both columns
+   for the description. */
+
+acmi-playlist-entry {
+  display: grid;
+  grid-template-columns: 1fr var(--acmi-timer-width);
+  grid-template-areas:
+    "status status"
+    "body timer";
+  column-gap: var(--acmi-timer-gap);
+  align-items: start;
+}
+
+acmi-playlist-entry[data-kind="current"] {
+  grid-template-areas:
+    "status status"
+    "body body";
+}
+
+acmi-playlist-entry + acmi-playlist-entry {
+  padding-block-start: var(--acmi-entry-gap);
+  border-block-start: var(--acmi-rule-width) solid var(--acmi-rule);
+}
+
+.acmi-playlist-entry__status {
+  grid-area: status;
+  margin: 0 0 var(--acmi-entry-status-space-after);
+  font-family: var(--acmi-font-decorative);
+  font-size: var(--acmi-entry-status-size);
   line-height: var(--acmi-leading-2);
-  font-family: var(--acmi-label-font-display);
   text-transform: uppercase;
 }
 
-.acmi-aside-panel__body {
-  font-size: var(--acmi-aside-body-size);
-  line-height: var(--acmi-leading-3);
+.acmi-playlist-entry__body {
+  grid-area: body;
 }
 
-.acmi-aside-panel__body > :first-child {
-  margin-block-start: 0;
+.acmi-playlist-entry__timer {
+  grid-area: timer;
 }
 
-.acmi-aside-panel__body > :last-child {
+/* The title and tombstone look the same in every entry: the title at the
+   size of a list item, and both at the width they have beside a timer,
+   even in the entry playing now, which has none. So a work moves up the
+   list without its title or credit changing size or wrapping anew. */
+acmi-playlist-entry .acmi-title__heading {
+  font-size: var(--acmi-entry-title-size);
+  line-height: var(--acmi-leading-1);
+}
+
+acmi-playlist-entry[data-kind="current"] :is(acmi-title, acmi-tombstone) {
+  margin-inline-end: calc(var(--acmi-timer-gap) + var(--acmi-timer-width));
+}
+
+acmi-playlist-entry:not([data-kind="current"]) acmi-tombstone {
   margin-block-end: 0;
+}
+
+/* ---- Rotating ----
+
+   When the playlist moves on, the label changes inside a view transition
+   (see `acmi-playlist-entry` and `acmi-lifelike-label`). A work's title,
+   tombstone and ring are named by the work, look the same in every slot,
+   and move up with it — the ring of the work up next on up into the
+   header. Everything else — the statuses, the rules, the description, and
+   the work that finished — has nothing to pair with, so it fades.
+
+   In order:
+   1. the statuses, and everything else leaving, fade out together;
+   2. each slot's work moves up, a stagger after the slot above;
+   3. once a slot has stopped, its body and rule fade in, and the work
+      come round to the foot with them;
+   4. last, the statuses fade in, a stagger apart.
+
+   Each part carries its slot as a class, which sets --acmi-slot for its
+   pseudo-elements, and each slot works out its own moments from it. A
+   browser without the class selector drops those rules: everything moves
+   at once, and the statuses come back with the bodies.
+
+   The moving parts are drawn over the page, where the clip at the foot of
+   the list does not reach them, so the whole transition is cut off there
+   instead: `acmi-lifelike-label` measures the gap below the list into
+   --acmi-transition-foot before it starts one. Below that, the page shows
+   through, drawn live — the qr code with it. And the page itself is not
+   pictured at all: everything in a playlist that changes is named, so a
+   picture of the rest would only fade into itself, a whole 4K screen of
+   it, for nothing. */
+
+html:has(acmi-playlist-work) {
+  view-transition-name: none;
+}
+
+html:has(acmi-playlist-work)::view-transition {
+  clip-path: inset(0 0 var(--acmi-transition-foot, 0px) 0);
+}
+
+::view-transition-group(*) {
+  --acmi-moves-at: calc(
+    var(--acmi-rotation-fade) + var(--acmi-slot, 0) * var(--acmi-rotation-stagger)
+  );
+  --acmi-arrives-at: calc(var(--acmi-moves-at) + var(--acmi-rotation-move));
+  --acmi-status-at: calc(var(--acmi-arrives-at) + var(--acmi-rotation-fade));
+
+  animation-delay: var(--acmi-moves-at);
+  animation-duration: var(--acmi-rotation-move);
+  animation-timing-function: var(--acmi-rotation-easing);
+}
+
+::view-transition-old(*):only-child {
+  animation-delay: 0s;
+  animation-duration: var(--acmi-rotation-fade);
+}
+
+::view-transition-new(*):only-child {
+  animation-delay: var(--acmi-arrives-at);
+  animation-duration: var(--acmi-rotation-fade);
+}
+
+::view-transition-new(*.acmi-status):only-child {
+  animation-delay: var(--acmi-status-at);
+}
+
+::view-transition-group(*.acmi-slot-0) { --acmi-slot: 0; }
+::view-transition-group(*.acmi-slot-1) { --acmi-slot: 1; }
+::view-transition-group(*.acmi-slot-2) { --acmi-slot: 2; }
+::view-transition-group(*.acmi-slot-3) { --acmi-slot: 3; }
+::view-transition-group(*.acmi-slot-4) { --acmi-slot: 4; }
+::view-transition-group(*.acmi-slot-5) { --acmi-slot: 5; }
+::view-transition-group(*.acmi-slot-6) { --acmi-slot: 6; }
+::view-transition-group(*.acmi-slot-7) { --acmi-slot: 7; }
+
+/* ---- Nightmare room ----
+
+   The info, inside the header band: the message on the left, the timer
+   beside it when a run is on. */
+
+acmi-nightmare-info {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: var(--acmi-nightmare-info-gap);
+  align-items: start;
+}
+
+.acmi-nightmare-info__text {
+  margin: 0;
+  font-family: var(--acmi-font-display);
+  font-size: var(--acmi-nightmare-info-size);
+  line-height: var(--acmi-nightmare-info-leading);
+  text-wrap: balance;
 }

@@ -3,37 +3,110 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gallery 4 label</title>
+  <title>Lifelike labels</title>
   <link rel="stylesheet" href="./style.css">
   <style>
     body {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      justify-content: center;
       min-height: 100vh;
+      margin: 0;
+      padding: 2rem;
+      box-sizing: border-box;
+      background: #333;
     }
-    acmi-gallery-2-label {
-      margin-inline: auto;
+    acmi-lifelike-label > * {
+      height: calc(100vh - 4rem);
+    }
+    figure {
+      margin: 0;
+      color: #ccc;
+      font: 14px system-ui, sans-serif;
+    }
+    figcaption {
+      margin-block-end: 0.5rem;
     }
   </style>
 </head>
 <body>
-    <acmi-gallery-2-label
-      heading="Signs of Life"
-      credit=""
-      date-text=""
-      billing="World premiere"
-      body="&lt;p&gt;lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam &lt;em&gt;Signs of Life&lt;/em&gt;  quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.&lt;/p&gt;&lt;p&gt;Duis aute irure dolor in voluptate velit esse cillum dolore eu fugiat nulla pariatur. &lt;strong&gt;Excepteur sint occaecat&lt;/strong&gt; cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.&lt;/p&gt;"
-    >
-      <script type="application/json" data-prop="infoBlocks">
-        [
-          { "icon": "duration", "text": "12 minutes" },
-          { "icon": "strobe", "text": "Contains strobe lighting" },
-          { "icon": "caution", "text": "Contains themes some visitors may find confronting" }
-        ]
-      </script>
-      <script type="application/json" data-prop="timer">
-        { "ratio": 0.42, "elapsed": "5:03", "restart": "Starts again in 7 minutes" }
-      </script>
-    </acmi-gallery-2-label>
 
+  <!-- The same three-work playlist, drawn by each variant. With no
+       playback-source the first item is current, the rest stack under it
+       with no start times, and there is no timer. Served by flask, add
+       playback-source="/api/playback-stream/" and they all come alive.
+       The playlist is the one json island below, handed to every label. -->
+
+  <figure>
+    <figcaption>normal</figcaption>
+    <acmi-lifelike-label variant="normal"></acmi-lifelike-label>
+  </figure>
+
+  <figure>
+    <figcaption>playlist</figcaption>
+    <acmi-lifelike-label variant="playlist"></acmi-lifelike-label>
+  </figure>
+
+  <figure>
+    <figcaption>nightmare-room</figcaption>
+    <acmi-lifelike-label variant="nightmare-room"></acmi-lifelike-label>
+  </figure>
+
+  <figure>
+    <figcaption>nightmare-room, closed</figcaption>
+    <acmi-lifelike-label variant="nightmare-room" nightmare-closed></acmi-lifelike-label>
+  </figure>
+
+  <script type="application/json" id="playlist">
+    {
+      "id": 299,
+      "title": "Screening Room",
+      "message": "The Nightmare Room is closed. Come back Thursday from 6pm.",
+      "qr_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 29 29\"><rect width=\"29\" height=\"29\" fill=\"var(--ground, white)\"/><path fill=\"var(--figure, black)\" d=\"M1 1h7v7H1zM2 2v5h5V2zM3 3h3v3H3zM21 1h7v7h-7zM22 2v5h5V2zM23 3h3v3h-3zM1 21h7v7H1zM2 22v5h5v-5zM3 23h3v3H3zM10 1h1v1h-1zM12 1h2v1h-2zM16 1h1v2h-1zM10 3h3v1h-3zM14 4h2v1h-2zM17 3h2v1h-2zM1 10h1v1H1zM3 10h2v1H3zM6 10h1v1H6zM9 9h2v2H9zM12 10h1v1h-1zM14 9h1v2h-1zM17 10h2v1h-2zM21 10h1v1h-1zM23 10h3v1h-3zM27 9h1v2h-1zM1 12h2v1H1zM4 13h2v1H4zM8 12h1v2H8zM11 12h2v1h-2zM15 12h1v1h-1zM18 12h1v2h-1zM20 13h2v1h-2zM24 12h1v2h-1zM26 12h2v1h-2zM2 15h1v1H2zM5 15h1v1H5zM7 14h2v1H7zM10 15h1v1h-1zM13 14h2v2h-2zM17 15h1v1h-1zM20 15h2v1h-2zM23 15h1v1h-1zM26 15h2v1h-2zM1 17h1v2H1zM4 17h2v1H4zM8 17h1v1H8zM11 17h1v2h-1zM14 17h1v1h-1zM16 18h2v1h-2zM20 17h1v1h-1zM22 18h2v1h-2zM26 17h1v2h-1zM10 20h1v1h-1zM13 21h2v1h-2zM16 20h1v2h-1zM19 21h2v1h-2zM23 20h1v1h-1zM25 21h2v1h-2zM28 20h1v1h-1zM9 23h2v1H9zM12 23h1v2h-1zM15 24h2v1h-2zM19 23h1v1h-1zM21 24h2v1h-2zM25 23h1v2h-1zM27 24h1v1h-1zM10 26h1v2h-1zM13 27h2v1h-2zM16 26h2v2h-2zM20 27h1v1h-1zM22 26h2v1h-2zM26 27h2v1h-2z\"/></svg>",
+      "playlist_labels": [
+        {
+          "label": {
+            "id": 66297,
+            "title": "<p>Signs of Life</p>",
+            "subtitles": "<p>Dir. Ana Moreau, Australia, 2026</p>",
+            "type": "work",
+            "columns": [
+              {
+                "content": "<p><acmi-warning>This experience contains sudden loud noises and graphic imagery.</acmi-warning></p><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam <em>Signs of Life</em> quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>\n<p>Duis aute irure dolor in voluptate velit esse cillum dolore eu fugiat nulla pariatur. <strong>Excepteur sint occaecat</strong> cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>",
+                "style": "standard"
+              }
+            ]
+          },
+          "video": { "id": 1149, "title": "Signs of Life", "duration_secs": 720.0 }
+        },
+        {
+          "label": {
+            "id": 66298,
+            "title": "<p>The Long Way Down</p>",
+            "subtitles": "<p>Dir. Peter Vasil, Canada, 2024</p>",
+            "type": "work",
+            "columns": [
+              { "content": "<p>Duis aute irure dolor in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>", "style": "standard" }
+            ]
+          },
+          "video": { "id": 1150, "title": "The Long Way Down", "duration_secs": 540.0 }
+        },
+        {
+          "label": {
+            "id": 66299,
+            "title": "<p>Blue Hour</p>",
+            "subtitles": "<p>Dir. Mari Okada, Japan, 2025</p>",
+            "type": "work",
+            "columns": [
+              { "content": "<p>Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt.</p>", "style": "standard" }
+            ]
+          },
+          "video": { "id": 1151, "title": "Blue Hour", "duration_secs": 300.0 }
+        }
+      ]
+    }
+  </script>
 
   <script type="importmap">
     {
@@ -43,6 +116,38 @@
       }
     }
   </script>
-  <script type="module" src="./main.mjs"></script>
+  <script type="module">
+    import "./main.mjs";
+
+    const playlist = JSON.parse(document.getElementById("playlist").textContent);
+    for (const label of document.querySelectorAll("acmi-lifelike-label")) {
+      label.playlist = playlist;
+    }
+
+    // With no stream, fake one: a 12 minute work, 42% through, so every
+    // timer has something to draw. Remove to see the no-timer states.
+    const fake = new URLSearchParams(location.search).has("timer");
+    if (fake) {
+      const start = performance.now();
+      const durationMs = 720_000;
+      function tick() {
+        const position = ((performance.now() - start) / durationMs + 0.42) % 1;
+        for (const label of document.querySelectorAll("acmi-lifelike-label > *")) {
+          const remaining = Math.round((1 - position) * durationMs / 1000);
+          const minutes = Math.floor(position * durationMs / 60000);
+          const seconds = Math.floor(position * durationMs / 1000) % 60;
+          label.timerRatio = position;
+          label.timerElapsed = `${minutes}:${String(seconds).padStart(2, "0")}`;
+          label.timerLine = `Starts again in ${Math.max(1, Math.floor(remaining / 60))} minutes`;
+          label.secondsUntilNext = remaining;
+          if (label.localName === "acmi-nightmare-room" && !label.parentElement.hasAttribute("nightmare-closed")) {
+            label.state = "running";
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+      tick();
+    }
+  </script>
 </body>
 </html>

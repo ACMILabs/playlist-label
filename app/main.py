@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import re
 import socket
 import time
 from threading import Thread
@@ -14,8 +15,15 @@ from peewee import (CharField, FloatField, IntegerField, Model,
 from playhouse.shortcuts import model_to_dict
 from sentry_sdk.integrations.flask import FlaskIntegration
 from segno import make_qr
+from app import dev_env
 from app.errors import HTTPError
+from app.mock_media_player import MockMediaPlayer
 from app.playback_sync import PlaybackSync
+
+# In development, config.env is read here rather than by docker, so an edit
+# to it takes without restarting the container. See `app/dev_env.py`.
+dev_env.load()
+CONFIG_ENV_FILE = os.getenv('CONFIG_ENV_FILE')
 
 XOS_API_ENDPOINT = os.getenv('XOS_API_ENDPOINT')
 XOS_TAPS_ENDPOINT = os.getenv('XOS_TAPS_ENDPOINT', f'{XOS_API_ENDPOINT}taps/')
@@ -44,6 +52,35 @@ OFFSET_TOP_MARGIN = os.getenv('OFFSET_TOP_MARGIN', '0')
 OVERRIDE_DURATION = os.getenv('OVERRIDE_DURATION', '')
 OVERRIDE_TITLE = os.getenv('OVERRIDE_TITLE', '')
 QR_URL_OVERRIDE = os.getenv('QR_URL_OVERRIDE', '')
+# What the nightmare room says across its header. From the environment for
+# now; the playlist would be the better home once xos carries it.
+HEADER_MESSAGE = os.getenv('HEADER_MESSAGE', '')
+# For testing without a media player: a stand-in plays the cached playlist
+# into the playback stream, every video MOCK_VIDEO_SECONDS long.
+MOCK_MEDIA_PLAYER = os.getenv('MOCK_MEDIA_PLAYER', 'false').lower() == 'true'
+MOCK_VIDEO_SECONDS = int(os.getenv('MOCK_VIDEO_SECONDS', '60'))
+
+
+def css_colour(name):
+    """
+    A colour from the environment for the lifelike label, or '' for its own.
+
+    Only checked for characters that could reach past the value into the
+    rest of the style: whether it is a colour at all is the browser's call,
+    and one that is not falls back to the label's own (see `@property` in
+    `app/static/lifelike/tokens.css`).
+    """
+    value = os.getenv(name, '').strip()
+    if value and not re.fullmatch(r'[#\w\s(),.%/+-]+', value):
+        print(f'[config] {name}={value!r} is not a colour, ignoring it')
+        return ''
+    return value
+
+
+# The lifelike label's text and ground, in place of its own blue and white:
+# any CSS colour, `#000` or `oklch(40% 0.1 250)`.
+LABEL_FG_COLOUR = css_colour('LABEL_FG_COLOUR')
+LABEL_BG_COLOUR = css_colour('LABEL_BG_COLOUR')
 LISTEING_ROOM_QR_CODE = "https://risingmelbourne.fillout.com/t/4qKipy8T3rus"
 CACHE_DIR = os.getenv('CACHE_DIR', '/data/')
 
@@ -295,9 +332,28 @@ def playlist_label():
             
             json_data['qr_text'] = json.dumps(qr_codes)
 
+        # The lifelike label shows one code, for QR_URL_OVERRIDE, or none at
+        # all. Same drawing as above, without the per-language set.
+        if QR_URL_OVERRIDE:
+            qrcode = make_qr(QR_URL_OVERRIDE, error="M")
+            text = qrcode.svg_inline(dark="#aaa", light="#bbb", border=1,
+                                     draw_transparent=False, omitsize=True)
+            text = text.replace('#bbb', "var(--ground, white)")
+            text = text.replace('#aaa', "var(--figure, black)")
+            json_data['qr_svg'] = text
+
+        if HEADER_MESSAGE:
+            json_data['message'] = HEADER_MESSAGE
+
         for item in list(json_data['playlist_labels']):
             if item['label'] is None:
                 json_data['playlist_labels'].remove(item)
+
+        if MOCK_MEDIA_PLAYER:
+            # Every video runs as long as the mock plays it, so the label's
+            # durations and start times agree with its timer.
+            for item in json_data['playlist_labels']:
+                item['video'] = {**(item.get('video') or {}), 'duration_secs': MOCK_VIDEO_SECONDS}
 
         collect_classname = f'collect {COLLECT_POSITION}' if COLLECT_POSITION else 'collect'
 
@@ -316,6 +372,9 @@ def playlist_label():
                 'media_player_id': XOS_MEDIA_PLAYER_ID
             },
             hide_timer=HIDE_TIMER,
+            mock_media_player=MOCK_MEDIA_PLAYER,
+            fg_colour=LABEL_FG_COLOUR,
+            bg_colour=LABEL_BG_COLOUR,
             override_duration=OVERRIDE_DURATION,
             show_caption_icon=XOS_MEDIA_PLAYER_ID is not None and HIDE_CAPTION is False,
             override_title=OVERRIDE_TITLE,
@@ -443,8 +502,15 @@ if __name__ == '__main__':
     except Exception:  # pylint: disable=broad-except
         pass  # column already exists
     HasTapped.create(has_tapped=0, tap_successful=0, tap_processing=0)
-    if XOS_MEDIA_PLAYER_ID:
-        if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    # Under the reloader, the first process only watches files; the server,
+    # and so everything below, runs in the process it starts.
+    serving = not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true'
+    if serving and CONFIG_ENV_FILE and not os.path.exists(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}'):
+        # config.env names a playlist that is not cached yet: fetch it first.
+        from app.cache import create_cache  # pylint: disable=import-outside-toplevel
+        create_cache()
+    if XOS_MEDIA_PLAYER_ID or MOCK_MEDIA_PLAYER:
+        if serving:
             # Templates that read `/api/playback-stream/` need the MQTT
             # client behind it. Everything else still consumes over AMQP.
             if LABEL_TEMPLATE in ('reverb-digital-label.html', 'lifelike.html'):
@@ -457,10 +523,25 @@ if __name__ == '__main__':
                     topic=MQTT_TOPIC,
                     retry_seconds=RABBITMQ_RETRY_SECONDS,
                 )
-                sync.start()
-            else:
+                if MOCK_MEDIA_PLAYER:
+                    sync.start(mqtt=False)
+                    MockMediaPlayer(
+                        sync, f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}', MOCK_VIDEO_SECONDS,
+                    ).start()
+                else:
+                    sync.start()
+            elif XOS_MEDIA_PLAYER_ID:
                 playlistlabel = PlaylistLabel()  # pylint: disable=C0103
                 Thread(target=playlistlabel.get_events).start()
+            else:
+                print(f'[mock] MOCK_MEDIA_PLAYER does nothing for {LABEL_TEMPLATE}: '
+                      'it only feeds /api/playback-stream/')
     else:
         print('[mqtt] XOS_MEDIA_PLAYER_ID not set — skipping MQTT connection')
-    app.run(host='0.0.0.0', port=PLAYLIST_LABEL_PORT, threaded=True)
+    app.run(
+        host='0.0.0.0',
+        port=PLAYLIST_LABEL_PORT,
+        threaded=True,
+        # Restart the server when config.env is saved, as for a code change.
+        extra_files=[CONFIG_ENV_FILE] if CONFIG_ENV_FILE else None,
+    )

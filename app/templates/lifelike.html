@@ -1,10 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+{# LABEL_FG_COLOUR and LABEL_BG_COLOUR, when set, take the place of the
+   label's own colours. One that is not a colour is ignored by the browser,
+   which keeps the label's own: see `@property` in tokens.css. #}
+<html lang="en"
+  {%- if fg_colour or bg_colour %} style="
+    {%- if fg_colour %}--acmi-fg: {{ fg_colour }};{% endif %}
+    {%- if bg_colour %}--acmi-bg: {{ bg_colour }};{% endif %}"
+  {%- endif %}>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ playlist_json.title }}</title>
   <link rel="stylesheet" href="/static/lifelike/style.css">
+  <style>
+    /* The label is the whole screen: nothing round it, the label's blue
+       behind it while the script loads, and never a scrollbar. */
+    html {
+      background: var(--acmi-bg);
+      overflow: clip;
+    }
+    body {
+      margin: 0;
+    }
+  </style>
   <script type="importmap">
     {
       "imports": {
@@ -15,14 +33,17 @@
   </script>
 </head>
 <body>
-  {# The stream only exists when a media player is configured, and HIDE_TIMER
-     is how a label opts out of it. No source, no connection. #}
+  {# The stream only exists when a media player is configured, or mocked with
+     MOCK_MEDIA_PLAYER, and HIDE_TIMER is how a label opts out of it. No
+     source, no connection. #}
   <acmi-lifelike-label
     variant="{{ label_mode }}"
-    {% if xos.media_player_id and not hide_timer %}playback-source="/api/playback-stream/"{% endif %}
+    {% if (xos.media_player_id or mock_media_player) and not hide_timer %}playback-source="/api/playback-stream/"{% endif %}
   >
+    {# `tojson`, not `json.dumps`: it escapes `<`, so no `</script>` in the
+       playlist's copy can end this block early. #}
     <script type="application/json" data-prop="playlist">
-      {{ playlist_json_rendered | safe}}
+      {{ playlist_json | tojson }}
     </script>
   </acmi-lifelike-label>
   <script type="module" src="/static/lifelike/main.mjs"></script>

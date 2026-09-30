@@ -27,25 +27,16 @@ dd {
   margin-block-end: 0;
 }
 
-/* Remove list styles on ul, ol elements with a list role, which suggests default styling will be removed */
-ul[role="list"],
-ol[role="list"] {
-  list-style-type: none;
-}
-
 /* Set core body defaults */
 body {
   line-height: 1.5;
 }
 
-/* Set shorter line heights on headings and interactive elements */
+/* Set shorter line heights on headings */
 h1,
 h2,
 h3,
-h4,
-button,
-input,
-label {
+h4 {
   line-height: 1.1;
 }
 
@@ -57,34 +48,15 @@ h4 {
   text-wrap: balance;
 }
 
-/* A elements that don't have a class get default styles */
+/* Links and images can come in with the cms's copy: a link takes the
+   label's colour, and an image never runs wider than the column. */
 a:not([class]) {
   text-decoration-skip-ink: auto;
   color: currentcolor;
 }
 
-/* Make images easier to work with */
 img,
 picture {
   max-width: 100%;
   display: block;
-}
-
-/* Inherit fonts for inputs and buttons */
-input,
-button,
-textarea,
-select {
-  font-family: inherit;
-  font-size: inherit;
-}
-
-/* Make sure textareas without a rows attribute are not tiny */
-textarea:not([rows]) {
-  min-height: 10em;
-}
-
-/* Anything that has been anchored to should have extra scroll margin */
-:target {
-  scroll-margin-block: 5ex;
 }
