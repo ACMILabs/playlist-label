@@ -32,16 +32,13 @@
     }
   </script>
 </head>
-<body>
-  {# The stream only exists when a media player is configured, or mocked with
-     MOCK_MEDIA_PLAYER, and HIDE_TIMER is how a label opts out of it. No
-     source, no connection. #}
+
   <acmi-lifelike-label
     variant="{{ label_mode }}"
-    {% if (xos.media_player_id or mock_media_player) and not hide_timer %}playback-source="/api/playback-stream/"{% endif %}
+    {% if label_mode == 'nightmare-room' %}room-source="/api/room-stream/"
+    {%- elif (xos.media_player_id or mock_media_player) and not hide_timer %}playback-source="/api/playback-stream/"{% endif %}
   >
-    {# `tojson`, not `json.dumps`: it escapes `<`, so no `</script>` in the
-       playlist's copy can end this block early. #}
+
     <script type="application/json" data-prop="playlist">
       {{ playlist_json | tojson }}
     </script>

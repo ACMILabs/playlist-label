@@ -28,6 +28,24 @@ To run the development container:
 
 You should then be able to see the Flask server running at: http://localhost:8081
 
+The server reads `config.env` itself and restarts when you save it, so a change to it needs no container restart. A new `XOS_PLAYLIST_ID` is downloaded and cached on that restart.
+
+To see the timer without a media player, set `MOCK_MEDIA_PLAYER=true` in `config.env`. A stand-in plays the cached playlist on a loop into `/api/playback-stream/`, and each video lasts `MOCK_VIDEO_SECONDS` (default `60`). It works for the templates that read the playback stream.
+
+To change the lifelike label's colours, set `LABEL_FG_COLOUR` (text) and `LABEL_BG_COLOUR` (background) to any CSS colour, for example `#000` or `oklch(40% 0.1 250)`. If a value is not a colour, the label keeps its own.
+
+### The nightmare room
+
+With `LABEL_TEMPLATE=lifelike.html` and `LABEL_MODE=nightmare-room`, the label follows the room's mode instead of a media player. TouchOSC sets the mode with OSC messages to UDP port `OSC_PORT` (default `8000`):
+
+| Address | Mode | What the label shows |
+| --- | --- | --- |
+| `/nightmare/start` | running | The running text and a timer. The run lasts `NIGHTMARE_RUN_MINUTES` (default `10`), then the room goes back to waiting by itself. Sending it during a run starts the run again. |
+| `/nightmare/wait` | waiting | The waiting text, a little lower, and no timer. The room starts in this mode. |
+| `/nightmare/unavailable` | unavailable | The unavailable text, with the work faded a little. |
+| `/nightmare/close` | closed | The closed text, with the work faded a little. |
+
+
 ## Run tests locally
 
 To run the python tests:

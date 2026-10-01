@@ -10,6 +10,7 @@ from app import cache, dev_env, main
 from app.cache import create_cache
 from app.main import HasTapped, Message, PlaylistLabel
 from app.mock_media_player import MockMediaPlayer
+from app.nightmare_room import NightmareRoom
 from app.playback_sync import PlaybackSync
 
 
@@ -498,3 +499,81 @@ def test_dev_env_load_does_nothing_without_a_file(monkeypatch):
     monkeypatch.delenv(dev_env.LOADED_KEYS, raising=False)
     dev_env.load()
     assert dev_env.LOADED_KEYS not in os.environ
+
+
+class FakeClock:
+    """A clock the test moves by hand."""
+
+    def __init__(self):
+        self.now = 100.0
+
+    def __call__(self):
+        return self.now
+
+
+def test_nightmare_room_starts_waiting_and_follows_commands():
+    """The room waits, then takes the mode each command sets."""
+    room = NightmareRoom(run_seconds=600, clock=FakeClock())
+    assert room.snapshot() == {'mode': 'waiting'}
+
+    for command, mode in [('unavailable', 'unavailable'), ('close', 'closed'), ('wait', 'waiting')]:
+        assert room.command(command)
+        assert room.snapshot() == {'mode': mode}
+
+    assert not room.command('dance')
+    assert room.snapshot() == {'mode': 'waiting'}
+
+
+def test_nightmare_room_runs_then_waits():
+    """A run counts from start, starts over when sent again, and ends in waiting."""
+    clock = FakeClock()
+    room = NightmareRoom(run_seconds=600, clock=clock)
+
+    room.command('start')
+    clock.now += 150
+    assert room.snapshot() == {'mode': 'running', 'duration': 600000, 'playback_position': 0.25}
+
+    room.command('start')
+    clock.now += 60
+    assert room.snapshot()['playback_position'] == pytest.approx(0.1)
+
+    clock.now += 540
+    assert room.snapshot() == {'mode': 'waiting'}
+
+
+def test_nightmare_room_acts_on_a_press_not_a_release():
+    """A TouchOSC button sends 1 on press and 0 on release: only the press counts."""
+    room = NightmareRoom(run_seconds=600, clock=FakeClock())
+
+    room._on_command('/nightmare/close', 0.0)
+    assert room.snapshot() == {'mode': 'waiting'}
+
+    room._on_command('/nightmare/close', 1.0)
+    assert room.snapshot() == {'mode': 'closed'}
+
+    room._on_command('/nightmare/unavailable')
+    assert room.snapshot() == {'mode': 'unavailable'}
+
+
+@patch('app.main.LABEL_TEMPLATE', 'lifelike.html')
+@patch('app.main.LABEL_MODE', 'nightmare-room')
+@patch('app.main.XOS_MEDIA_PLAYER_ID', '8')
+@patch('app.main.NIGHTMARE_TEXT', {'waiting': 'In a moment.', 'running': '', 'unavailable': '', 'closed': ''})
+def test_lifelike_nightmare_room_follows_the_room(client, tmp_path):
+    """The nightmare room reads the room stream, not the player's, and gets its words."""
+    (tmp_path / 'playlist_1.json').write_text(json.dumps(
+        {"id": 1, "title": "Test", "playlist_labels": []}))
+    with patch('app.main.CACHE_DIR', str(tmp_path) + '/'):
+        response = client.get('/')
+    data = response.data.decode('utf-8')
+
+    assert 'room-source="/api/room-stream/"' in data
+    assert 'playback-source' not in data
+    assert '"nightmare_text": {"waiting": "In a moment."}' in data
+
+
+def test_room_stream_is_missing_when_the_label_is_no_room(client):
+    """Only a nightmare room has a room stream."""
+    with patch('app.main.room', None):
+        response = client.get('/api/room-stream/')
+    assert response.status_code == 404

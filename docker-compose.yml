@@ -35,6 +35,7 @@ services:
     build: .
     ports:
       - "8081:801"
+      - "8000:8000/udp"
     privileged: true
     volumes:
       - 'data:/data'

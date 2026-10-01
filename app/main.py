@@ -18,6 +18,7 @@ from segno import make_qr
 from app import dev_env
 from app.errors import HTTPError
 from app.mock_media_player import MockMediaPlayer
+from app.nightmare_room import NightmareRoom
 from app.playback_sync import PlaybackSync
 
 # In development, config.env is read here rather than by docker, so an edit
@@ -52,9 +53,15 @@ OFFSET_TOP_MARGIN = os.getenv('OFFSET_TOP_MARGIN', '0')
 OVERRIDE_DURATION = os.getenv('OVERRIDE_DURATION', '')
 OVERRIDE_TITLE = os.getenv('OVERRIDE_TITLE', '')
 QR_URL_OVERRIDE = os.getenv('QR_URL_OVERRIDE', '')
-# What the nightmare room says across its header. From the environment for
-# now; the playlist would be the better home once xos carries it.
-HEADER_MESSAGE = os.getenv('HEADER_MESSAGE', '')
+# The nightmare room: how long a run lasts, what its header says in each
+# mode — a text left unset keeps the label's own wording — and the UDP port
+# TouchOSC sends its commands to. See `app/nightmare_room.py`.
+NIGHTMARE_RUN_MINUTES = float(os.getenv('NIGHTMARE_RUN_MINUTES', '10'))
+NIGHTMARE_TEXT = {
+    mode: os.getenv(f'NIGHTMARE_{mode.upper()}_TEXT', '')
+    for mode in ('waiting', 'running', 'unavailable', 'closed')
+}
+OSC_PORT = int(os.getenv('OSC_PORT', '8000'))
 # For testing without a media player: a stand-in plays the cached playlist
 # into the playback stream, every video MOCK_VIDEO_SECONDS long.
 MOCK_MEDIA_PLAYER = os.getenv('MOCK_MEDIA_PLAYER', 'false').lower() == 'true'
@@ -329,7 +336,7 @@ def playlist_label():
                 text = text.replace('#bbb', "var(--ground, white)")
                 text = text.replace('#aaa', "var(--figure, black)")
                 qr_codes[lang] = text
-            
+
             json_data['qr_text'] = json.dumps(qr_codes)
 
         # The lifelike label shows one code, for QR_URL_OVERRIDE, or none at
@@ -342,8 +349,12 @@ def playlist_label():
             text = text.replace('#aaa', "var(--figure, black)")
             json_data['qr_svg'] = text
 
-        if HEADER_MESSAGE:
-            json_data['message'] = HEADER_MESSAGE
+        # What the nightmare room says in each mode, for the modes it has
+        # been given words for; the label has its own for the rest.
+        if LABEL_MODE == 'nightmare-room':
+            json_data['nightmare_text'] = {
+                mode: text for mode, text in NIGHTMARE_TEXT.items() if text
+            }
 
         for item in list(json_data['playlist_labels']):
             if item['label'] is None:
@@ -479,6 +490,40 @@ def playback_source():
     return Response(playback_stream(request.remote_addr), mimetype="text/event-stream")
 
 
+# The nightmare room, when this label is one. See `app/nightmare_room.py`.
+room = None  # pylint: disable=invalid-name
+
+# How long the room stream goes without a word before it sends a comment,
+# which the label ignores, to find out whether anyone is still listening.
+ROOM_KEEPALIVE_SECONDS = 15
+
+
+def room_stream():
+    """The room's mode as server-sent events: see `RoomStreamEvent` in server.d.ts."""
+    last = None
+    quiet = 0
+    while True:
+        snapshot = room.snapshot()
+        # Every second while a run is on, so the label's clock keeps time;
+        # otherwise only when the mode changes.
+        if snapshot != last or snapshot['mode'] == 'running':
+            last = snapshot
+            quiet = 0
+            yield f'data: {json.dumps(snapshot)}\n\n'
+        elif quiet >= ROOM_KEEPALIVE_SECONDS:
+            quiet = 0
+            yield ':\n\n'
+        room.wait_for_change(timeout=1.0)
+        quiet += 1
+
+
+@app.route('/api/room-stream/')
+def room_source():
+    if room is None:
+        return jsonify({'error': 'This label is not a nightmare room.'}), 404
+    return Response(room_stream(), mimetype="text/event-stream")
+
+
 @app.route('/api/events/')
 def events():
     """Proxy for the ACMI events API."""
@@ -509,6 +554,13 @@ if __name__ == '__main__':
         # config.env names a playlist that is not cached yet: fetch it first.
         from app.cache import create_cache  # pylint: disable=import-outside-toplevel
         create_cache()
+    if serving and LABEL_TEMPLATE == 'lifelike.html' and LABEL_MODE == 'nightmare-room':
+        # The room's mode comes from TouchOSC, not the media player.
+        room = NightmareRoom(NIGHTMARE_RUN_MINUTES * 60)
+        try:
+            room.listen(OSC_PORT)
+        except OSError as error:
+            print(f'[osc] Could not listen on UDP {OSC_PORT}: {error}')
     if XOS_MEDIA_PLAYER_ID or MOCK_MEDIA_PLAYER:
         if serving:
             # Templates that read `/api/playback-stream/` need the MQTT

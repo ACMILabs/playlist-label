@@ -15,11 +15,11 @@
  * ```
  * acmi-single-work            acmi-playlist-work           acmi-nightmare-room
  *   header                      header                       header
- *     acmi-playlist-title         acmi-playlist-title          acmi-playlist-title
- *     acmi-timer                  acmi-timer                   acmi-nightmare-info
- *   body-block                  acmi-playlist-entries            text
- *     acmi-work-body              acmi-playlist-entry ×n         acmi-timer
- *     acmi-qr-block                 status                   acmi-work-body
+ *     acmi-timer                  acmi-playlist-title          acmi-nightmare-info
+ *   body-block                    acmi-timer                     text
+ *     acmi-work-body            acmi-playlist-entries            acmi-timer
+ *     acmi-qr-block               acmi-playlist-entry ×n     acmi-work-body
+ *                                   status
  *                                   acmi-work-body
  *                                   acmi-timer (not yet playing)
  *                               acmi-qr-block
@@ -27,9 +27,10 @@
  *
  * The header is a band of one fixed height on every label, so the work's
  * title starts at the same height on all three. The timer of the work playing
- * now sits in it, top right, wherever the label has one. `acmi-work-body` is the
- * title, the tombstone, the description and the info rows; a playlist entry
- * that is not playing yet shows only the first two.
+ * now sits in it, top right, wherever the label has one; only the playlist
+ * has its own title there, top left. `acmi-work-body` is the title, the
+ * tombstone, the description and the info rows; a playlist entry that is not
+ * playing yet shows only the first two.
  */
 
 import { computed } from "nanostores";
@@ -38,8 +39,10 @@ import { define } from "nanotags";
 import * as icons from "./icons.mjs";
 import {
   durationText,
+  endsInText,
   loopText,
   playbackSnapshotStore,
+  roomSnapshotStore,
   startsInText,
   timerDisplayStore,
 } from "./timerDisplayStore.mjs";
@@ -789,30 +792,25 @@ define("acmi-playlist-entries")
 // ---- The nightmare room's header ----
 
 /**
- * What the nightmare room is doing, and what its header says about it.
- * The text is written here for now; the closed message is the one that
- * will come from a variable, and `message` overrides it.
+ * What the nightmare room's header says in each mode, unless the server
+ * gives it other words — NIGHTMARE_WAITING_TEXT and the like.
  */
-const NIGHTMARE_MESSAGES = {
-  queue: "Please wait here. The next run starts soon.",
+const NIGHTMARE_TEXT = {
+  waiting: "Please wait here. The next run starts soon.",
   running: "A run is in progress. The next one starts when it ends.",
+  unavailable: "The Nightmare Room is not running at the moment.",
   closed: "The Nightmare Room is closed for today.",
 };
 
 /**
- * The band across the top of the nightmare room: one line of text, and the
- * timer when there is a run to count down. Which text, and whether the
- * timer shows, follows the room's state:
- *
- * - `queue`: visitors are lining up for the next run. Text, no timer.
- * - `running`: a run is on. Text, and the timer counting it down.
- * - `closed`: no more runs today. Text, no timer.
+ * The band across the top of the nightmare room: the mode's text, and the
+ * timer while a run is on. The room says which mode it is in (see
+ * `acmi-nightmare-room`); only `running` has a timer.
  */
 define("acmi-nightmare-info")
   .withProps((f) => ({
-    state: f.oneOf(["queue", "running", "closed"], "queue"),
-    /** Overrides the closed message. */
-    message: f.string(""),
+    state: f.oneOf(["waiting", "running", "unavailable", "closed"], "waiting"),
+    text: f.string(""),
     ...timerProps(f),
   }))
   .setup((c) => {
@@ -824,12 +822,7 @@ define("acmi-nightmare-info")
     const text = c.getElement(".acmi-nightmare-info__text");
     const timer = c.getElement("acmi-timer");
 
-    c.effect([c.props.$state, c.props.$message], (state, message) => {
-      c.host.dataset.state = state;
-      const html = state === "closed" && message ? message : NIGHTMARE_MESSAGES[state];
-      setHtml(text, html);
-    });
-
+    c.effect(c.props.$text, (value) => setHtml(text, value));
     c.effect(
       [c.props.$state, c.props.$timerRatio, c.props.$timerElapsed, c.props.$timerLine],
       (state, ratio, elapsed, line) =>
@@ -840,11 +833,10 @@ define("acmi-nightmare-info")
 // ---- The labels ----
 
 /**
- * The props every label takes: the playlist's title, the works, the timer,
- * and what to say when there is nothing to show.
+ * The props every label takes: the works, the timer, and what to say when
+ * there is nothing to show.
  */
 const labelProps = (f) => ({
-  playlistTitle: f.string(""),
   works: f.json(WorksSchema, []),
   errorMessage: f.string(""),
   ...timerProps(f),
@@ -854,17 +846,17 @@ const labelProps = (f) => ({
  * Writes a label's shell and wires what every label shares.
  *
  * The shell is the error screen, and beside it the content: a header band
- * of fixed height with the playlist's title in it, then the body. The band
- * is the same height on every label, whatever else it holds — the timer of
- * the work playing now, the nightmare room's info — so the work's title
- * starts at the same height on all three.
+ * of fixed height, then the body. The band is the same height on every
+ * label, whatever it holds — the playlist's title, the timer of the work
+ * playing now, the nightmare room's info — so the work's title starts at
+ * the same height on all three.
  *
  * Each block inside hides itself when it has nothing, so the label only
  * decides between all of them and the error screen: no works, no label.
  *
  * @param {any} c the setup context
  * @param {{ header?: string, body: string }} markup what goes in the header
- *   band after the playlist's title, and what goes below it
+ *   band, and what goes below it
  * @returns {{ works: import("nanostores").ReadableAtom<Work[]> }}
  */
 function labelShell(c, { header = "", body }) {
@@ -872,10 +864,7 @@ function labelShell(c, { header = "", body }) {
     <div class="acmi-label">
       <acmi-error-screen hidden></acmi-error-screen>
       <div class="acmi-label__content">
-        <header class="acmi-header">
-          <acmi-playlist-title hidden></acmi-playlist-title>
-          ${header}
-        </header>
+        <header class="acmi-header">${header}</header>
         ${body}
       </div>
     </div>
@@ -883,7 +872,6 @@ function labelShell(c, { header = "", body }) {
 
   const errorScreen = c.getElement("acmi-error-screen");
   const content = c.getElement(".acmi-label__content");
-  const playlistTitle = c.getElement("acmi-playlist-title");
   const $works = computed(c.props.$works, toWorks);
 
   c.effect($works, (works) => {
@@ -893,9 +881,6 @@ function labelShell(c, { header = "", body }) {
   });
   c.effect(c.props.$errorMessage, (value) => {
     errorScreen.message = value;
-  });
-  c.effect(c.props.$playlistTitle, (value) => {
-    playlistTitle.heading = value;
   });
 
   // Copy that does not fit its room runs on over the qr code, from the
@@ -977,29 +962,38 @@ define("acmi-single-work")
 
 /**
  * A playlist of works: the one playing now in full, then the others under
- * it with when each starts, and the qr code at the foot. The timer of the
- * one playing now is in the header, as on a single work, so its description
- * takes the full width.
+ * it with when each starts, and the qr code at the foot. The playlist's own
+ * title is top left in the header — only the playlist has one — and the
+ * timer of the work playing now top right, as on a single work, so its
+ * description takes the full width.
  */
 define("acmi-playlist-work")
   .withProps((f) => ({
     ...labelProps(f),
+    playlistTitle: f.string(""),
     qrSvg: f.string(""),
     secondsUntilNext: f.number(null),
   }))
   .setup((c) => {
     const { works } = labelShell(c, {
-      header: `<acmi-timer class="acmi-header__timer" hidden></acmi-timer>`,
+      header: `
+        <acmi-playlist-title hidden></acmi-playlist-title>
+        <acmi-timer class="acmi-header__timer" hidden></acmi-timer>
+      `,
       body: `
         <acmi-playlist-entries class="acmi-label__fill"></acmi-playlist-entries>
         <acmi-qr-block hidden></acmi-qr-block>
       `,
     });
 
+    const playlistTitle = c.getElement("acmi-playlist-title");
     const timer = c.getElement(".acmi-header__timer");
     const entries = c.getElement("acmi-playlist-entries");
     const qrBlock = c.getElement("acmi-qr-block");
 
+    c.effect(c.props.$playlistTitle, (value) => {
+      playlistTitle.heading = value;
+    });
     c.effect(c.props.$works, (value) => {
       entries.works = value;
     });
@@ -1021,31 +1015,56 @@ define("acmi-playlist-work")
   });
 
 /**
+ * The words the server has for the nightmare room's modes, by mode: only
+ * strings, for the modes there are.
+ *
+ * @param {unknown} value
+ * @returns {Record<string, string>}
+ */
+function toNightmareText(value) {
+  if (typeof value !== "object" || value === null) return {};
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      ([mode, text]) => Object.hasOwn(NIGHTMARE_TEXT, mode) && typeof text === "string",
+    ),
+  );
+}
+
+const NightmareTextSchema = lenient(toNightmareText);
+
+/**
  * The nightmare room: the info band across the top, then the work below
- * it. No qr code, and no upcoming works — the room runs one.
+ * it. No qr code, no duration — the room times its own runs — and no
+ * upcoming works: the room runs one.
+ *
+ * The room is in one of four modes, set from TouchOSC (see
+ * `app/nightmare_room.py`), and carries it as `data-state` for the
+ * stylesheet: `waiting`, `running` — the only one with a timer —
+ * `unavailable` and `closed`. Each has its text in the header, the
+ * server's when it has some, the label's own when not.
  */
 define("acmi-nightmare-room")
   .withProps((f) => ({
     ...labelProps(f),
-    state: f.oneOf(["queue", "running", "closed"], "queue"),
-    message: f.string(""),
+    state: f.oneOf(["waiting", "running", "unavailable", "closed"], "waiting"),
+    texts: f.json(NightmareTextSchema, {}),
   }))
   .setup((c) => {
     const { works } = labelShell(c, {
-      header: `<acmi-nightmare-info class="acmi-header__info" hidden></acmi-nightmare-info>`,
+      header: `<acmi-nightmare-info class="acmi-header__info"></acmi-nightmare-info>`,
       body: `<acmi-work-body></acmi-work-body>`,
     });
 
     const info = c.getElement("acmi-nightmare-info");
     const body = c.getElement("acmi-work-body");
 
-    c.effect(works, (value) => setWork(body, value[0] ?? EMPTY_WORK));
-    c.effect(c.props.$state, (value) => {
-      info.state = value;
-      info.hidden = false;
+    c.effect(works, (value) => setWork(body, { ...(value[0] ?? EMPTY_WORK), duration: "" }));
+    c.effect(c.props.$state, (state) => {
+      c.host.dataset.state = state;
+      info.state = state;
     });
-    c.effect(c.props.$message, (value) => {
-      info.message = value;
+    c.effect([c.props.$state, c.props.$texts], (state, texts) => {
+      info.text = toNightmareText(texts)[state] || NIGHTMARE_TEXT[state];
     });
     passTimer(c, info);
   });
@@ -1174,7 +1193,8 @@ function toWork(item) {
 /**
  * The line under the ring. A single work loops alone, so the timer's own
  * `restart` is right there. A playlist comes round again only after every
- * other work has played: what is left of this one, then all of them.
+ * other work has played: what is left of this one, then all of them. A run
+ * in the nightmare room just ends.
  *
  * @param {keyof typeof VARIANTS} variant
  * @param {TimerDisplay | undefined} timer
@@ -1182,6 +1202,7 @@ function toWork(item) {
  */
 function timerLine(variant, timer, works) {
   if (!timer) return "";
+  if (variant === "nightmare-room") return endsInText(timer.remainingSeconds);
   if (variant !== "playlist") return timer.restart;
   return loopText(
     works.slice(1).reduce((total, work) => total + work.durationSeconds, timer.remainingSeconds),
@@ -1226,13 +1247,14 @@ const VARIANTS = {
 };
 
 /**
- * The one element a page mounts. Three inputs — which label to draw, where
- * the player reports to, and the playlist — and it derives everything the
- * label shows from those, so the labels above stay presentation: content
- * attributes in, timer attributes in, nothing opened.
+ * The one element a page mounts. Its inputs — which label to draw, where
+ * the player reports to (or the nightmare room's mode), and the playlist —
+ * and it derives everything the label shows from those, so the labels above
+ * stay presentation: content attributes in, timer attributes in, nothing
+ * opened.
  *
  * ```html
- * <acmi-lifelike-label variant="nightmare-room" playback-source="/api/playback-stream/">
+ * <acmi-lifelike-label variant="playlist" playback-source="/api/playback-stream/">
  *   <script type="application/json" data-prop="playlist">{{ playlist_json | tojson }}</script>
  * </acmi-lifelike-label>
  * ```
@@ -1241,16 +1263,15 @@ const VARIANTS = {
  * in, and changing it later is not something the gallery does. One it does
  * not know draws a single work.
  *
- * The stream drives two things: the timer, every frame; and which item is
- * current, when its `label_id` changes — the label moves on to it inside a
- * view transition. The playlist's start times come off the same clock.
- * Without a stream the first item shows in full, the rest stack under it
- * with no times, and there is no timer.
+ * The player's stream drives two things: the timer, every frame; and which
+ * item is current, when its `label_id` changes — the label moves on to it
+ * inside a view transition. The playlist's start times come off the same
+ * clock. Without a stream the first item shows in full, the rest stack under
+ * it with no times, and there is no timer.
  *
- * The nightmare room's state comes from the same clock for now: a timer
- * means a run is on, no timer means visitors are queueing. `nightmare-closed`
- * on this element says the room is shut, whatever the player says — where
- * that comes from is still to be decided.
+ * The nightmare room follows the room's stream instead, `room-source`: its
+ * mode, set from TouchOSC, and while a run is on, the run's clock, which
+ * drives its timer as the player's drives the others.
  *
  * Anything else that connects — the tap stream, a playlist refetch, a
  * language toggle — belongs in this setup too, as its own section: a store,
@@ -1263,8 +1284,8 @@ define("acmi-lifelike-label")
     // templates, so it can hold one of theirs.
     variant: f.string("normal"),
     playbackSource: f.string(""),
+    roomSource: f.string(""),
     playlist: f.json(PlaylistSchema, null),
-    nightmareClosed: f.boolean(false),
   }))
   .setup((c) => {
     const asked = c.props.$variant.get();
@@ -1276,12 +1297,19 @@ define("acmi-lifelike-label")
 
     // ---- Playback ----
 
-    // Listening is what opens the stream, so a label with no source never
+    // Listening is what opens a stream, so a label with no source never
     // connects and never asks for a frame. A single work loops alone, so
     // its ring comes straight round again; a playlist's stops full at the
-    // end of a work, until the player says which comes next.
+    // end of a work, until the player says which comes next. The nightmare
+    // room's ring times its run instead, and stops full when the run ends,
+    // as the room goes back to waiting.
     const $snapshot = playbackSnapshotStore(c.props.$playbackSource);
-    const $timer = timerDisplayStore($snapshot, { loops: variant !== "playlist" });
+    const $room = roomSnapshotStore(c.props.$roomSource);
+    const $run = computed($room, (room) => (room?.mode === "running" ? room : undefined));
+    const $timer =
+      variant === "nightmare-room"
+        ? timerDisplayStore($run, { loops: false })
+        : timerDisplayStore($snapshot, { loops: variant !== "playlist" });
 
     // ---- What is playing ----
 
@@ -1354,8 +1382,12 @@ define("acmi-lifelike-label")
     });
 
     c.effect(c.props.$playlist, (playlist) => {
-      label.playlistTitle = playlist?.title ?? "";
-      label.message = playlist?.message ?? "";
+      if (variant === "nightmare-room") {
+        // What the room says in each mode, where the server has words.
+        label.texts = playlist?.nightmare_text ?? {};
+        return;
+      }
+      if (variant === "playlist") label.playlistTitle = playlist?.title ?? "";
       // One code, for `QR_URL_OVERRIDE`, or none. The per-language set in
       // `qr_text` is the reverb label's and this label ignores it.
       label.qrSvg = playlist?.qr_svg ?? "";
@@ -1364,7 +1396,7 @@ define("acmi-lifelike-label")
     // ---- The clock ----
 
     // One write feeds the ring, the start times, the line under the ring
-    // and the nightmare room's state, all from the one `timer` value, so
+    // and the nightmare room's mode, all from the one `timer` value, so
     // they can never disagree about how much of the current work is left.
     function writeClock() {
       // On an item the label does not list, the ring would count down
@@ -1374,13 +1406,14 @@ define("acmi-lifelike-label")
       label.timerRatio = timer?.ratio ?? null;
       label.timerElapsed = timer?.elapsed ?? "";
       label.timerLine = timerLine(variant, timer, $works.get());
-      label.secondsUntilNext = timer?.remainingSeconds ?? null;
-      label.state = c.props.$nightmareClosed.get() ? "closed" : timer ? "running" : "queue";
+      if (variant === "playlist") label.secondsUntilNext = timer?.remainingSeconds ?? null;
+      // Until the room says otherwise, it is waiting, as it starts.
+      if (variant === "nightmare-room") label.state = $room.get()?.mode ?? "waiting";
     }
 
     // Held while a rotation's transition is waiting: the transition writes
     // the clock itself, with the new works, once it has its old picture.
-    c.effect([$timer, $works, $playing, c.props.$nightmareClosed], () => {
+    c.effect([$timer, $works, $playing, $room], () => {
       if (!holding) writeClock();
     });
   });

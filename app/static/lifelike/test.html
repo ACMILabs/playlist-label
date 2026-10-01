@@ -36,7 +36,10 @@
        playback-source the first item is current, the rest stack under it
        with no start times, and there is no timer. Served by flask, add
        playback-source="/api/playback-stream/" and they all come alive.
-       The playlist is the one json island below, handed to every label. -->
+       The playlist is the one json island below, handed to every label.
+
+       The nightmare room has no stream here either, so it waits — or runs,
+       with ?timer — and data-harness-state puts it in a mode of its own. -->
 
   <figure>
     <figcaption>normal</figcaption>
@@ -54,15 +57,15 @@
   </figure>
 
   <figure>
-    <figcaption>nightmare-room, closed</figcaption>
-    <acmi-lifelike-label variant="nightmare-room" nightmare-closed></acmi-lifelike-label>
+    <figcaption>nightmare-room, unavailable</figcaption>
+    <acmi-lifelike-label variant="nightmare-room" data-harness-state="unavailable"></acmi-lifelike-label>
   </figure>
 
   <script type="application/json" id="playlist">
     {
       "id": 299,
       "title": "Screening Room",
-      "message": "The Nightmare Room is closed. Come back Thursday from 6pm.",
+      "nightmare_text": { "unavailable": "The Nightmare Room is closed. Come back Thursday from 6pm." },
       "qr_svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 29 29\"><rect width=\"29\" height=\"29\" fill=\"var(--ground, white)\"/><path fill=\"var(--figure, black)\" d=\"M1 1h7v7H1zM2 2v5h5V2zM3 3h3v3H3zM21 1h7v7h-7zM22 2v5h5V2zM23 3h3v3h-3zM1 21h7v7H1zM2 22v5h5v-5zM3 23h3v3H3zM10 1h1v1h-1zM12 1h2v1h-2zM16 1h1v2h-1zM10 3h3v1h-3zM14 4h2v1h-2zM17 3h2v1h-2zM1 10h1v1H1zM3 10h2v1H3zM6 10h1v1H6zM9 9h2v2H9zM12 10h1v1h-1zM14 9h1v2h-1zM17 10h2v1h-2zM21 10h1v1h-1zM23 10h3v1h-3zM27 9h1v2h-1zM1 12h2v1H1zM4 13h2v1H4zM8 12h1v2H8zM11 12h2v1h-2zM15 12h1v1h-1zM18 12h1v2h-1zM20 13h2v1h-2zM24 12h1v2h-1zM26 12h2v1h-2zM2 15h1v1H2zM5 15h1v1H5zM7 14h2v1H7zM10 15h1v1h-1zM13 14h2v2h-2zM17 15h1v1h-1zM20 15h2v1h-2zM23 15h1v1h-1zM26 15h2v1h-2zM1 17h1v2H1zM4 17h2v1H4zM8 17h1v1H8zM11 17h1v2h-1zM14 17h1v1h-1zM16 18h2v1h-2zM20 17h1v1h-1zM22 18h2v1h-2zM26 17h1v2h-1zM10 20h1v1h-1zM13 21h2v1h-2zM16 20h1v2h-1zM19 21h2v1h-2zM23 20h1v1h-1zM25 21h2v1h-2zM28 20h1v1h-1zM9 23h2v1H9zM12 23h1v2h-1zM15 24h2v1h-2zM19 23h1v1h-1zM21 24h2v1h-2zM25 23h1v2h-1zM27 24h1v1h-1zM10 26h1v2h-1zM13 27h2v1h-2zM16 26h2v2h-2zM20 27h1v1h-1zM22 26h2v1h-2zM26 27h2v1h-2z\"/></svg>",
       "playlist_labels": [
         {
@@ -119,14 +122,25 @@
   <script type="module">
     import "./main.mjs";
 
+    const params = new URLSearchParams(location.search);
+
+    // ?state=waiting, running, unavailable or closed puts the first
+    // nightmare room in that mode. A run's ring needs ?timer too.
+    const state = params.get("state");
+    if (state) {
+      document.querySelector('acmi-lifelike-label[variant="nightmare-room"]').dataset.harnessState = state;
+    }
+
     const playlist = JSON.parse(document.getElementById("playlist").textContent);
     for (const label of document.querySelectorAll("acmi-lifelike-label")) {
       label.playlist = playlist;
+      if (label.dataset.harnessState) label.firstElementChild.state = label.dataset.harnessState;
     }
 
     // With no stream, fake one: a 12 minute work, 42% through, so every
-    // timer has something to draw. Remove to see the no-timer states.
-    const fake = new URLSearchParams(location.search).has("timer");
+    // timer has something to draw — and the first nightmare room runs,
+    // unless ?state says otherwise. Remove to see the no-timer states.
+    const fake = params.has("timer");
     if (fake) {
       const start = performance.now();
       const durationMs = 720_000;
@@ -138,9 +152,10 @@
           const seconds = Math.floor(position * durationMs / 1000) % 60;
           label.timerRatio = position;
           label.timerElapsed = `${minutes}:${String(seconds).padStart(2, "0")}`;
-          label.timerLine = `Starts again in ${Math.max(1, Math.floor(remaining / 60))} minutes`;
-          label.secondsUntilNext = remaining;
-          if (label.localName === "acmi-nightmare-room" && !label.parentElement.hasAttribute("nightmare-closed")) {
+          const room = label.localName === "acmi-nightmare-room";
+          label.timerLine = `${room ? "Ends" : "Starts again"} in ${Math.max(1, Math.floor(remaining / 60))} minutes`;
+          if (label.localName === "acmi-playlist-work") label.secondsUntilNext = remaining;
+          if (room && !label.parentElement.dataset.harnessState) {
             label.state = "running";
           }
         }

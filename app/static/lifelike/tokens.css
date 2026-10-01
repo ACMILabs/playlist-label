@@ -137,8 +137,25 @@
   --acmi-rotation-stagger: 100ms;
   --acmi-rotation-easing: ease-in-out;
 
-  /* The nightmare room's info, inside the header band. */
+  /* The nightmare room. Its info, inside the header band: the mode's text,
+     where it sat under a playlist's title, and lower while the room waits.
+     Its title: big and red, between a rule above and one below, with a
+     glow that pulses between two sizes while a run is on. And how far the
+     work fades while the room is unavailable or closed. */
   --acmi-nightmare-info-size: var(--acmi-display-1);
   --acmi-nightmare-info-leading: var(--acmi-leading-3);
   --acmi-nightmare-info-gap: var(--acmi-space-3);
+  --acmi-nightmare-info-top: calc(136 * var(--acmi-px));
+  --acmi-nightmare-waiting-drop: calc(120 * var(--acmi-px));
+  --acmi-nightmare-title-size: calc(280 * var(--acmi-px));
+  --acmi-nightmare-title-colour: #BD0016;
+  --acmi-nightmare-title-rule: var(--acmi-rule);
+  --acmi-nightmare-title-rule-width: var(--acmi-rule-width);
+  --acmi-nightmare-title-rule-gap: var(--acmi-space-3);
+  --acmi-nightmare-title-space-after: calc(120 * var(--acmi-px));
+  --acmi-nightmare-glow: calc(5 * var(--acmi-px));
+  --acmi-nightmare-glow-low: calc(1 * var(--acmi-px));
+  --acmi-nightmare-glow-high: calc(4 * var(--acmi-px));
+  --acmi-nightmare-pulse-duration: 3s; /* each way */
+  --acmi-nightmare-off-opacity: 0.6;
 }

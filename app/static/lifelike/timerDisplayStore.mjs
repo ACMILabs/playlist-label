@@ -1,10 +1,11 @@
 import { atom, onMount } from "nanostores";
 
-// ---- Playback, as stores ----
+// ---- Playback, and the nightmare room, as stores ----
 
 /**
- * `/api/playback-stream/` sends its events unnamed, so `EventSource` hands
- * them over as `message`. Comments are invisible to it.
+ * `/api/playback-stream/` and `/api/room-stream/` send their events
+ * unnamed, so `EventSource` hands them over as `message`. Comments, which
+ * the room stream sends to keep its connection honest, are invisible to it.
  */
 const PLAYBACK_EVENT = "message";
 const MS_PER_MINUTE = 60000;
@@ -65,6 +66,12 @@ export function loopText(seconds) {
   return `This work starts again in ${minutesText(seconds)}`;
 }
 
+/** When a run in the nightmare room ends. */
+export function endsInText(seconds) {
+  if (!Number.isFinite(seconds)) return "";
+  return `Ends in ${minutesText(seconds)}`;
+}
+
 /**
  * Reads one event's data into a snapshot, or nothing.
  *
@@ -92,6 +99,35 @@ export function readPlaybackEvent(data) {
     position,
     labelId: Number.isFinite(labelId) ? labelId : undefined,
   };
+}
+
+/** The nightmare room's modes. See `app/nightmare_room.py`. */
+export const ROOM_MODES = ["waiting", "running", "unavailable", "closed"];
+
+/**
+ * @typedef {{ mode: string, durationMs?: number, position?: number }} RoomSnapshot
+ */
+
+/**
+ * Reads one event from the room stream: the room's mode, and while a run is
+ * on, its length and how far through, as a playback event carries them.
+ * Nothing for an event it cannot read.
+ *
+ * @param {string} data
+ * @returns {RoomSnapshot | undefined}
+ */
+export function readRoomEvent(data) {
+  let parsed;
+  try {
+    parsed = JSON.parse(data);
+  } catch {
+    return undefined;
+  }
+  if (!ROOM_MODES.includes(parsed?.mode)) return undefined;
+  if (parsed.mode !== "running") return { mode: parsed.mode };
+
+  const run = readPlaybackEvent(data);
+  return run ? { mode: "running", ...run } : undefined;
 }
 
 /**
@@ -160,7 +196,27 @@ export function timerAt(snapshot, sinceMs, loops) {
 }
 
 /**
- * The latest position from the label's playback stream.
+ * The latest position from the label's playback stream. See `streamStore`.
+ *
+ * @param {import("nanostores").ReadableAtom<string>} $source
+ * @returns {import("nanostores").ReadableAtom<PlaybackSnapshot | undefined>}
+ */
+export function playbackSnapshotStore($source) {
+  return streamStore($source, readPlaybackEvent);
+}
+
+/**
+ * The nightmare room's latest mode, from the room stream. See `streamStore`.
+ *
+ * @param {import("nanostores").ReadableAtom<string>} $source
+ * @returns {import("nanostores").ReadableAtom<RoomSnapshot | undefined>}
+ */
+export function roomSnapshotStore($source) {
+  return streamStore($source, readRoomEvent);
+}
+
+/**
+ * The latest event from a server-sent event stream, as `read` reads it.
  *
  * The store opens the connection when something listens and closes it when
  * the last listener goes, which is how a label with no media player behaves:
@@ -170,11 +226,13 @@ export function timerAt(snapshot, sinceMs, loops) {
  * but gives up for good on an error response — a 500 while the server
  * restarts, say. A kiosk is never reloaded, so this opens it again instead.
  *
+ * @template T
  * @param {import("nanostores").ReadableAtom<string>} $source
- * @returns {import("nanostores").ReadableAtom<PlaybackSnapshot | undefined>}
+ * @param {(data: string) => T | undefined} read
+ * @returns {import("nanostores").ReadableAtom<T | undefined>}
  */
-export function playbackSnapshotStore($source) {
-  /** @type {import("nanostores").WritableAtom<PlaybackSnapshot | undefined>} */
+function streamStore($source, read) {
+  /** @type {import("nanostores").WritableAtom<T | undefined>} */
   const $snapshot = atom(undefined);
 
   onMount($snapshot, () => {
@@ -189,18 +247,16 @@ export function playbackSnapshotStore($source) {
       stream = opened;
 
       opened.addEventListener(PLAYBACK_EVENT, (event) => {
-        if (failing) console.info("[acmi-label] playback stream open again");
+        if (failing) console.info(`[acmi-label] ${source} open again`);
         failing = false;
-        const next = readPlaybackEvent(
-          /** @type {MessageEvent<string>} */ (event).data,
-        );
+        const next = read(/** @type {MessageEvent<string>} */ (event).data);
         if (next) $snapshot.set(next);
       });
       opened.addEventListener("error", () => {
         if (stream !== opened || opened.readyState !== EventSource.CLOSED) return;
         if (!failing) {
           console.warn(
-            `[acmi-label] playback stream closed, opening it again every ${RECONNECT_AFTER_MS / 1000}s`,
+            `[acmi-label] ${source} closed, opening it again every ${RECONNECT_AFTER_MS / 1000}s`,
           );
         }
         failing = true;
