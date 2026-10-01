@@ -1,13 +1,15 @@
 import datetime
 import json
+import os
 import time
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app import cache, main
+from app import cache, dev_env, main
 from app.cache import create_cache
 from app.main import HasTapped, Message, PlaylistLabel
+from app.mock_media_player import MockMediaPlayer
 from app.playback_sync import PlaybackSync
 
 
@@ -386,3 +388,113 @@ def test_playback_sync_client_context_tracks_ip():
     with sync.client('1.2.3.4'):
         assert '1.2.3.4' in sync._clients
     assert '1.2.3.4' not in sync._clients
+
+
+def test_mock_media_player_plays_each_item_for_its_seconds():
+    """The mock plays each item for its seconds, in order, then loops."""
+    player = MockMediaPlayer(sync=None, playlist_path=None, seconds=60)
+
+    message = player.message_at([11, 22, 33], 125)
+    assert message['label_id'] == 33
+    assert message['duration'] == 60000
+    assert message['playback_position'] == pytest.approx(5 / 60)
+
+    assert player.message_at([11, 22, 33], 0)['label_id'] == 11
+    assert player.message_at([11, 22, 33], 185)['label_id'] == 11
+    assert player.message_at([], 10) is None
+
+
+def test_mock_media_player_plays_only_labelled_items(tmp_path):
+    """The mock skips items without a label, and plays nothing with no playlist."""
+    playlist_path = tmp_path / 'playlist_1.json'
+    playlist_path.write_text(json.dumps({'playlist_labels': [
+        {'label': {'id': 44}},
+        {'label': None},
+        {'label': {'id': 45}},
+    ]}))
+
+    assert MockMediaPlayer(None, str(playlist_path)).label_ids() == [44, 45]
+    assert MockMediaPlayer(None, str(tmp_path / 'missing.json')).label_ids() == []
+
+
+def test_mock_media_player_feeds_playback_sync():
+    """What the mock publishes arrives at the playback stream as MQTT would."""
+    sync = make_sync()
+    player = MockMediaPlayer(sync, playlist_path=None, seconds=60)
+    sync.receive(json.dumps(player.message_at([11, 22], 90)).encode())
+
+    body = sync.wait(last_body=None, timeout=1)
+    assert body['label_id'] == 22
+    assert body['playback_position'] == pytest.approx(0.5)
+
+
+@patch('app.main.LABEL_TEMPLATE', 'lifelike.html')
+@patch('app.main.XOS_MEDIA_PLAYER_ID', None)
+@patch('app.main.MOCK_MEDIA_PLAYER', True)
+@patch('app.main.MOCK_VIDEO_SECONDS', 60)
+def test_lifelike_label_with_mock_media_player(client, tmp_path):
+    """A mocked player connects the label, and every video runs its seconds."""
+    with open('tests/data/playlist.json', 'r') as the_file:
+        (tmp_path / 'playlist_1.json').write_text(the_file.read())
+    with patch('app.main.CACHE_DIR', str(tmp_path) + '/'):
+        response = client.get('/')
+    data = response.data.decode('utf-8')
+
+    assert response.status_code == 200
+    assert 'playback-source="/api/playback-stream/"' in data
+    assert '"duration_secs": 60.058' not in data
+    assert '"duration_secs": 110.052' not in data
+
+
+@patch('app.main.LABEL_TEMPLATE', 'lifelike.html')
+@patch('app.main.LABEL_FG_COLOUR', '#000')
+@patch('app.main.LABEL_BG_COLOUR', 'oklch(90% 0.05 90)')
+def test_lifelike_label_colours(client, tmp_path):
+    """LABEL_FG_COLOUR and LABEL_BG_COLOUR set the label's colour tokens."""
+    (tmp_path / 'playlist_1.json').write_text(json.dumps(
+        {"id": 1, "title": "Test", "playlist_labels": []}))
+    with patch('app.main.CACHE_DIR', str(tmp_path) + '/'):
+        response = client.get('/')
+    data = response.data.decode('utf-8')
+
+    assert '--acmi-fg: #000;' in data
+    assert '--acmi-bg: oklch(90% 0.05 90);' in data
+
+
+def test_css_colour_refuses_what_could_escape_the_value(monkeypatch):
+    """A colour is passed through; anything that could end the value is not."""
+    monkeypatch.setenv('TEST_COLOUR', ' rgb(0 0 0 / 50%) ')
+    assert main.css_colour('TEST_COLOUR') == 'rgb(0 0 0 / 50%)'
+
+    monkeypatch.setenv('TEST_COLOUR', 'red; display: none')
+    assert main.css_colour('TEST_COLOUR') == ''
+
+    monkeypatch.delenv('TEST_COLOUR')
+    assert main.css_colour('TEST_COLOUR') == ''
+
+
+def test_dev_env_load_follows_the_file(monkeypatch, tmp_path):
+    """load() copies the file in, and drops a key taken out of it."""
+    monkeypatch.setenv('DEV_ENV_TEST_KEPT', 'old')
+    monkeypatch.setenv('DEV_ENV_TEST_DROPPED', 'old')
+    monkeypatch.delenv(dev_env.LOADED_KEYS, raising=False)
+    config = tmp_path / 'config.env'
+    monkeypatch.setenv('CONFIG_ENV_FILE', str(config))
+
+    config.write_text('DEV_ENV_TEST_KEPT=first\nDEV_ENV_TEST_DROPPED=first\n')
+    dev_env.load()
+    assert os.environ['DEV_ENV_TEST_KEPT'] == 'first'
+    assert os.environ['DEV_ENV_TEST_DROPPED'] == 'first'
+
+    config.write_text('DEV_ENV_TEST_KEPT="second"\n# DEV_ENV_TEST_DROPPED=first\n')
+    dev_env.load()
+    assert os.environ['DEV_ENV_TEST_KEPT'] == 'second'
+    assert 'DEV_ENV_TEST_DROPPED' not in os.environ
+
+
+def test_dev_env_load_does_nothing_without_a_file(monkeypatch):
+    """Without CONFIG_ENV_FILE — on a device — load() reads nothing."""
+    monkeypatch.delenv('CONFIG_ENV_FILE', raising=False)
+    monkeypatch.delenv(dev_env.LOADED_KEYS, raising=False)
+    dev_env.load()
+    assert dev_env.LOADED_KEYS not in os.environ

@@ -210,6 +210,62 @@ function setText(element, value) {
   if (element.textContent !== value) element.textContent = value;
 }
 
+/** What each timer's line was last written as, so `setCaption` can compare. */
+const captions = new WeakMap();
+
+/**
+ * Writes a timer's line — "Starts in 5 minutes" — with each number in a
+ * cell of its own. When only the numbers have changed, a minute gone by,
+ * each new number is written into its cell over the old one, which fades
+ * out as the new one fades in (see `.acmi-timer__number`); any other change
+ * is written straight in. Like `setText`, it writes nothing when nothing
+ * has changed: the clock asks every frame.
+ *
+ * @param {HTMLElement} line
+ * @param {string} value
+ */
+function setCaption(line, value) {
+  const was = captions.get(line) ?? "";
+  if (value === was) return;
+  captions.set(line, value);
+
+  // Words at the even places, numbers at the odd.
+  const parts = value.split(/(\d+)/);
+  const wasParts = was.split(/(\d+)/);
+  const cells = line.querySelectorAll(".acmi-timer__number");
+  const sameWords =
+    parts.length === wasParts.length &&
+    parts.every((part, i) => i % 2 === 1 || part === wasParts[i]);
+
+  if (!sameWords || cells.length !== (parts.length - 1) / 2) {
+    line.replaceChildren(
+      ...parts.map((part, i) => {
+        if (i % 2 === 0) return part;
+        const cell = document.createElement("span");
+        cell.className = "acmi-timer__number";
+        cell.append(Object.assign(document.createElement("span"), { textContent: part }));
+        return cell;
+      }),
+    );
+    return;
+  }
+
+  parts.forEach((part, i) => {
+    if (i % 2 === 0 || part === wasParts[i]) return;
+    const cell = cells[(i - 1) / 2];
+    for (const old of [...cell.children]) {
+      old.dataset.leaving = "";
+      // Gone once it has faded — at once, if nothing fades, as when the
+      // line is hidden.
+      Promise.allSettled(old.getAnimations().map((a) => a.finished)).then(() => old.remove());
+    }
+    const next = document.createElement("span");
+    next.dataset.arriving = "";
+    next.textContent = part;
+    cell.append(next);
+  });
+}
+
 /**
  * Shows the element and fills it with `html`, or hides it when there is
  * nothing to show. The markup comes from the cms, which is why it goes in as
@@ -224,8 +280,8 @@ function setHtml(element, html) {
 }
 
 /**
- * How far an element's children run past its foot, in pixels — what it
- * cuts off, when it clips — or nothing when they fit.
+ * How far an element's children run past its foot, in pixels, or nothing
+ * when they fit.
  *
  * @param {Element} element
  */
@@ -429,7 +485,7 @@ define("acmi-timer")
       elapsed.hidden = !value;
     });
     c.effect(c.props.$line, (value) => {
-      setText(line, value);
+      setCaption(line, value);
       line.hidden = !value;
     });
   });
@@ -842,16 +898,17 @@ function labelShell(c, { header = "", body }) {
     playlistTitle.heading = value;
   });
 
-  // Copy that does not fit is clipped: at the foot of the content, or above
-  // the qr code, in the block that fills the room there (see style.css).
-  // Say so when it starts and when it stops, as the timer does when the
-  // player goes quiet, so whoever checks the label hears.
+  // Copy that does not fit its room runs on over the qr code, from the
+  // block that fills the room above it, and is cut off at the foot of the
+  // content (see style.css). Say so when it starts and when it stops, as
+  // the timer does when the player goes quiet, so whoever checks the label
+  // hears.
   const clips = [content, ...content.querySelectorAll(".acmi-label__fill")];
   let overflowing = false;
   const fit = new ResizeObserver(() => {
     const over = Math.max(...clips.map(overflowOf));
     if (over > 1 && !overflowing) {
-      console.warn(`[acmi-label] content runs ${Math.round(over)}px past the room it has, clipping it`);
+      console.warn(`[acmi-label] content runs ${Math.round(over)}px past the room it has`);
     }
     if (over <= 1 && overflowing) console.info("[acmi-label] content fits the label again");
     overflowing = over > 1;
@@ -1134,11 +1191,11 @@ function timerLine(variant, timer, works) {
 /**
  * Readies a label for a rotation's view transition. The moving parts are
  * drawn over the page, where the label's own clip does not reach them, so
- * the transition is cut off at the foot of what the label shows — the
- * bottom of its `acmi-label__fill`, above the qr code — through
- * --acmi-transition-foot (see Rotating in style.css). And a part that
- * starts below that foot loses its name: it is cut off anyway, and named it
- * would cost a picture of its own, drawn whole as it moved.
+ * the transition is cut off where the label cuts its copy off — the foot
+ * of its content — through --acmi-transition-foot (see Rotating in
+ * style.css). And a part that starts below that foot loses its name: it is
+ * cut off anyway, and named it would cost a picture of its own, drawn
+ * whole as it moved.
  *
  * Called before the transition, for the label as it was, and again inside
  * it, once the works have changed, for the label as it is.
@@ -1146,10 +1203,10 @@ function timerLine(variant, timer, works) {
  * @param {Element} label
  */
 function fitTransitionToLabel(label) {
-  const fill = label.querySelector(".acmi-label__fill");
-  if (!fill) return;
+  const content = label.querySelector(".acmi-label__content");
+  if (!content) return;
 
-  const foot = fill.getBoundingClientRect().bottom;
+  const foot = content.getBoundingClientRect().bottom;
   document.documentElement.style.setProperty(
     "--acmi-transition-foot",
     `${Math.max(0, innerHeight - foot)}px`,

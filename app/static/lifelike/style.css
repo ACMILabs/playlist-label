@@ -39,10 +39,13 @@ acmi-nightmare-room {
 }
 
 /* Copy too long for the label is cut, not scrolled: the kiosk cannot
-   scroll. The content is cut at its foot, inside the label's margin; a
-   label with a qr code cuts its copy above the code instead, in the block
-   that fills the room left there, so the code never moves. `labelShell`
-   warns in the console when either happens. */
+   scroll. It is cut at the foot of the content, inside the label's margin.
+
+   A label with a qr code keeps the code fixed at that foot, whatever the
+   copy does: the block above it fills the room left there and no more, so
+   copy too long for that room runs on down over the code — drawn above it,
+   to be read — until the foot cuts it off. `labelShell` warns in the
+   console when copy runs past its room. */
 .acmi-label__content {
   display: flex;
   flex-direction: column;
@@ -51,9 +54,9 @@ acmi-nightmare-room {
 }
 
 .acmi-label__fill {
+  position: relative;
   flex: 1 1 0;
   min-block-size: 0;
-  overflow-y: clip;
 }
 
 /* ---- Error screen ---- */
@@ -122,13 +125,39 @@ acmi-timer {
   text-box: trim-both cap alphabetic;
 }
 
+/* Never less than two lines high, so an entry does not shrink when its
+   line comes down to one — "Starts soon". */
 .acmi-timer__line {
   grid-area: line;
+  min-block-size: 2lh;
   margin: 0;
   text-align: center;
   text-wrap: pretty;
   font-size: var(--acmi-timer-line-size);
   line-height: var(--acmi-timer-line-leading);
+}
+
+/* A number in the line: when a minute goes by, the new number is written
+   in the same cell as the old, and fades in as the old fades out and goes
+   (see `setCaption`). */
+.acmi-timer__number {
+  display: inline-grid;
+  justify-items: center;
+}
+
+.acmi-timer__number > * {
+  grid-area: 1 / 1;
+  transition: opacity var(--acmi-caption-fade);
+}
+
+.acmi-timer__number > [data-leaving] {
+  opacity: 0;
+}
+
+@starting-style {
+  .acmi-timer__number > [data-arriving] {
+    opacity: 0;
+  }
 }
 
 /* ---- Title ---- */
@@ -264,8 +293,9 @@ acmi-playlist-title {
    --figure / --ground.
 
    It sits at the foot of the label, fixed, whatever the copy above it
-   does, and takes no part in a rotation: it stays drawn live, under the
-   transition, which is cut off above it (see Rotating). */
+   does, with copy too long for its room drawn over it (see
+   `.acmi-label__fill`). It takes no part in a rotation: it stays drawn
+   live, under the transition. */
 
 acmi-qr-block {
   --figure: var(--acmi-fg);
@@ -422,10 +452,11 @@ acmi-playlist-entry:not([data-kind="current"]) acmi-tombstone {
    at once, and the statuses come back with the bodies.
 
    The moving parts are drawn over the page, where the clip at the foot of
-   the list does not reach them, so the whole transition is cut off there
-   instead: `acmi-lifelike-label` measures the gap below the list into
-   --acmi-transition-foot before it starts one. Below that, the page shows
-   through, drawn live — the qr code with it. And the page itself is not
+   the content does not reach them, so the whole transition is cut off
+   there instead: `acmi-lifelike-label` measures the gap below the content
+   into --acmi-transition-foot before it starts one. The page shows through
+   everywhere the transition draws nothing, drawn live — the qr code with
+   it. And the page itself is not
    pictured at all: everything in a playlist that changes is named, so a
    picture of the rest would only fade into itself, a whole 4K screen of
    it, for nothing. */

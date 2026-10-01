@@ -90,6 +90,8 @@
   --acmi-timer-elapsed-size: var(--acmi-text-3);
   --acmi-timer-line-size: var(--acmi-text-2);
   --acmi-timer-line-leading: var(--acmi-leading-4);
+  /* How long the line's number takes to fade from one to the next. */
+  --acmi-caption-fade: 400ms;
 
   /* The title. */
   --acmi-title-size: var(--acmi-display-2);
