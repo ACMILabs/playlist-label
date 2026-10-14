@@ -1,13 +1,17 @@
 import datetime
 import json
+import os
+import re
 import time
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app import cache, main
+from app import cache, dev_env, main
 from app.cache import create_cache
 from app.main import HasTapped, Message, PlaylistLabel
+from app.mock_media_player import MockMediaPlayer
+from app.nightmare_room import NightmareRoom
 from app.playback_sync import PlaybackSync
 
 
@@ -79,8 +83,7 @@ def test_process_media():
 @patch('app.main.RABBITMQ_MQTT_HOST', 'track.acmi.net.au')
 def test_route_playlist_label(client, tmp_path):
     """Root route renders expected data."""
-    import json as _json
-    (tmp_path / 'playlist_1.json').write_text(_json.dumps(
+    (tmp_path / 'playlist_1.json').write_text(json.dumps(
         {"id": 1, "title": "Test", "playlist_labels": []}))
     with patch('app.main.CACHE_DIR', str(tmp_path) + '/'):
         response = client.get('/')
@@ -253,21 +256,19 @@ REVERB_TEST_PLAYLIST = {
 
 def reverb_client_get(client, tmp_path, extra_patches=None):
     """Write test playlist to cache and GET '/'."""
-    import json as _json
     cache_file = tmp_path / 'playlist_1.json'
-    cache_file.write_text(_json.dumps(REVERB_TEST_PLAYLIST))
+    cache_file.write_text(json.dumps(REVERB_TEST_PLAYLIST))
     patches = {'app.main.CACHE_DIR': str(tmp_path) + '/'}
     if extra_patches:
         patches.update(extra_patches)
-    with MagicMock():
-        ctx_managers = [patch(k, v) for k, v in patches.items()]
+    ctx_managers = [patch(k, v) for k, v in patches.items()]
+    for cm in ctx_managers:
+        cm.start()
+    try:
+        response = client.get('/')
+    finally:
         for cm in ctx_managers:
-            cm.start()
-        try:
-            response = client.get('/')
-        finally:
-            for cm in ctx_managers:
-                cm.stop()
+            cm.stop()
     return response
 
 
@@ -322,15 +323,17 @@ def test_reverb_label_override_duration(client, tmp_path):
 
 @patch('app.main.LABEL_TEMPLATE', 'reverb-digital-label.html')
 @patch('app.main.show_qr_code', True)
-@patch('app.main.QR_CODE_URL', 'https://example.com/work/123/')
-def test_reverb_label_qr_url(client, tmp_path):
-    """QR URL generates a QR code."""
+def test_reverb_label_qr_codes(client, tmp_path):
+    """The page carries a QR code per language, for qr-block.js to draw."""
     response = reverb_client_get(client, tmp_path)
     data = response.data.decode('utf-8')
 
     assert response.status_code == 200
     assert 'qr-block' in data
-    assert 'data-qr-svg' in data
+    playlist = json.loads(re.search(r'const json = (.*);$', data, re.M).group(1))
+    qr_codes = json.loads(playlist['qr_text'])
+    assert sorted(qr_codes) == ['en', 'hi', 'pa', 'zh-hans']
+    assert all(svg.startswith('<svg') for svg in qr_codes.values())
 
 
 def make_sync():
@@ -382,7 +385,216 @@ def test_playback_sync_receive_ignores_invalid_json():
 
 def test_playback_sync_client_context_tracks_ip():
     """client() tracks IP on enter, removes on exit."""
+    # pylint: disable=protected-access
     sync = make_sync()
     with sync.client('1.2.3.4'):
         assert '1.2.3.4' in sync._clients
     assert '1.2.3.4' not in sync._clients
+
+
+def test_mock_media_player_plays_each_item_for_its_seconds():
+    """The mock plays each item for its seconds, in order, then loops."""
+    player = MockMediaPlayer(sync=None, playlist_path=None, seconds=60)
+
+    message = player.message_at([11, 22, 33], 125)
+    assert message['label_id'] == 33
+    assert message['duration'] == 60000
+    assert message['playback_position'] == pytest.approx(5 / 60)
+
+    assert player.message_at([11, 22, 33], 0)['label_id'] == 11
+    assert player.message_at([11, 22, 33], 185)['label_id'] == 11
+    assert player.message_at([], 10) is None
+
+
+def test_mock_media_player_plays_only_labelled_items(tmp_path):
+    """The mock skips items without a label, and plays nothing with no playlist."""
+    playlist_path = tmp_path / 'playlist_1.json'
+    playlist_path.write_text(json.dumps({'playlist_labels': [
+        {'label': {'id': 44}},
+        {'label': None},
+        {'label': {'id': 45}},
+    ]}))
+
+    assert MockMediaPlayer(None, str(playlist_path)).label_ids() == [44, 45]
+    assert MockMediaPlayer(None, str(tmp_path / 'missing.json')).label_ids() == []
+
+
+def test_mock_media_player_feeds_playback_sync():
+    """What the mock publishes arrives at the playback stream as MQTT would."""
+    sync = make_sync()
+    player = MockMediaPlayer(sync, playlist_path=None, seconds=60)
+    sync.receive(json.dumps(player.message_at([11, 22], 90)).encode())
+
+    body = sync.wait(last_body=None, timeout=1)
+    assert body['label_id'] == 22
+    assert body['playback_position'] == pytest.approx(0.5)
+
+
+@patch('app.main.LABEL_TEMPLATE', 'lifelike.html')
+@patch('app.main.XOS_MEDIA_PLAYER_ID', None)
+@patch('app.main.MOCK_MEDIA_PLAYER', True)
+@patch('app.main.MOCK_VIDEO_SECONDS', 60)
+def test_lifelike_label_with_mock_media_player(client, tmp_path):
+    """A mocked player connects the label, and every video runs its seconds."""
+    with open('tests/data/playlist.json', 'r') as the_file:
+        (tmp_path / 'playlist_1.json').write_text(the_file.read())
+    with patch('app.main.CACHE_DIR', str(tmp_path) + '/'):
+        response = client.get('/')
+    data = response.data.decode('utf-8')
+
+    assert response.status_code == 200
+    assert 'playback-source="/api/playback-stream/"' in data
+    # The label reads `video.duration_secs`; each video's own metadata keeps
+    # its real length.
+    island = re.search(r'data-prop="playlist">(.*?)</script>', data, re.S).group(1)
+    videos = [item['video'] for item in json.loads(island)['playlist_labels']]
+    assert [video['duration_secs'] for video in videos] == [60, 60, 60]
+
+
+@patch('app.main.LABEL_TEMPLATE', 'lifelike.html')
+@patch('app.main.LABEL_FG_COLOUR', '#000')
+@patch('app.main.LABEL_BG_COLOUR', 'oklch(90% 0.05 90)')
+def test_lifelike_label_colours(client, tmp_path):
+    """LABEL_FG_COLOUR and LABEL_BG_COLOUR set the label's colour tokens."""
+    (tmp_path / 'playlist_1.json').write_text(json.dumps(
+        {"id": 1, "title": "Test", "playlist_labels": []}))
+    with patch('app.main.CACHE_DIR', str(tmp_path) + '/'):
+        response = client.get('/')
+    data = response.data.decode('utf-8')
+
+    assert '--acmi-fg: #000;' in data
+    assert '--acmi-bg: oklch(90% 0.05 90);' in data
+
+
+@patch('app.main.LABEL_TEMPLATE', 'lifelike.html')
+def test_lifelike_label_rotate(client, tmp_path):
+    """LABEL_ROTATE turns the page, and an upright label is left as it is."""
+    (tmp_path / 'playlist_1.json').write_text(json.dumps(
+        {"id": 1, "title": "Test", "playlist_labels": []}))
+    with patch('app.main.CACHE_DIR', str(tmp_path) + '/'):
+        with patch('app.main.LABEL_ROTATE', 'right'):
+            turned = client.get('/').data.decode('utf-8')
+        with patch('app.main.LABEL_ROTATE', 'normal'):
+            upright = client.get('/').data.decode('utf-8')
+
+    assert '<html lang="en" data-rotate="right"' in turned
+    assert 'data-rotate=' not in upright.split('<head>')[0]
+
+
+def test_css_colour_refuses_what_could_escape_the_value(monkeypatch):
+    """A colour is passed through; anything that could end the value is not."""
+    monkeypatch.setenv('TEST_COLOUR', ' rgb(0 0 0 / 50%) ')
+    assert main.css_colour('TEST_COLOUR') == 'rgb(0 0 0 / 50%)'
+
+    monkeypatch.setenv('TEST_COLOUR', 'red; display: none')
+    assert main.css_colour('TEST_COLOUR') == ''
+
+    monkeypatch.delenv('TEST_COLOUR')
+    assert main.css_colour('TEST_COLOUR') == ''
+
+
+def test_dev_env_load_follows_the_file(monkeypatch, tmp_path):
+    """load() copies the file in, and drops a key taken out of it."""
+    monkeypatch.setenv('DEV_ENV_TEST_KEPT', 'old')
+    monkeypatch.setenv('DEV_ENV_TEST_DROPPED', 'old')
+    monkeypatch.delenv(dev_env.LOADED_KEYS, raising=False)
+    config = tmp_path / 'config.env'
+    monkeypatch.setenv('CONFIG_ENV_FILE', str(config))
+
+    config.write_text('DEV_ENV_TEST_KEPT=first\nDEV_ENV_TEST_DROPPED=first\n')
+    dev_env.load()
+    assert os.environ['DEV_ENV_TEST_KEPT'] == 'first'
+    assert os.environ['DEV_ENV_TEST_DROPPED'] == 'first'
+
+    config.write_text('DEV_ENV_TEST_KEPT="second"\n# DEV_ENV_TEST_DROPPED=first\n')
+    dev_env.load()
+    assert os.environ['DEV_ENV_TEST_KEPT'] == 'second'
+    assert 'DEV_ENV_TEST_DROPPED' not in os.environ
+
+
+def test_dev_env_load_does_nothing_without_a_file(monkeypatch):
+    """Without CONFIG_ENV_FILE — on a device — load() reads nothing."""
+    monkeypatch.delenv('CONFIG_ENV_FILE', raising=False)
+    monkeypatch.delenv(dev_env.LOADED_KEYS, raising=False)
+    dev_env.load()
+    assert dev_env.LOADED_KEYS not in os.environ
+
+
+class FakeClock:  # pylint: disable=too-few-public-methods
+    """A clock the test moves by hand."""
+
+    def __init__(self):
+        self.now = 100.0
+
+    def __call__(self):
+        return self.now
+
+
+def test_nightmare_room_starts_waiting_and_follows_commands():
+    """The room waits, then takes the mode each command sets."""
+    room = NightmareRoom(run_seconds=600, clock=FakeClock())
+    assert room.snapshot() == {'mode': 'waiting'}
+
+    for command, mode in [('unavailable', 'unavailable'), ('close', 'closed'), ('wait', 'waiting')]:
+        assert room.command(command)
+        assert room.snapshot() == {'mode': mode}
+
+    assert not room.command('dance')
+    assert room.snapshot() == {'mode': 'waiting'}
+
+
+def test_nightmare_room_runs_then_waits():
+    """A run counts from start, starts over when sent again, and ends in waiting."""
+    clock = FakeClock()
+    room = NightmareRoom(run_seconds=600, clock=clock)
+
+    room.command('start')
+    clock.now += 150
+    assert room.snapshot() == {'mode': 'running', 'duration': 600000, 'playback_position': 0.25}
+
+    room.command('start')
+    clock.now += 60
+    assert room.snapshot()['playback_position'] == pytest.approx(0.1)
+
+    clock.now += 540
+    assert room.snapshot() == {'mode': 'waiting'}
+
+
+def test_nightmare_room_acts_on_a_press_not_a_release():
+    """A TouchOSC button sends 1 on press and 0 on release: only the press counts."""
+    # pylint: disable=protected-access
+    room = NightmareRoom(run_seconds=600, clock=FakeClock())
+
+    room._on_command('/nightmare/close', 0.0)
+    assert room.snapshot() == {'mode': 'waiting'}
+
+    room._on_command('/nightmare/close', 1.0)
+    assert room.snapshot() == {'mode': 'closed'}
+
+    room._on_command('/nightmare/unavailable')
+    assert room.snapshot() == {'mode': 'unavailable'}
+
+
+@patch('app.main.LABEL_TEMPLATE', 'lifelike.html')
+@patch('app.main.LABEL_MODE', 'nightmare-room')
+@patch('app.main.XOS_MEDIA_PLAYER_ID', '8')
+@patch('app.main.NIGHTMARE_TEXT',
+       {'waiting': 'In a moment.', 'running': '', 'unavailable': '', 'closed': ''})
+def test_lifelike_nightmare_room_follows_the_room(client, tmp_path):
+    """The nightmare room reads the room stream, not the player's, and gets its words."""
+    (tmp_path / 'playlist_1.json').write_text(json.dumps(
+        {"id": 1, "title": "Test", "playlist_labels": []}))
+    with patch('app.main.CACHE_DIR', str(tmp_path) + '/'):
+        response = client.get('/')
+    data = response.data.decode('utf-8')
+
+    assert 'room-source="/api/room-stream/"' in data
+    assert 'playback-source' not in data
+    assert '"nightmare_text": {"waiting": "In a moment."}' in data
+
+
+def test_room_stream_is_missing_when_the_label_is_no_room(client):
+    """Only a nightmare room has a room stream."""
+    with patch('app.main.room', None):
+        response = client.get('/api/room-stream/')
+    assert response.status_code == 404

@@ -1,0 +1,80 @@
+@font-face {
+  font-family: "ITC Benguiat";
+  font-weight: 400;
+  font-style: normal;
+  src: url("./itc-benguiat-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "ITC Benguiat";
+  font-weight: 500;
+  font-style: normal;
+  src: url("./itc-benguiat-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "ITC Benguiat";
+  font-weight: 700;
+  font-style: normal;
+  src: url("./itc-benguiat-700-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "ITC Benguiat";
+  font-weight: 400;
+  font-style: italic;
+  src: url("./itc-benguiat-400-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "ITC Benguiat";
+  font-weight: 500;
+  font-style: italic;
+  src: url("./itc-benguiat-500-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "ITC Benguiat";
+  font-weight: 700;
+  font-style: italic;
+  src: url("./itc-benguiat-700-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "ITC Benguiat Condensed";
+  font-weight: 400;
+  font-style: normal;
+  src: url("./itc-benguiat-condensed-400-normal.woff2") format("woff2"),
+    url("./itc-benguiat-condensed-400-normal.otf") format("opentype");
+}
+@font-face {
+  font-family: "ITC Benguiat Condensed";
+  font-weight: 500;
+  font-style: normal;
+  src: url("./itc-benguiat-condensed-500-normal.woff2") format("woff2"),
+    url("./itc-benguiat-condensed-500-normal.otf") format("opentype");
+}
+@font-face {
+  font-family: "ITC Benguiat Condensed";
+  font-weight: 700;
+  font-style: normal;
+  src: url("./itc-benguiat-condensed-700-normal.woff2") format("woff2"),
+    url("./itc-benguiat-condensed-700-normal.otf") format("opentype");
+}
+@font-face {
+  font-family: FaktPro;
+  src: url("./FaktPro-Normal.otf") format("opentype");
+}
+
+@font-face {
+  font-family: FaktPro;
+  font-style: italic;
+  src: url("./FaktPro-NormalItalic.otf") format("opentype");
+}
+
+@font-face {
+  font-family: FaktPro;
+  font-weight: bold;
+  src: url("./FaktPro-Bold.otf") format("opentype");
+}
+
+@font-face {
+  font-family: FaktPro;
+  font-weight: bold;
+  font-style: italic;
+  src: url("./FaktPro-BoldItalic.otf") format("opentype");
+}

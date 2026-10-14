@@ -17,6 +17,8 @@ services:
       KIOSK: "1"
       SHOW_CURSOR: "0"
       ENABLE_GPU: "1"
+      FORCE_VULKAN: "1"
+      EXTRA_FLAGS: "--remote-allow-origins=*"
       # Tells the balena browser base image to enable the Chrome DevTools Protocol
       # (CDP) on this internal port.  The debug startup script (run_debug.sh) then
       # proxies it out to the external port 9222 when DEBUG=true.
@@ -35,6 +37,7 @@ services:
     build: .
     ports:
       - "8081:801"
+      - "8000:8000/udp"
     privileged: true
     volumes:
       - 'data:/data'

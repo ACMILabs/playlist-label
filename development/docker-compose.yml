@@ -10,10 +10,16 @@ services:
     hostname: playlistlabel
     privileged: true
     container_name: playlistlabel
-    env_file: ../config.env
+    # Not `env_file`: docker reads that once, when it creates the container.
+    # The app reads config.env itself and restarts when it is saved, so an
+    # edit needs no container restart. See app/dev_env.py.
+    environment:
+      CONFIG_ENV_FILE: /code/config.env
     volumes:
       - ../:/code
       - ../data:/data
     command: ./scripts/dev.sh
     ports:
      - 8081:8081
+     # OSC from TouchOSC, for the nightmare room: keep it the same as OSC_PORT.
+     - 8000:8000/udp

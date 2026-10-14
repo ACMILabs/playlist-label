@@ -5,3 +5,4 @@ paho-mqtt
 peewee
 sentry-sdk[flask]
 segno
+python-osc

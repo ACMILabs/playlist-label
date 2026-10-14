@@ -46,7 +46,9 @@ describe("acmi-digital-label", () => {
       expect(elem.querySelector(".author").textContent).toContain(
         "Daniel Bronsema"
       );
-      expect(elem.querySelector(".body-copy").innerHTML).toContain("Music video");
+      expect(elem.querySelector(".body-copy").innerHTML).toContain(
+        "Music video"
+      );
       expect(elem.querySelector(".credit-line").innerHTML).toContain(
         "Courtesy of the artists"
       );
@@ -109,7 +111,9 @@ describe("acmi-digital-label", () => {
       elem.setAttribute("data-label-json", JSON.stringify(playlistJson));
 
       expect(elem.querySelector(".title").textContent).toBe("Default playlist");
-      expect(elem.querySelector(".body-copy").innerHTML).toContain("Music video");
+      expect(elem.querySelector(".body-copy").innerHTML).toContain(
+        "Music video"
+      );
     });
   });
 

@@ -2,18 +2,19 @@ import json
 import threading
 import time
 
-import paho.mqtt.client as mqtt
+import paho.mqtt.client as paho_mqtt
 
 
-class PlaybackSync:
+class PlaybackSync:  # pylint: disable=too-many-instance-attributes
     """
     Owns the MQTT connection, playback state, and SSE client tracking.
     Callers use wait() to block until a new playback message arrives.
     """
 
-    def __init__(self, host, port, user, password, topic, retry_seconds=2):
+    def __init__(  # pylint: disable=too-many-arguments
+            self, host, port, user, password, topic, retry_seconds=2):
         self._host = host
-        self._port = int(port)
+        self._port = port
         self._user = user
         self._password = password
         self._topic = topic
@@ -27,9 +28,13 @@ class PlaybackSync:
         self._count = 0
         self._sse_count = 0
 
-    def start(self):
-        """Start the MQTT and log threads."""
-        threading.Thread(target=self._mqtt_thread, daemon=True).start()
+    def start(self, mqtt=True):
+        """
+        Start the log thread, and the MQTT thread unless something else calls
+        receive() — the mock media player, say.
+        """
+        if mqtt:
+            threading.Thread(target=self._mqtt_thread, daemon=True).start()
         threading.Thread(target=self._log_thread, daemon=True).start()
 
     def receive(self, payload: bytes):
@@ -67,14 +72,14 @@ class PlaybackSync:
         return _ClientContext(self, client_ip)
 
     def _mqtt_thread(self):
-        client = mqtt.Client()
+        client = paho_mqtt.Client()
         client.username_pw_set(self._user, self._password)
         client.on_connect = self._on_connect
         client.on_disconnect = self._on_disconnect
         client.on_message = self._on_mqtt_message
         client.reconnect_delay_set(min_delay=self._retry_seconds, max_delay=60)
         print(f'[mqtt] Connecting to {self._host}:{self._port}...')
-        client.connect_async(self._host, self._port)
+        client.connect_async(self._host, int(self._port))
         client.loop_forever()
 
     def _on_connect(self, client, userdata, flags, rc):  # pylint: disable=unused-argument

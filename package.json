@@ -6,15 +6,12 @@
   "scripts": {
     "test": "jest",
     "test:debug": "node --inspect-brk=0.0.0.0:9229 node_modules/jest/bin/jest.js",
-    "lint": "eslint .",
+    "lint": "eslint . --ext .js,.mjs",
     "lint-test": "npm run lint && npm run test"
   },
   "devDependencies": {
-    "@projectwallace/stylelint-plugin": "^0.4.3",
-    "jest": "*",
-    "jest-fetch-mock": "*",
-    "stylelint": "^17.11.1",
-    "stylelint-config-standard": "^40.0.0"
+    "jest": "^30.5.2",
+    "jest-fetch-mock": "*"
   },
   "jest": {
     "cacheDirectory": "/tmp/jest_0",
@@ -22,6 +19,13 @@
       "/node_modules/"
     ],
     "automock": false,
+    "transform": {
+      "\\.m?js$": "babel-jest"
+    },
+    "moduleNameMapper": {
+      "^nanostores$": "<rootDir>/app/static/lifelike/vendor/nanostores.mjs",
+      "^nanotags$": "<rootDir>/app/static/lifelike/vendor/nanotags.mjs"
+    },
     "setupFiles": [
       "./setupJest.js"
     ]
@@ -37,9 +41,10 @@
   },
   "homepage": "https://github.com/ACMILabs/playlist-label-pi#readme",
   "dependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/plugin-transform-modules-commonjs": "^7.29.7",
     "babel-eslint": "*",
-    "babel-jest": "*",
-    "babel-plugin-transform-es2015-modules-commonjs": "*",
+    "babel-jest": "^30.5.2",
     "eslint": "*",
     "eslint-config-airbnb": "*",
     "eslint-config-prettier": "*",
@@ -50,13 +55,13 @@
     "eslint-plugin-jsx-a11y": "*",
     "eslint-plugin-prettier": "*",
     "eslint-plugin-react": "*",
-    "jest-environment-jsdom": "*",
+    "jest-environment-jsdom": "^30.5.2",
     "moment": "*",
     "prettier": "*"
   },
   "babel": {
     "plugins": [
-      "transform-es2015-modules-commonjs"
+      "@babel/plugin-transform-modules-commonjs"
     ]
   }
 }

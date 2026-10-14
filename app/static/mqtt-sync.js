@@ -56,7 +56,7 @@ class MQTTSync extends HTMLElement {
       playbackSignal.value = { duration, startTime };
     };
 
-    this.eventSource.onerror = (e) => {
+    this.eventSource.onerror = () => {
       // EventSource automatically reconnects after errors — no manual retry needed.
     };
   }

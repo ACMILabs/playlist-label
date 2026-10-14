@@ -122,15 +122,11 @@ class DigitalLabel extends HTMLElement {
   }
 
   #setupListeningRoom() {
-    const parentId = computed(
-      () =>
-        labelSignal.value?.LISTENING_ROOM_PARENT_ID
-          ? typeof labelSignal.value.LISTENING_ROOM_PARENT_ID === "string"
-            ? parseInt(labelSignal.value.LISTENING_ROOM_PARENT_ID, 10)
-            : labelSignal.value.LISTENING_ROOM_PARENT_ID
-          : null,
-      [labelSignal]
-    );
+    const parentId = computed(() => {
+      const id = labelSignal.value?.LISTENING_ROOM_PARENT_ID;
+      if (!id) return null;
+      return typeof id === "string" ? parseInt(id, 10) : id;
+    }, [labelSignal]);
 
     // Keep as string, not boolean — assigned directly to lrMode.
     const modeOverride = computed(
@@ -173,6 +169,7 @@ class DigitalLabel extends HTMLElement {
       }
     };
 
+    this.#cleanups.push(clearPoll);
     this.#cleanups.push(
       effect([parentId], () => {
         clearPoll();
@@ -189,7 +186,7 @@ class DigitalLabel extends HTMLElement {
           /** @type {import('./eventTimeManager.mjs').EventEntry[]} */
           const { events } = manager;
 
-          console.log(
+          console.info(
             events
               .map(
                 (e) =>
@@ -223,7 +220,7 @@ class DigitalLabel extends HTMLElement {
             const data = evd.getMode(now, events);
 
             if (data.mode !== "normal") {
-              console.log(
+              console.info(
                 `it's ${now.toLocaleString()}, currently in mode: ${
                   data.mode
                 } for event ${data.title}${
@@ -231,7 +228,7 @@ class DigitalLabel extends HTMLElement {
                 }`
               );
             } else {
-              console.log(
+              console.info(
                 `it's ${now.toLocaleString()}, currently in mode: ${data.mode}`
               );
             }
@@ -244,8 +241,6 @@ class DigitalLabel extends HTMLElement {
           tick();
           pollHandle = window.setInterval(tick, LR_POLL_INTERVAL_MS);
         });
-
-        return clearPoll;
       })
     );
   }

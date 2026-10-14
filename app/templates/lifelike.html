@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+{# LABEL_FG_COLOUR and LABEL_BG_COLOUR, when set, take the place of the
+   label's own colours. One that is not a colour is ignored by the browser,
+   which keeps the label's own: see `@property` in tokens.css. LABEL_ROTATE
+   turns the page: see below. #}
+<html lang="en"
+  {%- if label_rotate and label_rotate != 'normal' %} data-rotate="{{ label_rotate }}"{% endif %}
+  {%- if fg_colour or bg_colour %} style="
+    {%- if fg_colour %}--acmi-fg: {{ fg_colour }};{% endif %}
+    {%- if bg_colour %}--acmi-bg: {{ bg_colour }};{% endif %}"
+  {%- endif %}>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ playlist_json.title }}</title>
+  <link rel="stylesheet" href="/static/lifelike/style.css">
+  <style>
+    /* The label is the whole screen: nothing round it, the label's blue
+       behind it while the script loads, and never a scrollbar. */
+    html {
+      background: var(--acmi-bg);
+      overflow: clip;
+    }
+    body {
+      margin: 0;
+    }
+
+    /* LABEL_ROTATE: the page turned to portrait here, on a screen the
+       browser leaves as it is (ROTATE_DISPLAY=normal). The body takes the
+       turned screen's size and is turned into place, as part of drawing
+       the page, on the gpu. X turning the screen instead turns every frame
+       again after it is drawn, which on a Pi 5 at 4K halves the frame rate
+       of any animation. `right` and `left` turn the picture clockwise and
+       anticlockwise, as they do for ROTATE_DISPLAY.
+
+       The body is a layer of its own (`will-change`): drawn upright, then
+       the whole layer turned, each pixel onto one pixel, so the text is
+       exactly as it is upright. Painted with the turn, its text would be
+       smoothed differently. And it is placed absolutely, not fixed: while
+       a view transition runs, Chrome draws a fixed body only as far as the
+       screen reached before the turn, which loses the qr code at the foot
+       of a sideways label. */
+    html[data-rotate] body {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+    html:is([data-rotate="right"], [data-rotate="left"]) body {
+      width: 100vh;
+      height: 100vw;
+    }
+    html[data-rotate="right"] body {
+      transform: translateX(100vw) rotate(90deg);
+    }
+    html[data-rotate="left"] body {
+      transform: translateY(100vh) rotate(-90deg);
+    }
+    html[data-rotate="inverted"] body {
+      width: 100vw;
+      height: 100vh;
+      transform: translate(100vw, 100vh) rotate(180deg);
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "nanotags": "/static/lifelike/vendor/nanotags.mjs",
+        "nanostores": "/static/lifelike/vendor/nanostores.mjs"
+      }
+    }
+  </script>
+</head>
+<body>
+  <acmi-lifelike-label
+    variant="{{ label_mode }}"
+    {% if label_mode == 'nightmare-room' %}room-source="/api/room-stream/"
+    {%- elif (xos.media_player_id or mock_media_player) and not hide_timer %}playback-source="/api/playback-stream/"{% endif %}
+  >
+
+    <script type="application/json" data-prop="playlist">
+      {{ playlist_json | tojson }}
+    </script>
+  </acmi-lifelike-label>
+  <script type="module" src="/static/lifelike/main.mjs"></script>
+</body>
+</html>
