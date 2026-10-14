@@ -79,8 +79,7 @@ function lenient(coerce) {
 function toInfoEntries(value) {
   if (!Array.isArray(value)) return [];
   return value.filter(
-    (entry) =>
-      typeof entry?.icon === "string" && typeof entry?.text === "string",
+    (entry) => typeof entry?.icon === "string" && typeof entry?.text === "string",
   );
 }
 
@@ -114,9 +113,7 @@ function toWorks(value) {
       heading: work.heading,
       credit: typeof work.credit === "string" ? work.credit : "",
       duration: typeof work.duration === "string" ? work.duration : "",
-      durationSeconds: Number.isFinite(work.durationSeconds)
-        ? work.durationSeconds
-        : 0,
+      durationSeconds: Number.isFinite(work.durationSeconds) ? work.durationSeconds : 0,
       body: typeof work.body === "string" ? work.body : "",
       infoEntries: toInfoEntries(work.infoEntries),
       key: Number.isFinite(work.key) ? work.key : null,
@@ -274,12 +271,43 @@ function setCaption(line, value) {
  * nothing to show. The markup comes from the cms, which is why it goes in as
  * html — the same call the vue components made with `v-html`.
  *
+ * It goes in through the browser's sanitizer, `setHTML`, where the browser
+ * has one (Chromium 146 on): that keeps the copy and drops what could run —
+ * scripts, event handlers — and any element it does not know, along with
+ * what is inside it. A browser without one takes the markup as it is: the
+ * cms is ours.
+ *
  * @param {HTMLElement} element
  * @param {string} html
  */
 function setHtml(element, html) {
   element.hidden = !html;
-  element.innerHTML = html;
+  if ("setHTML" in element) element.setHTML(html);
+  else element.innerHTML = html;
+}
+
+/**
+ * How each LABEL_ROTATE turns the label on the screen (see lifelike.html):
+ * the side of the screen its foot faces, and `down`, which takes a box's
+ * rectangle on the screen to how far down the label, from its top, the box
+ * starts and ends.
+ */
+const TURNS = {
+  normal: { foot: "bottom", down: (r) => ({ top: r.top, bottom: r.bottom }) },
+  right: {
+    foot: "left",
+    down: (r) => ({ top: window.innerWidth - r.right, bottom: window.innerWidth - r.left }),
+  },
+  left: { foot: "right", down: (r) => ({ top: r.left, bottom: r.right }) },
+  inverted: {
+    foot: "top",
+    down: (r) => ({ top: window.innerHeight - r.bottom, bottom: window.innerHeight - r.top }),
+  },
+};
+
+/** How the page is turned. */
+function pageTurn() {
+  return TURNS[document.documentElement.dataset.rotate] ?? TURNS.normal;
 }
 
 /**
@@ -289,10 +317,11 @@ function setHtml(element, html) {
  * @param {Element} element
  */
 function overflowOf(element) {
-  const foot = element.getBoundingClientRect().bottom;
+  const { down } = pageTurn();
+  const foot = down(element.getBoundingClientRect()).bottom;
   let over = 0;
   for (const child of element.children) {
-    over = Math.max(over, child.getBoundingClientRect().bottom - foot);
+    over = Math.max(over, down(child.getBoundingClientRect()).bottom - foot);
   }
   return over;
 }
@@ -338,6 +367,9 @@ define("acmi-icon")
  * The work's title. The prop is `heading` because `title` is a built-in
  * global attribute — the tooltip — and custom element attributes share that
  * namespace.
+ *
+ * The heading carries its words as `data-text` too, for a stylesheet that
+ * draws them again — the nightmare room's glow.
  */
 define("acmi-title")
   .withProps((f) => ({
@@ -349,6 +381,7 @@ define("acmi-title")
 
     c.effect(c.props.$heading, (value) => {
       setHtml(heading, value);
+      heading.dataset.text = heading.textContent;
       c.host.hidden = !value;
     });
   });
@@ -378,8 +411,8 @@ define("acmi-tombstone")
       setText(duration, value);
       duration.hidden = !value;
     });
-    c.effect([c.props.$credit, c.props.$duration], (credit, duration) => {
-      c.host.hidden = !credit && !duration;
+    c.effect([c.props.$credit, c.props.$duration], (creditValue, durationValue) => {
+      c.host.hidden = !creditValue && !durationValue;
     });
   });
 
@@ -517,8 +550,10 @@ define("acmi-qr-block")
     const code = c.getElement(".acmi-qr-block__code");
     const info = c.getElement(".acmi-qr-block__text");
 
+    // The server draws the code, not the cms, so it goes in as it is: a
+    // sanitizer has nothing to keep it from, and could drop what draws it.
     c.effect(c.props.$svg, (value) => {
-      setHtml(code, value);
+      code.innerHTML = value;
       c.host.hidden = !value;
     });
     c.effect(c.props.$text, (value) => setText(info, value));
@@ -1075,12 +1110,34 @@ define("acmi-nightmare-room")
 // the section to edit when a field should read from somewhere different.
 
 /**
+ * The xos playlist, as far as this label reads it, with the keys
+ * `app/main.py` merges in before rendering: the one qr code, and the
+ * nightmare room's words. An item with no label is in the list too, until
+ * `labelledItems` takes it out.
+ *
+ * @typedef {{
+ *   id: number,
+ *   title?: string,
+ *   subtitles?: string,
+ *   columns?: { content?: string }[],
+ * }} ItemLabel
+ * @typedef {{ label: ItemLabel | null, video?: { duration_secs?: number } | null }} PlaylistItem
+ * @typedef {PlaylistItem & { label: ItemLabel }} LabelledItem
+ * @typedef {{
+ *   title?: string,
+ *   playlist_labels: PlaylistItem[],
+ *   qr_svg?: string,
+ *   nightmare_text?: Record<string, string>,
+ * }} ServedPlaylist
+ */
+
+/**
  * The playlist as the server hands it over: `window.STATIC_VARS.playlist_json`,
  * or the page's json island. Only the one thing the wrapper walks is checked;
  * everything else rides along and is read leniently below.
  *
  * @param {unknown} value
- * @returns {import("./server").ServedPlaylist | null}
+ * @returns {ServedPlaylist | null}
  */
 function toPlaylist(value) {
   if (typeof value !== "object" || value === null) return null;
@@ -1094,13 +1151,11 @@ const PlaylistSchema = lenient(toPlaylist);
  * The items that have a label, in playing order. `GET /` strips the others
  * before rendering; `/api/playlist/` does not, so this strips them again.
  *
- * @param {import("./server").ServedPlaylist | null} playlist
- * @returns {import("./server").LabelledItem[]}
+ * @param {ServedPlaylist | null} playlist
+ * @returns {LabelledItem[]}
  */
 function labelledItems(playlist) {
-  return /** @type {any[]} */ (playlist?.playlist_labels ?? []).filter(
-    (item) => item?.label,
-  );
+  return /** @type {any[]} */ (playlist?.playlist_labels ?? []).filter((item) => item?.label);
 }
 
 /**
@@ -1170,7 +1225,7 @@ function itemSeconds(item) {
  * One item as a work. The info rows are the warnings lifted out of the
  * description; the duration is the tombstone's second line.
  *
- * @param {import("./server").LabelledItem} item
+ * @param {LabelledItem} item
  * @returns {Work}
  */
 function toWork(item) {
@@ -1213,9 +1268,10 @@ function timerLine(variant, timer, works) {
  * Readies a label for a rotation's view transition. The moving parts are
  * drawn over the page, where the label's own clip does not reach them, so
  * the transition is cut off where the label cuts its copy off — the foot
- * of its content — through --acmi-transition-foot (see Rotating in
- * style.css). And a part that starts below that foot loses its name: it is
- * cut off anyway, and named it would cost a picture of its own, drawn
+ * of its content — through --acmi-transition-clip (see Rotating in
+ * style.css). That foot is on whichever side of the screen LABEL_ROTATE
+ * turned it to. And a part that starts below the foot loses its name: it
+ * is cut off anyway, and named it would cost a picture of its own, drawn
  * whole as it moved.
  *
  * Called before the transition, for the label as it was, and again inside
@@ -1227,13 +1283,17 @@ function fitTransitionToLabel(label) {
   const content = label.querySelector(".acmi-label__content");
   if (!content) return;
 
-  const foot = content.getBoundingClientRect().bottom;
+  const { foot: side, down } = pageTurn();
+  const foot = down(content.getBoundingClientRect()).bottom;
+  const screenFoot = down(new DOMRect(0, 0, window.innerWidth, window.innerHeight)).bottom;
+  const inset = { top: 0, right: 0, bottom: 0, left: 0 };
+  inset[side] = Math.max(0, screenFoot - foot);
   document.documentElement.style.setProperty(
-    "--acmi-transition-foot",
-    `${Math.max(0, innerHeight - foot)}px`,
+    "--acmi-transition-clip",
+    `inset(${inset.top}px ${inset.right}px ${inset.bottom}px ${inset.left}px)`,
   );
   for (const part of label.querySelectorAll("[style*='view-transition-name']")) {
-    if (part.getBoundingClientRect().top >= foot) part.style.viewTransitionName = "";
+    if (down(part.getBoundingClientRect()).top >= foot) part.style.viewTransitionName = "";
   }
 }
 
@@ -1322,16 +1382,16 @@ define("acmi-lifelike-label")
       playingIndex(items, snapshot?.labelId),
     );
     // The work shown as playing: the last one the player named that the
-    // label lists, or the first until it names one. While the player is on
-    // an item without a label, the label stays where it was, and hides the
-    // timer (see The clock).
-    let lastIndex = 0;
+    // label lists, or none until it names one — the label shows the first
+    // meanwhile. While the player is on an item without a label, the label
+    // stays where it was, and hides the timer (see The clock).
+    let lastIndex = null;
     const $index = computed([$items, $playing], (items, playing) => {
       if (playing !== -1) lastIndex = playing;
-      return Math.min(lastIndex, Math.max(items.length - 1, 0));
+      return lastIndex === null ? null : Math.min(lastIndex, Math.max(items.length - 1, 0));
     });
     const $works = computed([$items, $index], (items, index) =>
-      itemsFrom(items, index).map(toWork),
+      itemsFrom(items, index ?? 0).map(toWork),
     );
 
     // ---- Rotating ----
@@ -1344,25 +1404,27 @@ define("acmi-lifelike-label")
     // finished work leaves, rather than sweeping down past the others.
     let played = 0;
     let shownIndex = null;
-    let playerHadReported = false;
     // While a transition waits to take its picture of the label as it was,
     // the clock holds still, so the old picture is all the old work's.
     let holding = false;
+    // The mode the room last said it was in, as the label shows it: until
+    // the room has said, none. `writeClock` keeps it, and the effect below
+    // can call that, so it is declared here, before any effect runs.
+    let shownMode = null;
 
     c.effect($works, (works) => {
+      // Only a move from one work the player named to another is the room
+      // moving on. Its first report only says where it already was — even
+      // the first work, the one the label shows meanwhile — so that moves
+      // the label without a transition.
       const index = $index.get();
-      const rotated = shownIndex !== null && index !== shownIndex && works.length > 0;
+      const rotated =
+        shownIndex !== null && index !== null && index !== shownIndex && works.length > 0;
       if (rotated) played += (index - shownIndex + works.length) % works.length;
       shownIndex = index;
       const keyed = works.map((work, place) => ({ ...work, key: played + place }));
 
-      // The player's first report only says where it already was: that
-      // moves the label, but it is not the room moving on.
-      const playerReported = $snapshot.get()?.labelId !== undefined;
-      const animate = rotated && playerHadReported && playerReported;
-      playerHadReported = playerReported;
-
-      if (!animate || !document.startViewTransition) {
+      if (!rotated || !document.startViewTransition) {
         label.works = keyed;
         return;
       }
@@ -1407,13 +1469,33 @@ define("acmi-lifelike-label")
       label.timerElapsed = timer?.elapsed ?? "";
       label.timerLine = timerLine(variant, timer, $works.get());
       if (variant === "playlist") label.secondsUntilNext = timer?.remainingSeconds ?? null;
-      // Until the room says otherwise, it is waiting, as it starts.
-      if (variant === "nightmare-room") label.state = $room.get()?.mode ?? "waiting";
+      if (variant === "nightmare-room") {
+        // Until the room says otherwise, it is waiting, as it starts.
+        shownMode = $room.get()?.mode ?? null;
+        label.state = shownMode ?? "waiting";
+      }
     }
 
-    // Held while a rotation's transition is waiting: the transition writes
-    // the clock itself, with the new works, once it has its old picture.
+    // Held while a transition is waiting: the transition writes the clock
+    // itself, once it has its old picture. A rotation's does, with the new
+    // works; and so does the nightmare room's when its mode changes, which
+    // crossfades the whole label from one mode to the next — though not
+    // when the room first says where it is.
     c.effect([$timer, $works, $playing, $room], () => {
-      if (!holding) writeClock();
+      if (holding) return;
+      const mode = $room.get()?.mode ?? null;
+      const modeChanged = variant === "nightmare-room" && shownMode !== null && mode !== shownMode;
+      if (!modeChanged || !document.startViewTransition) {
+        writeClock();
+        return;
+      }
+      holding = true;
+      document.startViewTransition(() => {
+        try {
+          writeClock();
+        } finally {
+          holding = false;
+        }
+      });
     });
   });

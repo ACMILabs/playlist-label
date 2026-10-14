@@ -22,7 +22,7 @@ acmi-single-work,
 acmi-playlist-work,
 acmi-nightmare-room {
   display: block;
-  height: 100%;
+  block-size: 100%;
   container-type: size;
   aspect-ratio: 2160 / 3840;
 }
@@ -30,7 +30,7 @@ acmi-nightmare-room {
 /* A word too long for its line — a url in a description — breaks rather
    than running out sideways, where nothing clips it. */
 .acmi-label {
-  height: 100%;
+  block-size: 100%;
   padding: var(--acmi-label-padding);
   background: var(--acmi-bg);
   color: var(--acmi-fg);
@@ -49,7 +49,7 @@ acmi-nightmare-room {
 .acmi-label__content {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  block-size: 100%;
   overflow-y: clip;
 }
 
@@ -64,7 +64,7 @@ acmi-nightmare-room {
 acmi-error-screen {
   display: grid;
   place-items: center;
-  min-height: 100%;
+  min-block-size: 100%;
 }
 
 .acmi-error-screen__message {
@@ -81,26 +81,31 @@ acmi-icon {
 
 acmi-icon > svg {
   display: block;
-  width: auto;
-  height: var(--acmi-icon-size, 1em);
+  inline-size: auto;
+  block-size: var(--acmi-icon-size, 1em);
 }
 
 /* ---- Timer ----
 
-   The ring, the time inside it, the line under it. */
+   The ring, the time inside it, the line under it.
+
+   Its figures are all one width, so the time, centred in the ring, does
+   not shift sideways as it counts — "1:11" is as wide as "8:08" — and a
+   number in the line fades into the next without changing width. */
 
 acmi-timer {
   display: grid;
   grid-template-areas: "ring" "line";
   justify-items: center;
   gap: var(--acmi-timer-gap);
-  width: var(--acmi-timer-width);
+  inline-size: var(--acmi-timer-width);
+  font-variant-numeric: tabular-nums;
 }
 
 .acmi-timer__ring {
   grid-area: ring;
-  width: var(--acmi-timer-size);
-  height: var(--acmi-timer-size);
+  inline-size: var(--acmi-timer-size);
+  block-size: var(--acmi-timer-size);
   transform: rotate(-90deg);
 }
 
@@ -258,7 +263,7 @@ acmi-info-entry {
   row-gap: var(--acmi-header-gap);
   align-items: start;
   flex: none;
-  height: var(--acmi-header-height);
+  block-size: var(--acmi-header-height);
 }
 
 acmi-playlist-title {
@@ -311,14 +316,14 @@ acmi-qr-block {
 
 .acmi-qr-block__code {
   flex: none;
-  width: var(--acmi-qr-size);
-  height: var(--acmi-qr-size);
+  inline-size: var(--acmi-qr-size);
+  block-size: var(--acmi-qr-size);
 }
 
 .acmi-qr-block__code > svg {
   display: block;
-  width: 100%;
-  height: 100%;
+  inline-size: 100%;
+  block-size: 100%;
 }
 
 .acmi-qr-block__info {
@@ -398,7 +403,8 @@ acmi-playlist-entry + acmi-playlist-entry {
 
 .acmi-playlist-entry__status {
   grid-area: status;
-  margin: 0 0 var(--acmi-entry-status-space-after);
+  margin: 0;
+  margin-block-end: var(--acmi-entry-status-space-after);
   font-family: var(--acmi-font-decorative);
   font-size: var(--acmi-entry-status-size);
   line-height: var(--acmi-leading-2);
@@ -451,10 +457,14 @@ acmi-playlist-entry:not([data-kind="current"]) acmi-tombstone {
    browser without the class selector drops those rules: everything moves
    at once, and the statuses come back with the bodies.
 
+   All of it is the playlist's own: the other labels keep a plain
+   crossfade (see Nightmare room).
+
    The moving parts are drawn over the page, where the clip at the foot of
    the content does not reach them, so the whole transition is cut off
-   there instead: `acmi-lifelike-label` measures the gap below the content
-   into --acmi-transition-foot before it starts one. The page shows through
+   there instead: `acmi-lifelike-label` measures the gap below the content,
+   on whichever side of the screen LABEL_ROTATE turned it to, into
+   --acmi-transition-clip before it starts one. The page shows through
    everywhere the transition draws nothing, drawn live — the qr code with
    it. And the page itself is not
    pictured at all: everything in a playlist that changes is named, so a
@@ -466,12 +476,13 @@ html:has(acmi-playlist-work) {
 }
 
 html:has(acmi-playlist-work)::view-transition {
-  clip-path: inset(0 0 var(--acmi-transition-foot, 0px) 0);
+  clip-path: var(--acmi-transition-clip, none);
 }
 
-::view-transition-group(*) {
+html:has(acmi-playlist-work)::view-transition-group(*) {
   --acmi-moves-at: calc(
-    var(--acmi-rotation-fade) + var(--acmi-slot, 0) * var(--acmi-rotation-stagger)
+    var(--acmi-rotation-fade) + var(--acmi-slot, 0) *
+      var(--acmi-rotation-stagger)
   );
   --acmi-arrives-at: calc(var(--acmi-moves-at) + var(--acmi-rotation-move));
   --acmi-status-at: calc(var(--acmi-arrives-at) + var(--acmi-rotation-fade));
@@ -481,28 +492,44 @@ html:has(acmi-playlist-work)::view-transition {
   animation-timing-function: var(--acmi-rotation-easing);
 }
 
-::view-transition-old(*):only-child {
+html:has(acmi-playlist-work)::view-transition-old(*):only-child {
   animation-delay: 0s;
   animation-duration: var(--acmi-rotation-fade);
 }
 
-::view-transition-new(*):only-child {
+html:has(acmi-playlist-work)::view-transition-new(*):only-child {
   animation-delay: var(--acmi-arrives-at);
   animation-duration: var(--acmi-rotation-fade);
 }
 
-::view-transition-new(*.acmi-status):only-child {
+html:has(acmi-playlist-work)::view-transition-new(*.acmi-status):only-child {
   animation-delay: var(--acmi-status-at);
 }
 
-::view-transition-group(*.acmi-slot-0) { --acmi-slot: 0; }
-::view-transition-group(*.acmi-slot-1) { --acmi-slot: 1; }
-::view-transition-group(*.acmi-slot-2) { --acmi-slot: 2; }
-::view-transition-group(*.acmi-slot-3) { --acmi-slot: 3; }
-::view-transition-group(*.acmi-slot-4) { --acmi-slot: 4; }
-::view-transition-group(*.acmi-slot-5) { --acmi-slot: 5; }
-::view-transition-group(*.acmi-slot-6) { --acmi-slot: 6; }
-::view-transition-group(*.acmi-slot-7) { --acmi-slot: 7; }
+::view-transition-group(*.acmi-slot-0) {
+  --acmi-slot: 0;
+}
+::view-transition-group(*.acmi-slot-1) {
+  --acmi-slot: 1;
+}
+::view-transition-group(*.acmi-slot-2) {
+  --acmi-slot: 2;
+}
+::view-transition-group(*.acmi-slot-3) {
+  --acmi-slot: 3;
+}
+::view-transition-group(*.acmi-slot-4) {
+  --acmi-slot: 4;
+}
+::view-transition-group(*.acmi-slot-5) {
+  --acmi-slot: 5;
+}
+::view-transition-group(*.acmi-slot-6) {
+  --acmi-slot: 6;
+}
+::view-transition-group(*.acmi-slot-7) {
+  --acmi-slot: 7;
+}
 
 /* ---- Nightmare room ----
 
@@ -541,7 +568,6 @@ acmi-nightmare-room[data-state="waiting"] acmi-nightmare-info {
   line-height: var(--acmi-nightmare-info-leading);
   text-transform: uppercase;
   text-wrap: balance;
-  
 }
 
 /* A rule above the title and one below, the title between them trimmed to
@@ -550,17 +576,15 @@ acmi-nightmare-room[data-state="waiting"] acmi-nightmare-info {
 acmi-nightmare-room acmi-title {
   margin-block-end: var(--acmi-nightmare-title-space-after);
   padding-block: var(--acmi-nightmare-title-rule-gap);
-  border-block: var(--acmi-nightmare-title-rule-width) solid var(--acmi-nightmare-title-rule);
+  border-block: var(--acmi-nightmare-title-rule-width) solid
+    var(--acmi-nightmare-title-rule);
 }
 
-/* The title: big, red, centred, in capitals, with a glow round it, which
-   pulses while a run is on. The glow is the title's own colour, its size
-   --acmi-nightmare-pulse — registered as a length, so it can be animated
-   smoothly; an unregistered custom property only jumps between its
-   keyframes. */
+/* The title: big, red, centred, in capitals, with a glow round it in its
+   own colour, --acmi-nightmare-glow. */
 acmi-nightmare-room .acmi-title__heading {
-  --acmi-nightmare-pulse: var(--acmi-nightmare-glow);
-
+  position: relative;
+  isolation: isolate;
   font-size: var(--acmi-nightmare-title-size);
   color: var(--acmi-nightmare-title-colour);
   text-align: center;
@@ -568,32 +592,57 @@ acmi-nightmare-room .acmi-title__heading {
   text-box: trim-both cap alphabetic;
   letter-spacing: 0.01em;
   text-transform: uppercase;
-  text-shadow:
-    0 0 var(--acmi-nightmare-pulse) var(--acmi-nightmare-title-colour),
-    0 0 calc(3 * var(--acmi-nightmare-pulse)) var(--acmi-nightmare-title-colour);
+  text-shadow: 0 0 var(--acmi-nightmare-glow) var(--acmi-nightmare-title-colour),
+    0 0 calc(3 * var(--acmi-nightmare-glow)) var(--acmi-nightmare-title-colour);
+}
+
+/* While a run is on, the glow pulses: it drops to --acmi-nightmare-glow-low,
+   and a second glow, --acmi-nightmare-glow-high, rises and falls behind it.
+   That second glow is the title's words again, from `data-text`, drawn in
+   no colour so only their glow shows, and drawn once: only its opacity
+   moves, which the compositor does on its own. Animating the blur itself
+   would redraw the whole title every frame of every run. */
+acmi-nightmare-room .acmi-title__heading::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  color: transparent;
+  text-box: trim-both cap alphabetic;
+  text-shadow: 0 0 var(--acmi-nightmare-glow-high)
+      var(--acmi-nightmare-title-colour),
+    0 0 calc(3 * var(--acmi-nightmare-glow-high))
+      var(--acmi-nightmare-title-colour);
+  opacity: 0;
 }
 
 acmi-nightmare-room[data-state="running"] .acmi-title__heading {
-  animation: acmi-nightmare-pulse var(--acmi-nightmare-pulse-duration) ease-in-out infinite alternate;
+  --acmi-nightmare-glow: var(--acmi-nightmare-glow-low);
 }
 
-@property --acmi-nightmare-pulse {
-  syntax: "<length>";
-  inherits: false;
-  initial-value: 0px;
+acmi-nightmare-room[data-state="running"] .acmi-title__heading::after {
+  animation: acmi-nightmare-pulse var(--acmi-nightmare-pulse-duration)
+    ease-in-out infinite alternate;
 }
 
 @keyframes acmi-nightmare-pulse {
   from {
-    --acmi-nightmare-pulse: var(--acmi-nightmare-glow-low);
+    opacity: 0;
   }
   to {
-    --acmi-nightmare-pulse: var(--acmi-nightmare-glow-high);
+    opacity: 1;
   }
 }
 
 /* Unavailable or closed, the room's own text stays as it is, and the work
    under it fades a little. */
-acmi-nightmare-room:is([data-state="unavailable"], [data-state="closed"]) acmi-work-body {
+acmi-nightmare-room:is([data-state="unavailable"], [data-state="closed"])
+  acmi-work-body {
   opacity: var(--acmi-nightmare-off-opacity);
+}
+
+/* A change of mode crossfades, the whole label as it was into the label as
+   it is (see `acmi-lifelike-label`). */
+html:has(acmi-nightmare-room)::view-transition-group(root) {
+  animation-duration: var(--acmi-nightmare-fade);
 }

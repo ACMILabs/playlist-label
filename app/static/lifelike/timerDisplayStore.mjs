@@ -18,6 +18,12 @@ export const STALE_AFTER_MS = 30000;
 const RECONNECT_AFTER_MS = 5000;
 
 /**
+ * The smallest move of the ring worth drawing: a two-thousandth of a turn,
+ * about a third of a design pixel round a ring 260 across.
+ */
+const RING_STEP = 1 / 2000;
+
+/**
  * @typedef {{ durationMs: number, position: number, labelId?: number }} PlaybackSnapshot
  * @typedef {{ ratio: number, elapsed: string, restart: string, remainingSeconds: number }} TimerDisplay
  */
@@ -89,7 +95,8 @@ export function readPlaybackEvent(data) {
   if (typeof parsed !== "object" || parsed === null) return undefined;
 
   // `duration` is milliseconds, whatever `Video.duration_secs` says: the
-  // server forwards the media player's mqtt body as-is. See `server.d.ts`.
+  // server forwards the media player's mqtt body as-is. See `playback_stream`
+  // in `app/main.py`.
   const { duration: durationMs, playback_position: position, label_id: labelId } = parsed;
   if (!Number.isFinite(durationMs) || durationMs <= 0) return undefined;
   if (!Number.isFinite(position)) return undefined;
@@ -164,9 +171,7 @@ export function toTimerDisplay(snapshot) {
   // Whole seconds, so this changes once a second rather than once a frame.
   // The start times down a playlist come from it, through the label's
   // `seconds-until-next`, and are only worked out again when it moves.
-  const remainingSeconds = Math.round(
-    (snapshot.durationMs - elapsedMs) / MS_PER_SECOND,
-  );
+  const remainingSeconds = Math.round((snapshot.durationMs - elapsedMs) / MS_PER_SECOND);
 
   return {
     ratio,
@@ -285,7 +290,25 @@ function streamStore($source, read) {
 }
 
 /**
- * The timer, advanced every frame while there is something to draw.
+ * Whether two readings of the timer would draw the same: the same text, and
+ * the ring less than `RING_STEP` apart.
+ *
+ * @param {TimerDisplay} a
+ * @param {TimerDisplay} b
+ */
+function looksTheSame(a, b) {
+  return (
+    a.elapsed === b.elapsed &&
+    a.remainingSeconds === b.remainingSeconds &&
+    Math.abs(a.ratio - b.ratio) < RING_STEP
+  );
+}
+
+/**
+ * The timer, worked out every frame while there is something to draw, but
+ * only passed on when it would draw differently. The ring moves about a
+ * design pixel a second, so most frames would redraw it, and everything
+ * downstream of it, for a fraction of one.
  *
  * The loop stops once the timer reads nothing — no snapshot yet, or the
  * player has gone quiet — and starts again on the next snapshot, so a label
@@ -318,11 +341,12 @@ export function timerDisplayStore($snapshot, { loops = true } = {}) {
       if (snapshot && !next && !stale) {
         stale = true;
         console.info(
-          `[acmi-label] no playback event for ${STALE_AFTER_MS / 1000}s, hiding the timer`
+          `[acmi-label] no playback event for ${STALE_AFTER_MS / 1000}s, hiding the timer`,
         );
       }
 
-      $display.set(next);
+      const shown = $display.get();
+      if (!next || !shown || !looksTheSame(shown, next)) $display.set(next);
       if (next) schedule();
     }
 

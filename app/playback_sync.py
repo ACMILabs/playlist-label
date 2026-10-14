@@ -2,16 +2,17 @@ import json
 import threading
 import time
 
-import paho.mqtt.client as mqtt
+import paho.mqtt.client as paho_mqtt
 
 
-class PlaybackSync:
+class PlaybackSync:  # pylint: disable=too-many-instance-attributes
     """
     Owns the MQTT connection, playback state, and SSE client tracking.
     Callers use wait() to block until a new playback message arrives.
     """
 
-    def __init__(self, host, port, user, password, topic, retry_seconds=2):
+    def __init__(  # pylint: disable=too-many-arguments
+            self, host, port, user, password, topic, retry_seconds=2):
         self._host = host
         self._port = port
         self._user = user
@@ -71,7 +72,7 @@ class PlaybackSync:
         return _ClientContext(self, client_ip)
 
     def _mqtt_thread(self):
-        client = mqtt.Client()
+        client = paho_mqtt.Client()
         client.username_pw_set(self._user, self._password)
         client.on_connect = self._on_connect
         client.on_disconnect = self._on_disconnect

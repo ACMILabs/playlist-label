@@ -8,10 +8,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v7
     - name: Setup QEMU
       id: qemu
-      uses: docker/setup-qemu-action@v1
+      uses: docker/setup-qemu-action@v4
       with:
         image: tonistiigi/binfmt:latest
         platforms: all
@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v7
     - name: Build Javascript lint and test
       run: |
         cd testing && docker compose up --build -d

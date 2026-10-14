@@ -5,6 +5,7 @@ import re
 import socket
 import time
 from threading import Thread
+
 import kombu
 import requests
 import sentry_sdk
@@ -13,8 +14,9 @@ from kombu import Connection, Exchange, Queue
 from peewee import (CharField, FloatField, IntegerField, Model,
                     OperationalError, SqliteDatabase)
 from playhouse.shortcuts import model_to_dict
-from sentry_sdk.integrations.flask import FlaskIntegration
 from segno import make_qr
+from sentry_sdk.integrations.flask import FlaskIntegration
+
 from app import dev_env
 from app.errors import HTTPError
 from app.mock_media_player import MockMediaPlayer
@@ -88,6 +90,16 @@ def css_colour(name):
 # any CSS colour, `#000` or `oklch(40% 0.1 250)`.
 LABEL_FG_COLOUR = css_colour('LABEL_FG_COLOUR')
 LABEL_BG_COLOUR = css_colour('LABEL_BG_COLOUR')
+
+# Turns the lifelike label to portrait in the page itself — `left`, `right`
+# or `inverted`, as the browser's ROTATE_DISPLAY takes them — on a display
+# the browser leaves as it is (ROTATE_DISPLAY=normal). On a Pi 5 at 4K, X
+# turning the screen costs about half the frame rate of any animation; the
+# page turning itself costs next to nothing.
+LABEL_ROTATE = os.getenv('LABEL_ROTATE', 'normal').strip().lower()
+if LABEL_ROTATE not in ('normal', 'left', 'right', 'inverted'):
+    print(f'[config] LABEL_ROTATE={LABEL_ROTATE!r} is not a rotation, ignoring it')
+    LABEL_ROTATE = 'normal'
 LISTEING_ROOM_QR_CODE = "https://risingmelbourne.fillout.com/t/4qKipy8T3rus"
 CACHE_DIR = os.getenv('CACHE_DIR', '/data/')
 
@@ -122,11 +134,13 @@ if XOS_MEDIA_PLAYER_ID:
         f'user={RABBITMQ_MEDIA_PLAYER_USER}')
     print(f'[config] Topic: {MQTT_TOPIC}')
 show_qr_code = QR_URL_OVERRIDE != '' or XOS_MEDIA_PLAYER_ID is not None or XOS_PLAYLIST_ID != '1'
-PLAYLIST_QR_CODES = dict(
-    [
-        [lang_code, f'https://www.acmi.net.au{"" if lang_code == "en" else f"/{lang_code}"}/access-guide/?scannedplaylist={XOS_PLAYLIST_ID}']
-        for lang_code in ["en", "zh-hans", "hi", "pa"]
-    ])
+PLAYLIST_QR_CODES = {
+    lang_code: (
+        f'https://www.acmi.net.au{"" if lang_code == "en" else f"/{lang_code}"}'
+        f'/access-guide/?scannedplaylist={XOS_PLAYLIST_ID}'
+    )
+    for lang_code in ["en", "zh-hans", "hi", "pa"]
+}
 QR_CODE_MEDIA_PLAYER = f'https://www.acmi.net.au/media-player/{XOS_MEDIA_PLAYER_ID}/'
 
 QR_CODE_LABEL_ONLY = (f'https://www.acmi.net.au/media-player'
@@ -175,7 +189,9 @@ class PlaylistLabel():
                 video_buffer=body.get('video_buffer', 0),
             )
 
-            delete_records = Message.delete().where(
+            # peewee 4.5 wraps `delete` in a classmethod descriptor of its
+            # own, which pylint takes for a method that needs an instance.
+            delete_records = Message.delete().where(  # pylint: disable=no-value-for-parameter
                 Message.datetime.not_in(
                     Message.select(Message.datetime).order_by(
                         Message.datetime.desc()).limit(5)
@@ -272,9 +288,6 @@ class PlaylistLabel():
             return self.errors_history.pop(error_name)['error']
         except KeyError:
             return None
-
-
-global sync
 
 
 def listening_room_json_additions(qr_code_url, mode_override, time_override,
@@ -386,6 +399,7 @@ def playlist_label():
             mock_media_player=MOCK_MEDIA_PLAYER,
             fg_colour=LABEL_FG_COLOUR,
             bg_colour=LABEL_BG_COLOUR,
+            label_rotate=LABEL_ROTATE,
             override_duration=OVERRIDE_DURATION,
             show_caption_icon=XOS_MEDIA_PLAYER_ID is not None and HIDE_CAPTION is False,
             override_title=OVERRIDE_TITLE,
@@ -470,6 +484,11 @@ def tap_source():
     return Response(event_stream(), mimetype="text/event-stream")
 
 
+# The media player's mqtt client, when a template reads the playback stream
+# and a media player, real or mock, is configured. See `app/playback_sync.py`.
+sync = None  # pylint: disable=invalid-name
+
+
 def playback_stream(client_ip):
     last_body = None
     with sync.client(client_ip):
@@ -487,6 +506,8 @@ def playback_stream(client_ip):
 
 @app.route('/api/playback-stream/')
 def playback_source():
+    if sync is None:
+        return jsonify({'error': 'This label has no media player to follow.'}), 404
     return Response(playback_stream(request.remote_addr), mimetype="text/event-stream")
 
 
@@ -499,7 +520,7 @@ ROOM_KEEPALIVE_SECONDS = 15
 
 
 def room_stream():
-    """The room's mode as server-sent events: see `RoomStreamEvent` in server.d.ts."""
+    """The room's mode as server-sent events: see `NightmareRoom.snapshot`."""
     last = None
     quiet = 0
     while True:
@@ -566,7 +587,6 @@ if __name__ == '__main__':
             # Templates that read `/api/playback-stream/` need the MQTT
             # client behind it. Everything else still consumes over AMQP.
             if LABEL_TEMPLATE in ('reverb-digital-label.html', 'lifelike.html'):
-                # global sync  # pylint: disable=global-statement
                 sync = PlaybackSync(
                     host=RABBITMQ_MQTT_HOST,
                     port=RABBITMQ_MQTT_PORT,

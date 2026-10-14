@@ -34,6 +34,8 @@ To see the timer without a media player, set `MOCK_MEDIA_PLAYER=true` in `config
 
 To change the lifelike label's colours, set `LABEL_FG_COLOUR` (text) and `LABEL_BG_COLOUR` (background) to any CSS colour, for example `#000` or `oklch(40% 0.1 250)`. If a value is not a colour, the label keeps its own.
 
+To show the lifelike label on a screen mounted on its side, set `LABEL_ROTATE` to `right` (a quarter turn clockwise), `left` (anticlockwise) or `inverted`, and leave the browser's `ROTATE_DISPLAY` at `normal`. The page turns itself, as part of drawing each frame, with the same meaning as `ROTATE_DISPLAY`: a screen that used `ROTATE_DISPLAY=right` takes `LABEL_ROTATE=right`. When X turns the screen instead, it turns every whole 4K frame again after the browser has drawn it, which on a Raspberry Pi 5 halves the frame rate of the label's transitions. A quarter turn moves each pixel onto exactly one other pixel, so the text is just as sharp. The default is `normal`.
+
 ### The nightmare room
 
 With `LABEL_TEMPLATE=lifelike.html` and `LABEL_MODE=nightmare-room`, the label follows the room's mode instead of a media player. TouchOSC sets the mode with OSC messages to UDP port `OSC_PORT` (default `8000`):

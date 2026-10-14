@@ -11,17 +11,21 @@
    label's own as their initial values, so a page can set them — the server
    does, on <html>, from LABEL_FG_COLOUR and LABEL_BG_COLOUR — and a value
    that is not a colour falls back to these rather than leaving the label
-   with no colour at all. */
+   with no colour at all.
+
+   Written in oklch, as every colour here is: white is #fff, the blue is
+   #225599, and the white has no hue (`none`), so a mix of the two keeps
+   the blue's. */
 @property --acmi-fg {
   syntax: "<color>";
   inherits: true;
-  initial-value: #fff;
+  initial-value: oklch(100% 0 none);
 }
 
 @property --acmi-bg {
   syntax: "<color>";
   inherits: true;
-  initial-value: #225599;
+  initial-value: oklch(45.26% 0.1237 256.8);
 }
 
 :root {
@@ -30,7 +34,7 @@
 
   /* ---- Colour ----
      --acmi-fg and --acmi-bg are registered above; the rest mix from them. */
-  --acmi-fg-faint: color-mix(in lab, var(--acmi-fg) 20%, var(--acmi-bg));
+  --acmi-fg-faint: color-mix(in oklch, var(--acmi-fg) 20%, var(--acmi-bg));
 
   /* ---- Type families ---- */
   --acmi-font-body: "FaktPro", sans-serif;
@@ -140,15 +144,16 @@
   /* The nightmare room. Its info, inside the header band: the mode's text,
      where it sat under a playlist's title, and lower while the room waits.
      Its title: big and red, between a rule above and one below, with a
-     glow that pulses between two sizes while a run is on. And how far the
-     work fades while the room is unavailable or closed. */
+     glow round it, which pulses between two sizes while a run is on. How
+     far the work fades while the room is unavailable or closed, and how
+     long the label takes to fade from one mode to the next. */
   --acmi-nightmare-info-size: var(--acmi-display-1);
   --acmi-nightmare-info-leading: var(--acmi-leading-3);
   --acmi-nightmare-info-gap: var(--acmi-space-3);
   --acmi-nightmare-info-top: calc(136 * var(--acmi-px));
   --acmi-nightmare-waiting-drop: calc(120 * var(--acmi-px));
   --acmi-nightmare-title-size: calc(280 * var(--acmi-px));
-  --acmi-nightmare-title-colour: #BD0016;
+  --acmi-nightmare-title-colour: oklch(50.24% 0.2044 26.46); /* #bd0016 */
   --acmi-nightmare-title-rule: var(--acmi-rule);
   --acmi-nightmare-title-rule-width: var(--acmi-rule-width);
   --acmi-nightmare-title-rule-gap: var(--acmi-space-3);
@@ -157,5 +162,6 @@
   --acmi-nightmare-glow-low: calc(1 * var(--acmi-px));
   --acmi-nightmare-glow-high: calc(4 * var(--acmi-px));
   --acmi-nightmare-pulse-duration: 3s; /* each way */
+  --acmi-nightmare-fade: 800ms; /* from one mode to the next */
   --acmi-nightmare-off-opacity: 0.6;
 }

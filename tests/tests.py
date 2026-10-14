@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import re
 import time
 from unittest.mock import MagicMock, patch
 
@@ -82,8 +83,7 @@ def test_process_media():
 @patch('app.main.RABBITMQ_MQTT_HOST', 'track.acmi.net.au')
 def test_route_playlist_label(client, tmp_path):
     """Root route renders expected data."""
-    import json as _json
-    (tmp_path / 'playlist_1.json').write_text(_json.dumps(
+    (tmp_path / 'playlist_1.json').write_text(json.dumps(
         {"id": 1, "title": "Test", "playlist_labels": []}))
     with patch('app.main.CACHE_DIR', str(tmp_path) + '/'):
         response = client.get('/')
@@ -256,21 +256,19 @@ REVERB_TEST_PLAYLIST = {
 
 def reverb_client_get(client, tmp_path, extra_patches=None):
     """Write test playlist to cache and GET '/'."""
-    import json as _json
     cache_file = tmp_path / 'playlist_1.json'
-    cache_file.write_text(_json.dumps(REVERB_TEST_PLAYLIST))
+    cache_file.write_text(json.dumps(REVERB_TEST_PLAYLIST))
     patches = {'app.main.CACHE_DIR': str(tmp_path) + '/'}
     if extra_patches:
         patches.update(extra_patches)
-    with MagicMock():
-        ctx_managers = [patch(k, v) for k, v in patches.items()]
+    ctx_managers = [patch(k, v) for k, v in patches.items()]
+    for cm in ctx_managers:
+        cm.start()
+    try:
+        response = client.get('/')
+    finally:
         for cm in ctx_managers:
-            cm.start()
-        try:
-            response = client.get('/')
-        finally:
-            for cm in ctx_managers:
-                cm.stop()
+            cm.stop()
     return response
 
 
@@ -325,15 +323,17 @@ def test_reverb_label_override_duration(client, tmp_path):
 
 @patch('app.main.LABEL_TEMPLATE', 'reverb-digital-label.html')
 @patch('app.main.show_qr_code', True)
-@patch('app.main.QR_CODE_URL', 'https://example.com/work/123/')
-def test_reverb_label_qr_url(client, tmp_path):
-    """QR URL generates a QR code."""
+def test_reverb_label_qr_codes(client, tmp_path):
+    """The page carries a QR code per language, for qr-block.js to draw."""
     response = reverb_client_get(client, tmp_path)
     data = response.data.decode('utf-8')
 
     assert response.status_code == 200
     assert 'qr-block' in data
-    assert 'data-qr-svg' in data
+    playlist = json.loads(re.search(r'const json = (.*);$', data, re.M).group(1))
+    qr_codes = json.loads(playlist['qr_text'])
+    assert sorted(qr_codes) == ['en', 'hi', 'pa', 'zh-hans']
+    assert all(svg.startswith('<svg') for svg in qr_codes.values())
 
 
 def make_sync():
@@ -385,6 +385,7 @@ def test_playback_sync_receive_ignores_invalid_json():
 
 def test_playback_sync_client_context_tracks_ip():
     """client() tracks IP on enter, removes on exit."""
+    # pylint: disable=protected-access
     sync = make_sync()
     with sync.client('1.2.3.4'):
         assert '1.2.3.4' in sync._clients
@@ -443,8 +444,11 @@ def test_lifelike_label_with_mock_media_player(client, tmp_path):
 
     assert response.status_code == 200
     assert 'playback-source="/api/playback-stream/"' in data
-    assert '"duration_secs": 60.058' not in data
-    assert '"duration_secs": 110.052' not in data
+    # The label reads `video.duration_secs`; each video's own metadata keeps
+    # its real length.
+    island = re.search(r'data-prop="playlist">(.*?)</script>', data, re.S).group(1)
+    videos = [item['video'] for item in json.loads(island)['playlist_labels']]
+    assert [video['duration_secs'] for video in videos] == [60, 60, 60]
 
 
 @patch('app.main.LABEL_TEMPLATE', 'lifelike.html')
@@ -460,6 +464,21 @@ def test_lifelike_label_colours(client, tmp_path):
 
     assert '--acmi-fg: #000;' in data
     assert '--acmi-bg: oklch(90% 0.05 90);' in data
+
+
+@patch('app.main.LABEL_TEMPLATE', 'lifelike.html')
+def test_lifelike_label_rotate(client, tmp_path):
+    """LABEL_ROTATE turns the page, and an upright label is left as it is."""
+    (tmp_path / 'playlist_1.json').write_text(json.dumps(
+        {"id": 1, "title": "Test", "playlist_labels": []}))
+    with patch('app.main.CACHE_DIR', str(tmp_path) + '/'):
+        with patch('app.main.LABEL_ROTATE', 'right'):
+            turned = client.get('/').data.decode('utf-8')
+        with patch('app.main.LABEL_ROTATE', 'normal'):
+            upright = client.get('/').data.decode('utf-8')
+
+    assert '<html lang="en" data-rotate="right"' in turned
+    assert 'data-rotate=' not in upright.split('<head>')[0]
 
 
 def test_css_colour_refuses_what_could_escape_the_value(monkeypatch):
@@ -501,7 +520,7 @@ def test_dev_env_load_does_nothing_without_a_file(monkeypatch):
     assert dev_env.LOADED_KEYS not in os.environ
 
 
-class FakeClock:
+class FakeClock:  # pylint: disable=too-few-public-methods
     """A clock the test moves by hand."""
 
     def __init__(self):
@@ -543,6 +562,7 @@ def test_nightmare_room_runs_then_waits():
 
 def test_nightmare_room_acts_on_a_press_not_a_release():
     """A TouchOSC button sends 1 on press and 0 on release: only the press counts."""
+    # pylint: disable=protected-access
     room = NightmareRoom(run_seconds=600, clock=FakeClock())
 
     room._on_command('/nightmare/close', 0.0)
@@ -558,7 +578,8 @@ def test_nightmare_room_acts_on_a_press_not_a_release():
 @patch('app.main.LABEL_TEMPLATE', 'lifelike.html')
 @patch('app.main.LABEL_MODE', 'nightmare-room')
 @patch('app.main.XOS_MEDIA_PLAYER_ID', '8')
-@patch('app.main.NIGHTMARE_TEXT', {'waiting': 'In a moment.', 'running': '', 'unavailable': '', 'closed': ''})
+@patch('app.main.NIGHTMARE_TEXT',
+       {'waiting': 'In a moment.', 'running': '', 'unavailable': '', 'closed': ''})
 def test_lifelike_nightmare_room_follows_the_room(client, tmp_path):
     """The nightmare room reads the room stream, not the player's, and gets its words."""
     (tmp_path / 'playlist_1.json').write_text(json.dumps(
