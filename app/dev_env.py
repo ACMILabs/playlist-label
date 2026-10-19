@@ -1,20 +1,16 @@
 """
 Development only: the label reads its settings from `config.env` itself.
 
-Docker reads an `env_file` once, when it creates the container, so an edit
-means recreating it. Instead, the development compose file names the file in
-`CONFIG_ENV_FILE`, every process reads it when it starts, and Flask's reloader
-watches it: save the file and the server restarts with what it now says.
+Docker reads an `env_file` only when it creates the container. Instead, the
+development compose file names the file in `CONFIG_ENV_FILE`, each process
+reads it at start-up, and Flask's reloader restarts the server when it is saved.
 
-Nothing sets `CONFIG_ENV_FILE` on balena, so a device never reads a file, and
-never needs python-dotenv installed.
+Balena never sets `CONFIG_ENV_FILE`, so a device needs no python-dotenv.
 """
 import os
 
-# The keys the file set last time. The reloader starts each new server with
-# the environment of the process that watches the file, which still has every
-# key it read at first; a line since taken out of the file has to be taken
-# out of the environment too.
+# The keys the file set last time. Each reloaded server inherits the watcher's
+# environment, so a key since taken out of the file must be taken out here too.
 LOADED_KEYS = 'CONFIG_ENV_LOADED_KEYS'
 
 

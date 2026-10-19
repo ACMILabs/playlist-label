@@ -1,23 +1,20 @@
 """
 The nightmare room's mode, set from TouchOSC over OSC.
 
-The room is always in one of four modes, and its label shows which:
+The room is in one of four modes, shown on its label:
 
-- `waiting`: between runs, visitors queueing. No timer. The mode the room
-  starts in, and the one a run ends in.
-- `running`: a run is on, NIGHTMARE_RUN_MINUTES long, timed from `start`.
-  When it ends, the room goes back to waiting by itself.
-- `unavailable`: off for now. Not broken, just not running.
+- `waiting`: between runs; no timer. The room starts here, and a run ends here.
+- `running`: a run of NIGHTMARE_RUN_MINUTES, timed from `start`.
+- `unavailable`: off for now, not broken.
 - `closed`: no more runs today.
 
-TouchOSC sends a command as a message to an address under /nightmare/:
-`start` (sent again during a run, it starts the run over), `wait`,
-`unavailable` and `close`. A button sends 1 when it is pressed and 0 when it
-is let go; only the press is a command.
+Commands are OSC messages to /nightmare/<command>: `start` (during a run, it
+starts the run over), `wait`, `unavailable` and `close`. A TouchOSC button
+sends 1 on press and 0 on release; only the press counts.
 
-`/api/room-stream/` hands the mode on to the label, and while a run is on,
-its length and how far through it is, in the same shape as the media
-player's playback events: the label times a run as it times a video.
+`/api/room-stream/` sends the mode to the label and, during a run, its length
+and position in the shape of the media player's playback events, so the label
+times a run as it times a video.
 
 To send a command without TouchOSC, from the machine the label runs on:
 
@@ -34,7 +31,6 @@ from pythonosc.udp_client import SimpleUDPClient
 
 ADDRESS = '/nightmare/'
 
-# Each command, and the mode it puts the room in.
 COMMANDS = {
     'start': 'running',
     'wait': 'waiting',
@@ -75,7 +71,6 @@ class NightmareRoom:
                         'duration': self._run_seconds * 1000,
                         'playback_position': elapsed / self._run_seconds,
                     }
-                # The run is over: the room waits for the next.
                 self._mode = 'waiting'
             return {'mode': self._mode}
 
@@ -96,7 +91,7 @@ class NightmareRoom:
         return server
 
     def _on_command(self, address, *args):
-        # A button's release is a 0: only the press is a command.
+        # Ignore a button's release (0).
         if args and not args[0]:
             return
         self.command(address[len(ADDRESS):])
@@ -110,7 +105,7 @@ class NightmareRoom:
 
 
 if __name__ == '__main__':
-    from app import dev_env  # pylint: disable=import-outside-toplevel
+    from app import dev_env
 
     dev_env.load()
     PORT = int(os.getenv('OSC_PORT', '8000'))

@@ -1,21 +1,13 @@
 @import url("./fonts/fonts.css");
 @import url("./reset.css");
 
-/* Every number the lifelike labels are drawn with. Sizes are in design
-   pixels — one `--acmi-px` is one pixel of the 2160 × 3840 artwork, scaled to
-   whatever the label is really drawn at. Two layers: the scales, then what
-   each block takes from them. Change a scale to move everything, a role to
-   move one block. */
+/* Every number the lifelike labels are drawn with: the scales, then what
+   each block takes from them. Sizes are in design pixels (`--acmi-px`). */
 
-/* The two colours everything is drawn in. Registered as colours, with the
-   label's own as their initial values, so a page can set them — the server
-   does, on <html>, from LABEL_FG_COLOUR and LABEL_BG_COLOUR — and a value
-   that is not a colour falls back to these rather than leaving the label
-   with no colour at all.
-
-   Written in oklch, as every colour here is: white is #fff, the blue is
-   #225599, and the white has no hue (`none`), so a mix of the two keeps
-   the blue's. */
+/* The two colours everything is drawn in. The template sets them from
+   LABEL_FG_COLOUR and LABEL_BG_COLOUR; registered, a value that is not a
+   colour falls back to these. In oklch: the white (#fff) has no hue
+   (`none`), so a mix keeps the blue's (#225599). */
 @property --acmi-fg {
   syntax: "<color>";
   inherits: true;
@@ -29,12 +21,12 @@
 }
 
 :root {
-  /* One design pixel. `min()` fits the 2160 × 3840 artwork to the label. */
+  /* One pixel of the 2160 × 3840 artwork, fitted to the label. */
   --acmi-px: min(100cqi / 2160, 100cqb / 3840);
 
-  /* ---- Colour ----
-     --acmi-fg and --acmi-bg are registered above; the rest mix from them. */
+  /* ---- Colour ---- */
   --acmi-fg-faint: color-mix(in oklch, var(--acmi-fg) 20%, var(--acmi-bg));
+  --acmi-fg-subtle: color-mix(in oklch, var(--acmi-fg) 85%, var(--acmi-bg));
 
   /* ---- Type families ---- */
   --acmi-font-body: "FaktPro", sans-serif;
@@ -60,8 +52,7 @@
   --acmi-space-2: calc(32 * var(--acmi-px));
   --acmi-space-3: calc(64 * var(--acmi-px));
   --acmi-space-4: calc(84 * var(--acmi-px));
-  --acmi-space-5: calc(136 * var(--acmi-px));
-  --acmi-space-6: calc(240 * var(--acmi-px));
+  --acmi-space-5: calc(240 * var(--acmi-px));
 
   /* ---- Rules ---- */
   --acmi-rule-width: calc(4 * var(--acmi-px));
@@ -71,87 +62,65 @@
 /* ---- What each block takes ---- */
 
 :root {
-  /* The label: the page-sized block, and the gutter round its content. */
-  --acmi-label-padding: var(--acmi-space-6);
+  --acmi-label-padding: var(--acmi-space-5);
 
-  /* The header band: its height, the same on every label, and the
-     playlist's title inside it. */
+  /* The header band: one height on every label. */
   --acmi-header-height: calc(710 * var(--acmi-px));
   --acmi-header-gap: var(--acmi-space-3);
   --acmi-playlist-title-size: var(--acmi-text-4);
   --acmi-playlist-title-leading: var(--acmi-leading-2);
 
-  /* The timer: the ring, the time inside it, the line under it. The width
-     is the column all three sit in, a little wider than the ring, and fixed
-     so the line changing never moves the text beside it. */
+  /* The timer's column: a little wider than the ring, and fixed so the line
+     changing never moves the text beside it. */
   --acmi-timer-size: calc(260 * var(--acmi-px));
   --acmi-timer-width: calc(286 * var(--acmi-px));
-  /* In the ring's own units, not design pixels: its viewBox is 108 across,
-     so 4 draws about 9.6 design pixels wide at 260. */
+  /* In the ring's viewBox units (108 across), not design pixels: 4 draws
+     about 9.6 design pixels wide at 260. */
   --acmi-timer-ring-width: 4;
   --acmi-timer-track: var(--acmi-fg-faint);
   --acmi-timer-gap: var(--acmi-space-3);
   --acmi-timer-elapsed-size: var(--acmi-text-3);
   --acmi-timer-line-size: var(--acmi-text-2);
   --acmi-timer-line-leading: var(--acmi-leading-4);
-  /* How long the line's number takes to fade from one to the next. */
-  --acmi-caption-fade: 400ms;
+  --acmi-caption-fade: 400ms; /* a number in the line, old to new */
 
-  /* The title. */
   --acmi-title-size: var(--acmi-display-2);
   --acmi-title-leading: var(--acmi-leading-3);
   --acmi-title-space-after: var(--acmi-space-2);
 
-  /* The tombstone: the credit, then the duration. */
   --acmi-tombstone-size: var(--acmi-text-4);
   --acmi-tombstone-leading: var(--acmi-leading-2);
   --acmi-tombstone-space-after: var(--acmi-space-4);
 
-  /* The description. */
   --acmi-description-size: var(--acmi-text-5);
   --acmi-description-leading: var(--acmi-leading-4);
   --acmi-description-space-after: var(--acmi-space-4);
 
-  /* The additional info rows: icon, then text. */
   --acmi-info-size: var(--acmi-text-4);
   --acmi-info-leading: var(--acmi-leading-2);
   --acmi-info-icon-size: calc(160 * var(--acmi-px));
   --acmi-info-row-gap: calc(72 * var(--acmi-px));
   --acmi-info-icon-gap: var(--acmi-space-3);
 
-  /* The qr block: the code, and the icon and line beside it. */
   --acmi-qr-size: calc(172 * var(--acmi-px));
   --acmi-qr-info-size: var(--acmi-text-1);
   --acmi-qr-icon-size: calc(82 * var(--acmi-px));
   --acmi-qr-gap: var(--acmi-space-2);
   --acmi-qr-space-before: var(--acmi-space-4);
 
-  /* Playlist entries: the status line, and the gap between entries. */
   --acmi-entry-status-size: var(--acmi-text-3);
   --acmi-entry-status-space-after: var(--acmi-space-1);
-  --acmi-entry-gap: var(--acmi-space-4);
+  --acmi-entry-gap: var(--acmi-space-3);
   --acmi-entry-title-size: var(--acmi-display-1);
+  --acmi-entry-upcoming-colour: var(--acmi-fg-subtle);
 
-  /* Rotating: the label moving on to the next work. The statuses, and
-     what is leaving, fade out; then each slot's work moves up, a stagger
-     after the slot above; then its body, and the work arriving at the
-     foot, fade in; then the statuses, a stagger apart. */
+  /* Rotating: see Rotating in style.css. */
   --acmi-rotation-fade: 600ms;
   --acmi-rotation-move: 1200ms;
   --acmi-rotation-stagger: 100ms;
   --acmi-rotation-easing: ease-in-out;
 
-  /* The nightmare room. Its info, inside the header band: the mode's text,
-     where it sat under a playlist's title, and lower while the room waits.
-     Its title: big and red, between a rule above and one below, with a
-     glow round it, which pulses between two sizes while a run is on. How
-     far the work fades while the room is unavailable or closed, and how
-     long the label takes to fade from one mode to the next. */
-  --acmi-nightmare-info-size: var(--acmi-display-1);
-  --acmi-nightmare-info-leading: var(--acmi-leading-3);
-  --acmi-nightmare-info-gap: var(--acmi-space-3);
-  --acmi-nightmare-info-top: calc(136 * var(--acmi-px));
-  --acmi-nightmare-waiting-drop: calc(120 * var(--acmi-px));
+  /* The nightmare room: see Nightmare room in style.css. */
   --acmi-nightmare-title-size: calc(280 * var(--acmi-px));
   --acmi-nightmare-title-colour: oklch(50.24% 0.2044 26.46); /* #bd0016 */
   --acmi-nightmare-title-rule: var(--acmi-rule);
@@ -162,6 +131,16 @@
   --acmi-nightmare-glow-low: calc(1 * var(--acmi-px));
   --acmi-nightmare-glow-high: calc(4 * var(--acmi-px));
   --acmi-nightmare-pulse-duration: 3s; /* each way */
+  --acmi-nightmare-fog-colour: color-mix(in oklch, var(--acmi-fg) 35%, transparent);
+  --acmi-nightmare-fog-reach: var(--acmi-space-4); /* past the title's rules */
+  --acmi-nightmare-fog-drift: 45s; /* the faster layer, across the label */
+  --acmi-nightmare-fog-swell: 8s; /* each way */
+  --acmi-nightmare-info-size: var(--acmi-display-1);
+  --acmi-nightmare-info-leading: var(--acmi-leading-3);
+  --acmi-nightmare-info-padding: var(--acmi-space-3);
+  --acmi-nightmare-info-border: var(--acmi-fg);
+  --acmi-nightmare-info-border-width: var(--acmi-rule-width);
+  --acmi-nightmare-info-space-after: var(--acmi-nightmare-title-space-after);
   --acmi-nightmare-fade: 800ms; /* from one mode to the next */
-  --acmi-nightmare-off-opacity: 0.6;
+  --acmi-nightmare-off-opacity: 0.6; /* the work, while unavailable or closed */
 }

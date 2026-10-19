@@ -444,8 +444,7 @@ def test_lifelike_label_with_mock_media_player(client, tmp_path):
 
     assert response.status_code == 200
     assert 'playback-source="/api/playback-stream/"' in data
-    # The label reads `video.duration_secs`; each video's own metadata keeps
-    # its real length.
+    # The label reads each item's `video.duration_secs`.
     island = re.search(r'data-prop="playlist">(.*?)</script>', data, re.S).group(1)
     videos = [item['video'] for item in json.loads(island)['playlist_labels']]
     assert [video['duration_secs'] for video in videos] == [60, 60, 60]
@@ -591,6 +590,7 @@ def test_lifelike_nightmare_room_follows_the_room(client, tmp_path):
     assert 'room-source="/api/room-stream/"' in data
     assert 'playback-source' not in data
     assert '"nightmare_text": {"waiting": "In a moment."}' in data
+    assert '--acmi-bg: oklch(0% 0 none);' in data
 
 
 def test_room_stream_is_missing_when_the_label_is_no_room(client):

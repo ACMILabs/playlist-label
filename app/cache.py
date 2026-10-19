@@ -1,4 +1,5 @@
-import json.decoder
+import glob
+import json
 import os
 
 import requests
@@ -20,23 +21,35 @@ sentry_sdk.init(dsn=SENTRY_ID)
 def create_cache():
     """
     Fetches a Playlist from XOS and saves it to the CACHE_DIR.
+
+    An XOS error, a timeout or a reply that is not a playlist keeps the cached one.
     """
     try:
-        playlist_label_json = requests.get(
+        response = requests.get(
             f'{XOS_API_ENDPOINT}playlists/{XOS_PLAYLIST_ID}/',
             timeout=5,
-        ).json()
-
-        if CACHE_DIR:
-            for old_file in os.listdir(CACHE_DIR):
-                os.remove(CACHE_DIR + old_file)
-
-        with open(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}', 'w') as outfile:
-            json.dump(playlist_label_json, outfile)
-
-    except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError) as exception:
+        )
+        response.raise_for_status()
+        playlist_label_json = response.json()
+        if not isinstance(playlist_label_json, dict) or \
+                not isinstance(playlist_label_json.get('playlist_labels'), list):
+            raise ValueError(f'not a playlist: {str(playlist_label_json)[:200]}')
+    except (requests.exceptions.RequestException, ValueError) as exception:
         sentry_sdk.capture_exception(exception)
         print(f'Error downloading playlist JSON from XOS: {exception}')
+        return
+
+    # Written whole, then moved into place, so the label never reads half a
+    # file, even if the power goes mid-write.
+    cache_path = f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}'
+    with open(f'{cache_path}.tmp', 'w', encoding='utf-8') as outfile:
+        json.dump(playlist_label_json, outfile)
+    os.replace(f'{cache_path}.tmp', cache_path)
+
+    # Playlists cached under an earlier XOS_PLAYLIST_ID.
+    for old_file in glob.glob(f'{CACHE_DIR}playlist_*.json'):
+        if old_file != cache_path:
+            os.remove(old_file)
 
 
 if __name__ == '__main__':

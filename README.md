@@ -32,7 +32,7 @@ The server reads `config.env` itself and restarts when you save it, so a change 
 
 To see the timer without a media player, set `MOCK_MEDIA_PLAYER=true` in `config.env`. A stand-in plays the cached playlist on a loop into `/api/playback-stream/`, and each video lasts `MOCK_VIDEO_SECONDS` (default `60`). It works for the templates that read the playback stream.
 
-To change the lifelike label's colours, set `LABEL_FG_COLOUR` (text) and `LABEL_BG_COLOUR` (background) to any CSS colour, for example `#000` or `oklch(40% 0.1 250)`. If a value is not a colour, the label keeps its own.
+To change the lifelike label's colours, set `LABEL_FG_COLOUR` (text) and `LABEL_BG_COLOUR` (background) to any CSS colour, for example `#000` or `oklch(40% 0.1 250)`. If a value is not a colour, the label keeps its own. The nightmare room's own background is black, so its red title stands out; `LABEL_BG_COLOUR` still takes its place.
 
 To show the lifelike label on a screen mounted on its side, set `LABEL_ROTATE` to `right` (a quarter turn clockwise), `left` (anticlockwise) or `inverted`, and leave the browser's `ROTATE_DISPLAY` at `normal`. The page turns itself, as part of drawing each frame, with the same meaning as `ROTATE_DISPLAY`: a screen that used `ROTATE_DISPLAY=right` takes `LABEL_ROTATE=right`. When X turns the screen instead, it turns every whole 4K frame again after the browser has drawn it, which on a Raspberry Pi 5 halves the frame rate of the label's transitions. A quarter turn moves each pixel onto exactly one other pixel, so the text is just as sharp. The default is `normal`.
 
@@ -43,10 +43,9 @@ With `LABEL_TEMPLATE=lifelike.html` and `LABEL_MODE=nightmare-room`, the label f
 | Address | Mode | What the label shows |
 | --- | --- | --- |
 | `/nightmare/start` | running | The running text and a timer. The run lasts `NIGHTMARE_RUN_MINUTES` (default `10`), then the room goes back to waiting by itself. Sending it during a run starts the run again. |
-| `/nightmare/wait` | waiting | The waiting text, a little lower, and no timer. The room starts in this mode. |
+| `/nightmare/wait` | waiting | The waiting text, and no timer. The room starts in this mode. |
 | `/nightmare/unavailable` | unavailable | The unavailable text, with the work faded a little. |
 | `/nightmare/close` | closed | The closed text, with the work faded a little. |
-
 
 ## Run tests locally
 

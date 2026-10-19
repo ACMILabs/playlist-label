@@ -1,11 +1,9 @@
 """
 A stand-in for the media player, for trying a label without one.
 
-`MOCK_MEDIA_PLAYER=true` starts it in place of the MQTT connection. It plays
-the cached playlist on a loop, every labelled item `MOCK_VIDEO_SECONDS` long,
-and hands `PlaybackSync` the message the real player would publish, once a
-second. Everything downstream of that — `/api/playback-stream/`, the label's
-timer, the playlist moving on — runs as it does with a real player.
+`MOCK_MEDIA_PLAYER=true` starts it in place of the MQTT connection. It loops
+the cached playlist, every labelled item `MOCK_VIDEO_SECONDS` long, and once a
+second hands `PlaybackSync` the message the real player would publish.
 """
 import json
 import threading
@@ -34,10 +32,7 @@ class MockMediaPlayer:
             time.sleep(1)
 
     def label_ids(self):
-        """
-        The labelled items' ids, in playing order: the items the label shows.
-        Read every time, so a playlist cached again plays from then on.
-        """
+        """The labelled items' ids, in order. Read each time, so a new cache takes effect."""
         try:
             with open(self._playlist_path, encoding='utf-8') as playlist_file:
                 items = json.load(playlist_file).get('playlist_labels', [])
@@ -47,9 +42,8 @@ class MockMediaPlayer:
 
     def message_at(self, label_ids, elapsed):
         """
-        What the player would publish `elapsed` seconds after it started, or
-        None with nothing to play. Only the three fields the playback stream
-        forwards: duration in milliseconds, as the real player sends it.
+        What the player would publish `elapsed` seconds in, or None with nothing
+        to play: only the fields the playback stream forwards, duration in ms.
         """
         if not label_ids:
             return None

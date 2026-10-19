@@ -4,8 +4,8 @@ import { atom, onMount } from "nanostores";
 
 /**
  * `/api/playback-stream/` and `/api/room-stream/` send their events
- * unnamed, so `EventSource` hands them over as `message`. Comments, which
- * the room stream sends to keep its connection honest, are invisible to it.
+ * unnamed, so `EventSource` hands them over as `message`. The room stream's
+ * keep-alive comments never reach it.
  */
 const PLAYBACK_EVENT = "message";
 const MS_PER_MINUTE = 60000;
@@ -30,11 +30,10 @@ const RING_STEP = 1 / 2000;
 
 // ---- Time, as text ----
 
-// Every string in the label that names a length of time is written here, so
-// they all round the same way and all read the same way. Components take the
-// number of seconds and call these; nothing else formats a duration.
+// Every length of time the label shows is written here, so they all round
+// and read the same way.
 
-/** Whole minutes, never fewer than one. Under a minute still reads "1 minute". */
+/** Whole minutes, never fewer than one. */
 export function minutesText(seconds) {
   const minutes = Math.max(1, Math.floor(seconds / 60));
   return `${minutes} minute${minutes === 1 ? "" : "s"}`;
@@ -47,9 +46,8 @@ export function durationText(seconds) {
 }
 
 /**
- * When a work further down the playlist comes round. Inside the last minute
- * the number stops being useful, so it stops being given. Nothing at all
- * when no time is known — no stream yet, or the player has gone quiet.
+ * When a work further down the playlist comes round: "Starts soon" inside
+ * the last minute, and nothing when no time is known.
  */
 export function startsInText(seconds) {
   if (!Number.isFinite(seconds)) return "";
@@ -63,10 +61,7 @@ export function restartText(seconds) {
   return `Starts again in ${minutesText(seconds)}`;
 }
 
-/**
- * The same line on a playlist, where "again" means after everything else
- * has played: the rest of this work, then every other work in the loop.
- */
+/** The same line on a playlist, where "again" means after every other work. */
 export function loopText(seconds) {
   if (!Number.isFinite(seconds)) return "";
   return `This work starts again in ${minutesText(seconds)}`;
@@ -109,7 +104,7 @@ export function readPlaybackEvent(data) {
 }
 
 /** The nightmare room's modes. See `app/nightmare_room.py`. */
-export const ROOM_MODES = ["waiting", "running", "unavailable", "closed"];
+const ROOM_MODES = ["waiting", "running", "unavailable", "closed"];
 
 /**
  * @typedef {{ mode: string, durationMs?: number, position?: number }} RoomSnapshot
@@ -117,8 +112,8 @@ export const ROOM_MODES = ["waiting", "running", "unavailable", "closed"];
 
 /**
  * Reads one event from the room stream: the room's mode, and while a run is
- * on, its length and how far through, as a playback event carries them.
- * Nothing for an event it cannot read.
+ * on, its clock, as a playback event carries it. Nothing for an event it
+ * cannot read.
  *
  * @param {string} data
  * @returns {RoomSnapshot | undefined}
@@ -139,8 +134,8 @@ export function readRoomEvent(data) {
 
 /**
  * How far through the work, as a ratio of its duration, `sinceMs` after the
- * snapshot. A work that loops comes round to the start again; one that
- * does not stops at the end, until the player says what plays next.
+ * snapshot. A work that loops comes round again; one that does not stops at
+ * the end.
  *
  * @param {PlaybackSnapshot} snapshot
  * @param {number} sinceMs
@@ -168,9 +163,6 @@ export function toTimerDisplay(snapshot) {
   const minutes = Math.floor(elapsedMs / MS_PER_MINUTE);
   const seconds = Math.floor(elapsedMs / MS_PER_SECOND) % 60;
 
-  // Whole seconds, so this changes once a second rather than once a frame.
-  // The start times down a playlist come from it, through the label's
-  // `seconds-until-next`, and are only worked out again when it moves.
   const remainingSeconds = Math.round((snapshot.durationMs - elapsedMs) / MS_PER_SECOND);
 
   return {
@@ -221,15 +213,13 @@ export function roomSnapshotStore($source) {
 }
 
 /**
- * The latest event from a server-sent event stream, as `read` reads it.
+ * The latest event from a server-sent event stream, as `read` reads it. The
+ * connection is open only while something listens and there is a source, so
+ * a label with no media player never connects.
  *
- * The store opens the connection when something listens and closes it when
- * the last listener goes, which is how a label with no media player behaves:
- * the server renders no attribute, so nothing here ever opens.
- *
- * `EventSource` opens the stream again by itself after a dropped connection,
- * but gives up for good on an error response — a 500 while the server
- * restarts, say. A kiosk is never reloaded, so this opens it again instead.
+ * `EventSource` reconnects by itself after a dropped connection, but gives up
+ * for good on an error response — a 500 while the server restarts, say. A
+ * kiosk is never reloaded, so this opens it again instead.
  *
  * @template T
  * @param {import("nanostores").ReadableAtom<string>} $source
@@ -273,8 +263,7 @@ function streamStore($source, read) {
       clearTimeout(reconnect);
       stream?.close();
       stream = undefined;
-      // A new source knows nothing yet, and no source knows nothing at all:
-      // either way the last snapshot is not this player's.
+      // New source or none, the last snapshot is not this player's.
       $snapshot.set(undefined);
       if (source) connect(source);
     });
@@ -306,17 +295,14 @@ function looksTheSame(a, b) {
 
 /**
  * The timer, worked out every frame while there is something to draw, but
- * only passed on when it would draw differently. The ring moves about a
- * design pixel a second, so most frames would redraw it, and everything
- * downstream of it, for a fraction of one.
- *
- * The loop stops once the timer reads nothing — no snapshot yet, or the
- * player has gone quiet — and starts again on the next snapshot, so a label
- * without playback costs no frames.
+ * only passed on when it would draw differently: the ring moves about a
+ * design pixel a second, so most frames would redraw it for a fraction of
+ * one. The loop stops once the timer reads nothing and starts again on the
+ * next snapshot, so a label without playback costs no frames.
  *
  * @param {import("nanostores").ReadableAtom<PlaybackSnapshot | undefined>} $snapshot
  * @param {{ loops?: boolean }} [options] whether the work comes round again
- *   by itself — a single work does; a playlist's moves on to the next
+ *   by itself
  * @returns {import("nanostores").ReadableAtom<TimerDisplay | undefined>}
  */
 export function timerDisplayStore($snapshot, { loops = true } = {}) {

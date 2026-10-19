@@ -6,8 +6,7 @@ volumes:
 
 services:
   browser:
-    # Built from ./browser rather than pulled from a registry so we can layer in
-    # socat and the debug startup script on top of the balena browser base image.
+    # Built locally to add socat and the debug script to the balena browser image.
     build: ./browser
     container_name: browser
     privileged: true
@@ -19,16 +18,13 @@ services:
       ENABLE_GPU: "1"
       FORCE_VULKAN: "1"
       EXTRA_FLAGS: "--remote-allow-origins=*"
-      # Tells the balena browser base image to enable the Chrome DevTools Protocol
-      # (CDP) on this internal port.  The debug startup script (run_debug.sh) then
-      # proxies it out to the external port 9222 when DEBUG=true.
+      # Chrome DevTools Protocol (CDP) on this internal port; run_debug.sh
+      # proxies it out to 9222 when DEBUG=true.
       REMOTE_DEBUG_PORT: "35173"
     ports:
-      # Chrome DevTools Protocol — connect Chrome DevTools or Playwright here
-      # when DEBUG=true.  socat inside the container forwards 9222 → 35173.
+      # CDP through the socat proxy, when DEBUG=true.
       - "9222:9222"
-      # Direct CDP port (also exposed so tools that want the raw internal port
-      # can connect without going through the socat proxy).
+      # CDP directly, without the proxy.
       - "35173:35173"
       - "5011:5011"
 
@@ -38,16 +34,10 @@ services:
     ports:
       - "8081:801"
       - "8000:8000/udp"
-    privileged: true
     volumes:
       - 'data:/data'
     environment:
-      - UDEV=1
       - TZ=Australia/Melbourne
+    # Unprivileged: scripts/pi.sh needs only the supervisor api, for the daily reboot.
     labels:
-      io.balena.features.kernel-modules: '1'
-      io.balena.features.firmware: '1'
-      io.balena.features.dbus: '1'
       io.balena.features.supervisor-api: '1'
-      io.balena.features.balena-api: '1'
-      io.balena.features.sysfs: '1'

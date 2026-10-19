@@ -105,18 +105,6 @@ describe("acmi-digital-label", () => {
     });
   });
 
-  describe("Works with JS-only attribute (no Jinja)", () => {
-    it("renders correctly when data-label-json is set via JS setAttribute", () => {
-      const elem = makeElement();
-      elem.setAttribute("data-label-json", JSON.stringify(playlistJson));
-
-      expect(elem.querySelector(".title").textContent).toBe("Default playlist");
-      expect(elem.querySelector(".body-copy").innerHTML).toContain(
-        "Music video"
-      );
-    });
-  });
-
   describe("playbackSignal sets timer attributes", () => {
     it("sets data-video-duration and data-video-start-time on timer when playbackSignal updates", () => {
       const elem = makeElement(true, { "data-xos-media-player": "player1" });

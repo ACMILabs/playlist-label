@@ -84,6 +84,25 @@ describe("Signals", () => {
       y.value = 2;
       expect(result.value).toBe(13); // 5 + 2*4
     });
+
+    it("should recompute with single dependency", () => {
+      const x = signal(5);
+      const double = computed(() => x.value * 2, [x]);
+      expect(double.value).toBe(10);
+      x.value = 7;
+      expect(double.value).toBe(14);
+      x.value = 0;
+      expect(double.value).toBe(0);
+    });
+
+    it("should recompute with chain of computed signals", () => {
+      const a = signal(2);
+      const b = computed(() => a.value * 2, [a]);
+      const c = computed(() => b.value + 1, [b]);
+      expect(c.value).toBe(5); // (2*2)+1
+      a.value = 3;
+      expect(c.value).toBe(7); // (3*2)+1
+    });
   });
 
   describe("effect", () => {
@@ -114,18 +133,6 @@ describe("Signals", () => {
       const calls = [];
       const cleanup = effect([s], () => calls.push(s.value));
       expect(typeof cleanup).toBe("function");
-      expect(calls).toEqual([1]);
-      s.value = 2;
-      expect(calls).toEqual([1, 2]);
-      cleanup();
-      s.value = 3;
-      expect(calls).toEqual([1, 2]);
-    });
-
-    it("should stop re-running after cleanup is called", () => {
-      const s = signal(1);
-      const calls = [];
-      const cleanup = effect([s], () => calls.push(s.value));
       expect(calls).toEqual([1]);
       s.value = 2;
       expect(calls).toEqual([1, 2]);
@@ -168,60 +175,14 @@ describe("Signals", () => {
       // With no dependencies, effect is never called (no listeners registered)
       expect(calls).toEqual([]);
     });
-  });
-
-  describe("Effect cleanup stops re-runs", () => {
-    it("should stop re-running after cleanup is called", () => {
-      const s = signal(1);
-      const calls = [];
-      const cleanup = effect([s], () => calls.push(s.value));
-      expect(calls).toEqual([1]);
-      s.value = 2;
-      expect(calls).toEqual([1, 2]);
-      cleanup();
-      s.value = 3;
-      expect(calls).toEqual([1, 2]);
-    });
 
     it("should allow multiple cleanup calls without error", () => {
       const s = signal(1);
       const calls = [];
       const cleanup = effect([s], () => calls.push(s.value));
       cleanup();
-      cleanup(); // Should not error
+      cleanup();
       expect(calls).toEqual([1]);
-    });
-  });
-
-  describe("Computed recomputes on declared dep change", () => {
-    it("should recompute when a declared dep changes", () => {
-      const a = signal(3);
-      const b = signal(4);
-      const sum = computed(() => a.value + b.value, [a, b]);
-      expect(sum.value).toBe(7);
-      a.value = 10;
-      expect(sum.value).toBe(14);
-      b.value = 1;
-      expect(sum.value).toBe(11);
-    });
-
-    it("should recompute with single dependency", () => {
-      const x = signal(5);
-      const double = computed(() => x.value * 2, [x]);
-      expect(double.value).toBe(10);
-      x.value = 7;
-      expect(double.value).toBe(14);
-      x.value = 0;
-      expect(double.value).toBe(0);
-    });
-
-    it("should recompute with chain of computed signals", () => {
-      const a = signal(2);
-      const b = computed(() => a.value * 2, [a]);
-      const c = computed(() => b.value + 1, [b]);
-      expect(c.value).toBe(5); // (2*2)+1
-      a.value = 3;
-      expect(c.value).toBe(7); // (3*2)+1
     });
   });
 });

@@ -1,18 +1,14 @@
 @import url("./tokens.css");
 
-/* Every style for the lifelike labels lives here. The custom elements render
-   into the light dom, so each element is its own root: `acmi-title` is the
-   selector. Parts inside an element keep a block__part class. */
+/* Styles for the lifelike labels. The custom elements render into the
+   light dom, so an element is styled by its tag (`acmi-title`) and its
+   parts by block__part classes. */
 
 [hidden] {
   display: none !important;
 }
 
-/* ---- The label ----
 
-   The wrapper is not a box: the label inside it is the container every
-   design pixel is measured against, and sizes from the page. Swapping
-   labels must not move anything. */
 
 acmi-lifelike-label {
   display: contents;
@@ -27,8 +23,8 @@ acmi-nightmare-room {
   aspect-ratio: 2160 / 3840;
 }
 
-/* A word too long for its line — a url in a description — breaks rather
-   than running out sideways, where nothing clips it. */
+/* A word too long for its line (a url) breaks rather than running out
+   sideways, where nothing clips it. */
 .acmi-label {
   block-size: 100%;
   padding: var(--acmi-label-padding);
@@ -38,14 +34,7 @@ acmi-nightmare-room {
   overflow-wrap: break-word;
 }
 
-/* Copy too long for the label is cut, not scrolled: the kiosk cannot
-   scroll. It is cut at the foot of the content, inside the label's margin.
 
-   A label with a qr code keeps the code fixed at that foot, whatever the
-   copy does: the block above it fills the room left there and no more, so
-   copy too long for that room runs on down over the code — drawn above it,
-   to be read — until the foot cuts it off. `labelShell` warns in the
-   console when copy runs past its room. */
 .acmi-label__content {
   display: flex;
   flex-direction: column;
@@ -87,11 +76,8 @@ acmi-icon > svg {
 
 /* ---- Timer ----
 
-   The ring, the time inside it, the line under it.
-
-   Its figures are all one width, so the time, centred in the ring, does
-   not shift sideways as it counts — "1:11" is as wide as "8:08" — and a
-   number in the line fades into the next without changing width. */
+   Tabular figures, so the time does not shift sideways in the ring as it
+   counts, and a number in the line fades into the next at the same width. */
 
 acmi-timer {
   display: grid;
@@ -130,8 +116,7 @@ acmi-timer {
   text-box: trim-both cap alphabetic;
 }
 
-/* Never less than two lines high, so an entry does not shrink when its
-   line comes down to one — "Starts soon". */
+
 .acmi-timer__line {
   grid-area: line;
   min-block-size: 2lh;
@@ -142,9 +127,7 @@ acmi-timer {
   line-height: var(--acmi-timer-line-leading);
 }
 
-/* A number in the line: when a minute goes by, the new number is written
-   in the same cell as the old, and fades in as the old fades out and goes
-   (see `setCaption`). */
+
 .acmi-timer__number {
   display: inline-grid;
   justify-items: center;
@@ -194,8 +177,7 @@ acmi-tombstone {
   margin: 0;
 }
 
-/* The credit is the cms's own markup, a paragraph or two: its first and
-   last lose the margins that would push the tombstone apart. */
+
 .acmi-tombstone__credit > :first-child {
   margin-block-start: 0;
 }
@@ -248,12 +230,7 @@ acmi-info-entry {
   text-box: trim-both cap alphabetic;
 }
 
-/* ---- Header ----
 
-   A band of fixed height across the top of every label. A playlist's own
-   title sits in its top left — only a playlist has one. A single work and
-   a playlist put the timer of the work playing now in the top right; the
-   nightmare room fills the band with its info. */
 
 .acmi-header {
   display: grid;
@@ -286,21 +263,6 @@ acmi-playlist-title {
   grid-row: 1 / -1;
 }
 
-.acmi-header__info {
-  grid-column: 1 / -1;
-  grid-row: 1 / -1;
-}
-
-/* ---- Qr block ----
-
-   The code, and beside it the captions icon and one line, in a row,
-   centred on the code. The svg's colours are the label's, through
-   --figure / --ground.
-
-   It sits at the foot of the label, fixed, whatever the copy above it
-   does, with copy too long for its room drawn over it (see
-   `.acmi-label__fill`). It takes no part in a rotation: it stays drawn
-   live, under the transition. */
 
 acmi-qr-block {
   --figure: var(--acmi-fg);
@@ -349,10 +311,7 @@ acmi-work-body {
   display: block;
 }
 
-/* ---- Single work ----
-
-   The body block under the header, with the qr code pinned to its foot:
-   the work fills the room above it (`acmi-label__fill`). */
+/* ---- Single work ---- */
 
 .acmi-body-block {
   display: flex;
@@ -361,10 +320,7 @@ acmi-work-body {
   min-block-size: 0;
 }
 
-/* ---- Playlist ----
-
-   The entries stack from the top, filling the room above the qr code at
-   the foot (`acmi-label__fill`). */
+/* ---- Playlist ---- */
 
 acmi-playlist-entries {
   display: flex;
@@ -374,11 +330,9 @@ acmi-playlist-entries {
 
 /* ---- Playlist entry ----
 
-   The status line across the top, then the body on the left and the timer
-   in the right column. Every kind is the same grid: an entry that is not
-   playing yet just has less in its body, and the one playing now has no
-   timer of its own — the header has it — so its body takes both columns
-   for the description. */
+   The status across the top, the body left, the timer right. The entry
+   playing now has no timer (the header has it), so its body takes both
+   columns for the description. */
 
 acmi-playlist-entry {
   display: grid;
@@ -401,6 +355,11 @@ acmi-playlist-entry + acmi-playlist-entry {
   border-block-start: var(--acmi-rule-width) solid var(--acmi-rule);
 }
 
+
+acmi-playlist-entry:not([data-kind="current"]) {
+  color: var(--acmi-entry-upcoming-colour);
+}
+
 .acmi-playlist-entry__status {
   grid-area: status;
   margin: 0;
@@ -419,10 +378,7 @@ acmi-playlist-entry + acmi-playlist-entry {
   grid-area: timer;
 }
 
-/* The title and tombstone look the same in every entry: the title at the
-   size of a list item, and both at the width they have beside a timer,
-   even in the entry playing now, which has none. So a work moves up the
-   list without its title or credit changing size or wrapping anew. */
+
 acmi-playlist-entry .acmi-title__heading {
   font-size: var(--acmi-entry-title-size);
   line-height: var(--acmi-leading-1);
@@ -436,40 +392,7 @@ acmi-playlist-entry:not([data-kind="current"]) acmi-tombstone {
   margin-block-end: 0;
 }
 
-/* ---- Rotating ----
 
-   When the playlist moves on, the label changes inside a view transition
-   (see `acmi-playlist-entry` and `acmi-lifelike-label`). A work's title,
-   tombstone and ring are named by the work, look the same in every slot,
-   and move up with it — the ring of the work up next on up into the
-   header. Everything else — the statuses, the rules, the description, and
-   the work that finished — has nothing to pair with, so it fades.
-
-   In order:
-   1. the statuses, and everything else leaving, fade out together;
-   2. each slot's work moves up, a stagger after the slot above;
-   3. once a slot has stopped, its body and rule fade in, and the work
-      come round to the foot with them;
-   4. last, the statuses fade in, a stagger apart.
-
-   Each part carries its slot as a class, which sets --acmi-slot for its
-   pseudo-elements, and each slot works out its own moments from it. A
-   browser without the class selector drops those rules: everything moves
-   at once, and the statuses come back with the bodies.
-
-   All of it is the playlist's own: the other labels keep a plain
-   crossfade (see Nightmare room).
-
-   The moving parts are drawn over the page, where the clip at the foot of
-   the content does not reach them, so the whole transition is cut off
-   there instead: `acmi-lifelike-label` measures the gap below the content,
-   on whichever side of the screen LABEL_ROTATE turned it to, into
-   --acmi-transition-clip before it starts one. The page shows through
-   everywhere the transition draws nothing, drawn live — the qr code with
-   it. And the page itself is not
-   pictured at all: everything in a playlist that changes is named, so a
-   picture of the rest would only fade into itself, a whole 4K screen of
-   it, for nothing. */
 
 html:has(acmi-playlist-work) {
   view-transition-name: none;
@@ -531,57 +454,16 @@ html:has(acmi-playlist-work)::view-transition-new(*.acmi-status):only-child {
   --acmi-slot: 7;
 }
 
-/* ---- Nightmare room ----
 
-   The room carries its mode as `data-state` — waiting, running,
-   unavailable or closed — set from TouchOSC (see `acmi-nightmare-room`).
-
-   Its info fills the header band: the mode's text, where it sat under a
-   playlist's title, and the timer beside it while a run is on. While the
-   room waits there is no timer, and the text sits a little lower. */
-
-acmi-nightmare-info {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  column-gap: var(--acmi-nightmare-info-gap);
-  align-items: start;
-  padding-block-start: var(--acmi-nightmare-info-top);
-}
-
-/* With no timer beside it, the text has the whole band, so it centres on
-   the label, under the title, not short of a gap kept for a timer. */
-acmi-nightmare-room:not([data-state="running"]) acmi-nightmare-info {
-  grid-template-columns: 1fr;
-  text-align: center;
-}
-
-acmi-nightmare-room[data-state="waiting"] acmi-nightmare-info {
-  padding-block-start: calc(
-    var(--acmi-nightmare-info-top) + var(--acmi-nightmare-waiting-drop)
-  );
-}
-
-.acmi-nightmare-info__text {
-  margin: 0;
-  font-family: var(--acmi-font-display);
-  font-size: var(--acmi-nightmare-info-size);
-  line-height: var(--acmi-nightmare-info-leading);
-  text-transform: uppercase;
-  text-wrap: balance;
-}
-
-/* A rule above the title and one below, the title between them trimmed to
-   its capitals, so the gap to each rule is the gap you see. The space
-   before the work goes after the lower rule. */
 acmi-nightmare-room acmi-title {
+  position: relative;
   margin-block-end: var(--acmi-nightmare-title-space-after);
   padding-block: var(--acmi-nightmare-title-rule-gap);
   border-block: var(--acmi-nightmare-title-rule-width) solid
     var(--acmi-nightmare-title-rule);
 }
 
-/* The title: big, red, centred, in capitals, with a glow round it in its
-   own colour, --acmi-nightmare-glow. */
+/* Positioned and isolated to hold the pulsing glow (::after) behind it. */
 acmi-nightmare-room .acmi-title__heading {
   position: relative;
   isolation: isolate;
@@ -596,12 +478,7 @@ acmi-nightmare-room .acmi-title__heading {
     0 0 calc(3 * var(--acmi-nightmare-glow)) var(--acmi-nightmare-title-colour);
 }
 
-/* While a run is on, the glow pulses: it drops to --acmi-nightmare-glow-low,
-   and a second glow, --acmi-nightmare-glow-high, rises and falls behind it.
-   That second glow is the title's words again, from `data-text`, drawn in
-   no colour so only their glow shows, and drawn once: only its opacity
-   moves, which the compositor does on its own. Animating the blur itself
-   would redraw the whole title every frame of every run. */
+
 acmi-nightmare-room .acmi-title__heading::after {
   content: attr(data-text);
   position: absolute;
@@ -634,15 +511,82 @@ acmi-nightmare-room[data-state="running"] .acmi-title__heading::after {
   }
 }
 
-/* Unavailable or closed, the room's own text stays as it is, and the work
-   under it fades a little. */
+/* Fog across the title while a run is on: two layers, each twice the
+   label's width, so drifting by half loops seamlessly. The second is
+   flipped, takes half as long again, and swells out of step. It comes and
+   goes with the mode's crossfade. */
+acmi-nightmare-room[data-state="running"] acmi-title::before,
+acmi-nightmare-room[data-state="running"] acmi-title::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset-block: calc(-1 * var(--acmi-nightmare-fog-reach));
+  inset-inline-start: calc(-1 * var(--acmi-label-padding));
+  inline-size: calc(2 * (100% + 2 * var(--acmi-label-padding)));
+  background: var(--acmi-nightmare-fog-colour);
+  mask:
+    url("./fog.svg") 0 0 / 50% 100% repeat-x,
+    linear-gradient(transparent, #000 30%, #000 70%, transparent);
+  mask-composite: intersect;
+  pointer-events: none;
+  animation:
+    acmi-nightmare-fog-drift var(--acmi-nightmare-fog-drift) linear infinite,
+    acmi-nightmare-fog-swell var(--acmi-nightmare-fog-swell) ease-in-out
+      infinite alternate backwards;
+}
+
+acmi-nightmare-room[data-state="running"] acmi-title::after {
+  scale: 1 -1;
+  animation-duration: calc(1.5 * var(--acmi-nightmare-fog-drift)),
+    var(--acmi-nightmare-fog-swell);
+  animation-direction: reverse, alternate;
+  animation-delay: 0s, calc(0.5 * var(--acmi-nightmare-fog-swell));
+}
+
+@keyframes acmi-nightmare-fog-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes acmi-nightmare-fog-swell {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 0.9;
+  }
+}
+
+acmi-nightmare-info {
+  display: block;
+  margin-block-end: var(--acmi-nightmare-info-space-after);
+  padding: var(--acmi-nightmare-info-padding);
+  border: var(--acmi-nightmare-info-border-width) solid
+    var(--acmi-nightmare-info-border);
+  text-align: center;
+}
+
+.acmi-nightmare-info__text {
+  margin: 0;
+  font-family: var(--acmi-font-display);
+  font-size: var(--acmi-nightmare-info-size);
+  line-height: var(--acmi-nightmare-info-leading);
+  text-transform: uppercase;
+  text-wrap: balance;
+  text-box: trim-both cap alphabetic;
+}
+
+/* Unavailable or closed: the work fades, the room's info does not. */
 acmi-nightmare-room:is([data-state="unavailable"], [data-state="closed"])
-  acmi-work-body {
+  :is(acmi-title, acmi-work-body) {
   opacity: var(--acmi-nightmare-off-opacity);
 }
 
-/* A change of mode crossfades, the whole label as it was into the label as
-   it is (see `acmi-lifelike-label`). */
+/* A change of mode crossfades the whole label. */
 html:has(acmi-nightmare-room)::view-transition-group(root) {
   animation-duration: var(--acmi-nightmare-fade);
 }

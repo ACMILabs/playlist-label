@@ -9,7 +9,7 @@ from threading import Thread
 import kombu
 import requests
 import sentry_sdk
-from flask import Flask, Response, jsonify, render_template, request
+from flask import Flask, Response, jsonify, redirect, render_template, request
 from kombu import Connection, Exchange, Queue
 from peewee import (CharField, FloatField, IntegerField, Model,
                     OperationalError, SqliteDatabase)
@@ -23,8 +23,7 @@ from app.mock_media_player import MockMediaPlayer
 from app.nightmare_room import NightmareRoom
 from app.playback_sync import PlaybackSync
 
-# In development, config.env is read here rather than by docker, so an edit
-# to it takes without restarting the container. See `app/dev_env.py`.
+# Development only: read config.env here, not in docker. See `app/dev_env.py`.
 dev_env.load()
 CONFIG_ENV_FILE = os.getenv('CONFIG_ENV_FILE')
 
@@ -42,7 +41,6 @@ AMQP_PORT = os.getenv('AMQP_PORT')
 RABBITMQ_RETRY_SECONDS = int(os.getenv('RABBITMQ_RETRY_SECONDS', '2'))
 SENTRY_ID = os.getenv('SENTRY_ID')
 PROGRAMMING_MESSAGE = os.getenv('PROGRAMMING_MESSAGE', None)
-PROGRAMMING_URL = os.getenv('PROGRAMMING_URL', None)
 BALENA_APP_ID = os.getenv('BALENA_APP_ID')
 BALENA_SERVICE_NAME = os.getenv('BALENA_SERVICE_NAME')
 BALENA_SUPERVISOR_ADDRESS = os.getenv('BALENA_SUPERVISOR_ADDRESS')
@@ -55,29 +53,25 @@ OFFSET_TOP_MARGIN = os.getenv('OFFSET_TOP_MARGIN', '0')
 OVERRIDE_DURATION = os.getenv('OVERRIDE_DURATION', '')
 OVERRIDE_TITLE = os.getenv('OVERRIDE_TITLE', '')
 QR_URL_OVERRIDE = os.getenv('QR_URL_OVERRIDE', '')
-# The nightmare room: how long a run lasts, what its header says in each
-# mode — a text left unset keeps the label's own wording — and the UDP port
-# TouchOSC sends its commands to. See `app/nightmare_room.py`.
+# The nightmare room's run length, header text per mode (unset keeps the
+# label's own wording) and TouchOSC's UDP port. See `app/nightmare_room.py`.
 NIGHTMARE_RUN_MINUTES = float(os.getenv('NIGHTMARE_RUN_MINUTES', '10'))
 NIGHTMARE_TEXT = {
     mode: os.getenv(f'NIGHTMARE_{mode.upper()}_TEXT', '')
     for mode in ('waiting', 'running', 'unavailable', 'closed')
 }
 OSC_PORT = int(os.getenv('OSC_PORT', '8000'))
-# For testing without a media player: a stand-in plays the cached playlist
-# into the playback stream, every video MOCK_VIDEO_SECONDS long.
+# A stand-in media player, for testing without one. See `app/mock_media_player.py`.
 MOCK_MEDIA_PLAYER = os.getenv('MOCK_MEDIA_PLAYER', 'false').lower() == 'true'
 MOCK_VIDEO_SECONDS = int(os.getenv('MOCK_VIDEO_SECONDS', '60'))
 
 
 def css_colour(name):
     """
-    A colour from the environment for the lifelike label, or '' for its own.
+    A CSS colour from the environment for the lifelike label, or '' for its own.
 
-    Only checked for characters that could reach past the value into the
-    rest of the style: whether it is a colour at all is the browser's call,
-    and one that is not falls back to the label's own (see `@property` in
-    `app/static/lifelike/tokens.css`).
+    Only rejects characters that could escape the CSS value. An invalid colour
+    falls back in the browser (see `@property` in `app/static/lifelike/tokens.css`).
     """
     value = os.getenv(name, '').strip()
     if value and not re.fullmatch(r'[#\w\s(),.%/+-]+', value):
@@ -86,21 +80,17 @@ def css_colour(name):
     return value
 
 
-# The lifelike label's text and ground, in place of its own blue and white:
-# any CSS colour, `#000` or `oklch(40% 0.1 250)`.
 LABEL_FG_COLOUR = css_colour('LABEL_FG_COLOUR')
 LABEL_BG_COLOUR = css_colour('LABEL_BG_COLOUR')
 
-# Turns the lifelike label to portrait in the page itself — `left`, `right`
-# or `inverted`, as the browser's ROTATE_DISPLAY takes them — on a display
-# the browser leaves as it is (ROTATE_DISPLAY=normal). On a Pi 5 at 4K, X
-# turning the screen costs about half the frame rate of any animation; the
-# page turning itself costs next to nothing.
+# Rotates the lifelike label in the page itself (`left`, `right` or
+# `inverted`), for use with the browser's ROTATE_DISPLAY=normal: on a Pi 5 at
+# 4K, X rotating the screen halves the frame rate of any animation.
 LABEL_ROTATE = os.getenv('LABEL_ROTATE', 'normal').strip().lower()
 if LABEL_ROTATE not in ('normal', 'left', 'right', 'inverted'):
     print(f'[config] LABEL_ROTATE={LABEL_ROTATE!r} is not a rotation, ignoring it')
     LABEL_ROTATE = 'normal'
-LISTEING_ROOM_QR_CODE = "https://risingmelbourne.fillout.com/t/4qKipy8T3rus"
+LISTENING_ROOM_QR_CODE = "https://risingmelbourne.fillout.com/t/4qKipy8T3rus"
 CACHE_DIR = os.getenv('CACHE_DIR', '/data/')
 
 LABEL_TEMPLATE = os.getenv('LABEL_TEMPLATE', 'playlist.html')
@@ -119,18 +109,18 @@ sentry_sdk.init(
     integrations=[FlaskIntegration()]
 )
 AMQP_URL = f'amqp://{RABBITMQ_MEDIA_PLAYER_USER}:{RABBITMQ_MEDIA_PLAYER_PASS}'\
-    f'@{RABBITMQ_MQTT_HOST}:{AMQP_PORT}//'
+           f'@{RABBITMQ_MQTT_HOST}:{AMQP_PORT}//'
 QUEUE_NAME = f'mqtt-subscription-playback_{XOS_MEDIA_PLAYER_ID}'
 ROUTING_KEY = f'mediaplayer.{XOS_MEDIA_PLAYER_ID}'
+
 MEDIA_PLAYER_EXCHANGE = Exchange('amq.topic', 'direct', durable=True)
-PLAYBACK_QUEUE = Queue(
-    QUEUE_NAME, exchange=MEDIA_PLAYER_EXCHANGE, routing_key=ROUTING_KEY)
+PLAYBACK_QUEUE = Queue(QUEUE_NAME, exchange=MEDIA_PLAYER_EXCHANGE, routing_key=ROUTING_KEY)
 
 MQTT_TOPIC: str | None = None
 if XOS_MEDIA_PLAYER_ID:
     MQTT_TOPIC = f'mediaplayer.{XOS_MEDIA_PLAYER_ID}'
     print(
-        f'[config] MQTT: {RABBITMQ_MQTT_HOST}:{RABBITMQ_MQTT_PORT}'
+        f'[config] MQTT: {RABBITMQ_MQTT_HOST}:{RABBITMQ_MQTT_PORT} '
         f'user={RABBITMQ_MEDIA_PLAYER_USER}')
     print(f'[config] Topic: {MQTT_TOPIC}')
 show_qr_code = QR_URL_OVERRIDE != '' or XOS_MEDIA_PLAYER_ID is not None or XOS_PLAYLIST_ID != '1'
@@ -141,13 +131,8 @@ PLAYLIST_QR_CODES = {
     )
     for lang_code in ["en", "zh-hans", "hi", "pa"]
 }
-QR_CODE_MEDIA_PLAYER = f'https://www.acmi.net.au/media-player/{XOS_MEDIA_PLAYER_ID}/'
-
-QR_CODE_LABEL_ONLY = (f'https://www.acmi.net.au/media-player'
-                      f'/{XOS_PLAYLIST_ID}/?type=label&playlist={XOS_PLAYLIST_ID}')
 
 app = Flask(__name__)  # pylint: disable=C0103
-
 CACHED_PLAYLIST_JSON = f'playlist_{XOS_PLAYLIST_ID}.json'
 db = SqliteDatabase('message.db')  # pylint: disable=C0103
 
@@ -188,13 +173,10 @@ class PlaylistLabel():
                 audio_buffer=body.get('audio_buffer', 0),
                 video_buffer=body.get('video_buffer', 0),
             )
-
-            # peewee 4.5 wraps `delete` in a classmethod descriptor of its
-            # own, which pylint takes for a method that needs an instance.
+            # pylint misreads peewee 4.5's `delete` descriptor as needing an instance.
             delete_records = Message.delete().where(  # pylint: disable=no-value-for-parameter
                 Message.datetime.not_in(
-                    Message.select(Message.datetime).order_by(
-                        Message.datetime.desc()).limit(5)
+                    Message.select(Message.datetime).order_by(Message.datetime.desc()).limit(5)
                 )
             )
             delete_records.execute()
@@ -207,35 +189,28 @@ class PlaylistLabel():
 
     def consume(self, conn):
         """Consume from the RabbitMQ queue."""
-        connection_errors = conn.connection_errors + \
-            (kombu.exceptions.OperationalError,)
+        connection_errors = conn.connection_errors + (kombu.exceptions.OperationalError,)
         try:
             conn.ensure_connection(max_retries=3)
             with conn.Consumer(PLAYBACK_QUEUE, callbacks=[self.process_media]):
-
                 while True:
                     try:
                         conn.drain_events(timeout=2)
-                        resolved_timeout = self.clear_error_history(
-                            'media_player_timeout')
+                        resolved_timeout = self.clear_error_history('media_player_timeout')
                         if resolved_timeout:
                             print(f'Automatically resolved: {resolved_timeout}. '
                                   'Now receiving messages.')
-                        resolved_conn = self.clear_error_history(
-                            'rabbitmq_conn_error')
+                        resolved_conn = self.clear_error_history('rabbitmq_conn_error')
                         if resolved_conn:
                             print(f'Automatically resolved: {resolved_conn}. '
                                   'Connection reestablished.')
                     except socket.timeout as exception:
-                        print(
-                            f'Stopped receiving messages from media player {XOS_MEDIA_PLAYER_ID}')
-                        self.send_error('media_player_timeout',
-                                        exception, every=3600)
+                        print(f'Stopped receiving messages from media player {XOS_MEDIA_PLAYER_ID}')
+                        self.send_error('media_player_timeout', exception, every=3600)
                         conn.heartbeat_check()
         except connection_errors as conn_error:
             print(f'Error connecting to RabbitMQ server: {conn_error}')
-            self.send_error('rabbitmq_conn_error',
-                            conn_error, on_rep=3, every=3600)
+            self.send_error('rabbitmq_conn_error', conn_error, on_rep=3, every=3600)
             print(f'Retrying in {RABBITMQ_RETRY_SECONDS} seconds')
             time.sleep(RABBITMQ_RETRY_SECONDS)
 
@@ -247,7 +222,11 @@ class PlaylistLabel():
 
     def send_error(self, error_name, error, on_rep=5, every=100, units='seconds'):
         # pylint: disable=too-many-arguments
-        """Rate-limited error reporting to Sentry."""
+        """
+        Sends `error` to Sentry on its `on_rep`th report, then every `every`
+        `units` ('seconds' or 'instances') until `clear_error_history`, so
+        brief blips go unreported and a lasting fault does not flood Sentry.
+        """
         try:
             error_history = self.errors_history[error_name]
         except KeyError:
@@ -270,8 +249,7 @@ class PlaylistLabel():
 
         # subsequent sendings go every `every` `units`
         if units == 'seconds':
-            time_since_last = datetime.datetime.now(
-            ) - error_history['last_sent_time']
+            time_since_last = datetime.datetime.now() - error_history['last_sent_time']
             if time_since_last.seconds >= every:
                 sentry_sdk.capture_exception(error)
                 error_history['last_sent_time'] = datetime.datetime.now()
@@ -290,15 +268,18 @@ class PlaylistLabel():
             return None
 
 
+def qr_svg(url, error='M'):
+    """An inline SVG QR code for `url`, drawn in the page's --figure and --ground."""
+    text = make_qr(url, error=error).svg_inline(dark="#aaa", light="#bbb", border=1,
+                                                draw_transparent=False, omitsize=True)
+    text = text.replace('#aaa', "var(--figure, black)")
+    return text.replace('#bbb', "var(--ground, white)")
+
+
 def listening_room_json_additions(qr_code_url, mode_override, time_override,
                                   custom_event_start_time, parent_id):
-    qrcode = make_qr(qr_code_url, error="L")
-    text = qrcode.svg_inline(dark="#aaa", light="#bbb", border=1,
-                             draw_transparent=False, omitsize=True)
-    text = text.replace('#aaa', "var(--figure, black)")
-    text = text.replace('#bbb', "var(--ground, white)")
     return {
-        'qr_lr': text,
+        'qr_lr': qr_svg(qr_code_url, error='L'),
         'LISTENING_ROOM_MODE_OVERRIDE': mode_override,
         'LISTENING_ROOM_TIME_OVERRIDE': time_override,
         'LISTENING_ROOM_CUSTOM_EVENT_START_TIME': custom_event_start_time,
@@ -323,47 +304,49 @@ class HasTapped(Model):  # pylint: disable=R0903
         database = db
 
 
+# How often the "Playlist not found" page reloads, and so asks XOS again.
+PLAYLIST_RETRY_SECONDS = 60
+last_playlist_fetch = None  # pylint: disable=invalid-name
+
+
+def fetch_missing_playlist():
+    """
+    Fetches the playlist, at most once every PLAYLIST_RETRY_SECONDS, so a label
+    that started while XOS was out of reach catches up without a reboot.
+    """
+    global last_playlist_fetch  # pylint: disable=global-statement
+    now = time.monotonic()
+    if last_playlist_fetch is not None and now - last_playlist_fetch < PLAYLIST_RETRY_SECONDS:
+        return
+    last_playlist_fetch = now
+    from app import cache as playlist_cache  # pylint: disable=import-outside-toplevel
+    playlist_cache.create_cache()
+
+
 @app.route('/')
 def playlist_label():
-    print(f'show caption: {XOS_MEDIA_PLAYER_ID is not None and HIDE_CAPTION is False}')
     json_data = {}
     try:
         with open(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}', encoding='utf-8') as json_file:
             json_data = json.load(json_file)
         if LABEL_MODE == 'listening-room':
             json_data.update(listening_room_json_additions(
-                qr_code_url=LISTEING_ROOM_QR_CODE,
+                qr_code_url=LISTENING_ROOM_QR_CODE,
                 mode_override=LISTENING_ROOM_MODE_OVERRIDE,
                 time_override=LISTENING_ROOM_TIME_OVERRIDE,
                 custom_event_start_time=LISTENING_ROOM_CUSTOM_EVENT_START_TIME,
                 parent_id=LISTENING_ROOM_PARENT_ID,
-
             ))
 
         if show_qr_code:
-            qr_codes = {**PLAYLIST_QR_CODES}
-            for lang, url in qr_codes.items():
-                qrcode = make_qr(url, error="M")
-                text = qrcode.svg_inline(dark="#aaa", light="#bbb", border=1,
-                                         draw_transparent=False, omitsize=True)
-                text = text.replace('#bbb', "var(--ground, white)")
-                text = text.replace('#aaa', "var(--figure, black)")
-                qr_codes[lang] = text
+            json_data['qr_text'] = json.dumps(
+                {lang: qr_svg(url) for lang, url in PLAYLIST_QR_CODES.items()})
 
-            json_data['qr_text'] = json.dumps(qr_codes)
-
-        # The lifelike label shows one code, for QR_URL_OVERRIDE, or none at
-        # all. Same drawing as above, without the per-language set.
+        # The lifelike label's one code, if any.
         if QR_URL_OVERRIDE:
-            qrcode = make_qr(QR_URL_OVERRIDE, error="M")
-            text = qrcode.svg_inline(dark="#aaa", light="#bbb", border=1,
-                                     draw_transparent=False, omitsize=True)
-            text = text.replace('#bbb', "var(--ground, white)")
-            text = text.replace('#aaa', "var(--figure, black)")
-            json_data['qr_svg'] = text
+            json_data['qr_svg'] = qr_svg(QR_URL_OVERRIDE)
 
-        # What the nightmare room says in each mode, for the modes it has
-        # been given words for; the label has its own for the rest.
+        # Only the modes given text; the label has its own words for the rest.
         if LABEL_MODE == 'nightmare-room':
             json_data['nightmare_text'] = {
                 mode: text for mode, text in NIGHTMARE_TEXT.items() if text
@@ -374,8 +357,7 @@ def playlist_label():
                 json_data['playlist_labels'].remove(item)
 
         if MOCK_MEDIA_PLAYER:
-            # Every video runs as long as the mock plays it, so the label's
-            # durations and start times agree with its timer.
+            # Match the mock's video length, so the label's timings agree with its timer.
             for item in json_data['playlist_labels']:
                 item['video'] = {**(item.get('video') or {}), 'duration_secs': MOCK_VIDEO_SECONDS}
 
@@ -411,9 +393,11 @@ def playlist_label():
             offset_top_margin=OFFSET_TOP_MARGIN
         )
     except FileNotFoundError:
-        print(
-            f'Couldn\'t open cached playlist JSON: {CACHE_DIR}{CACHED_PLAYLIST_JSON}')
-        return render_template('no_playlist.html')
+        print(f'Couldn\'t open cached playlist JSON: {CACHE_DIR}{CACHED_PLAYLIST_JSON}')
+        fetch_missing_playlist()
+        if os.path.exists(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}'):
+            return redirect(request.path)
+        return render_template('no_playlist.html', retry_seconds=PLAYLIST_RETRY_SECONDS)
 
 
 @app.route('/api/playlist/')
@@ -437,8 +421,7 @@ def collect_item():
         tap_to_process.save()
 
     xos_tap = dict(request.get_json())
-    record = model_to_dict(Message.select().order_by(
-        Message.datetime.desc()).get())
+    record = model_to_dict(Message.select().order_by(Message.datetime.desc()).get())
     xos_tap['label'] = record.pop('label_id', None)
     xos_tap.setdefault('data', {})['playlist_info'] = record
     headers = {'Authorization': 'Token ' + AUTH_TOKEN}
@@ -484,8 +467,7 @@ def tap_source():
     return Response(event_stream(), mimetype="text/event-stream")
 
 
-# The media player's mqtt client, when a template reads the playback stream
-# and a media player, real or mock, is configured. See `app/playback_sync.py`.
+# Set at start-up for templates that read the playback stream. See `app/playback_sync.py`.
 sync = None  # pylint: disable=invalid-name
 
 
@@ -514,8 +496,7 @@ def playback_source():
 # The nightmare room, when this label is one. See `app/nightmare_room.py`.
 room = None  # pylint: disable=invalid-name
 
-# How long the room stream goes without a word before it sends a comment,
-# which the label ignores, to find out whether anyone is still listening.
+# A quiet room stream sends an SSE comment this often, so a closed client is noticed.
 ROOM_KEEPALIVE_SECONDS = 15
 
 
@@ -561,19 +542,17 @@ def events():
 
 if __name__ == '__main__':
     db.create_tables([Message, HasTapped])
-
     try:
-        db.execute_sql(
-            'ALTER TABLE message ADD COLUMN duration INTEGER DEFAULT 0')
+        db.execute_sql('ALTER TABLE message ADD COLUMN duration INTEGER DEFAULT 0')
     except Exception:  # pylint: disable=broad-except
         pass  # column already exists
     HasTapped.create(has_tapped=0, tap_successful=0, tap_processing=0)
-    # Under the reloader, the first process only watches files; the server,
-    # and so everything below, runs in the process it starts.
+    # Under the reloader, the first process only watches files and the server
+    # runs in the process it starts.
     serving = not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true'
     if serving and CONFIG_ENV_FILE and not os.path.exists(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}'):
-        # config.env names a playlist that is not cached yet: fetch it first.
-        from app.cache import create_cache  # pylint: disable=import-outside-toplevel
+        # config.env names a playlist that is not cached yet.
+        from app.cache import create_cache
         create_cache()
     if serving and LABEL_TEMPLATE == 'lifelike.html' and LABEL_MODE == 'nightmare-room':
         # The room's mode comes from TouchOSC, not the media player.
@@ -584,8 +563,7 @@ if __name__ == '__main__':
             print(f'[osc] Could not listen on UDP {OSC_PORT}: {error}')
     if XOS_MEDIA_PLAYER_ID or MOCK_MEDIA_PLAYER:
         if serving:
-            # Templates that read `/api/playback-stream/` need the MQTT
-            # client behind it. Everything else still consumes over AMQP.
+            # These templates read `/api/playback-stream/`; the rest consume over AMQP.
             if LABEL_TEMPLATE in ('reverb-digital-label.html', 'lifelike.html'):
                 sync = PlaybackSync(
                     host=RABBITMQ_MQTT_HOST,
@@ -603,7 +581,7 @@ if __name__ == '__main__':
                 else:
                     sync.start()
             elif XOS_MEDIA_PLAYER_ID:
-                playlistlabel = PlaylistLabel()  # pylint: disable=C0103
+                playlistlabel = PlaylistLabel()
                 Thread(target=playlistlabel.get_events).start()
             else:
                 print(f'[mock] MOCK_MEDIA_PLAYER does nothing for {LABEL_TEMPLATE}: '
