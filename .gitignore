@@ -17,3 +17,7 @@ __pycache__/
 
 # Node
 node_modules/
+
+# ITC Benguiat: its licence does not let us share it, so it stays out of the
+# repo. Copy it into app/static/lifelike/fonts/ by hand.
+app/static/lifelike/fonts/itc-benguiat-*

@@ -7,11 +7,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from app import cache, dev_env, main
+from app import cache, dev_env, main, osc
 from app.cache import create_cache
 from app.main import HasTapped, Message, PlaylistLabel
 from app.mock_media_player import MockMediaPlayer
-from app.nightmare_room import NightmareRoom
+from app.nightmare_room import COMMANDS, NightmareRoom
 from app.playback_sync import PlaybackSync
 
 
@@ -297,6 +297,18 @@ def test_reverb_label_hide_timer(client, tmp_path):
 
 
 @patch('app.main.LABEL_TEMPLATE', 'reverb-digital-label.html')
+@patch('app.main.XOS_MEDIA_PLAYER_ID', None)
+@patch('app.main.MOCK_MEDIA_PLAYER', True)
+def test_reverb_label_with_mock_media_player(client, tmp_path):
+    """A mocked player connects the reverb label, with no real player id."""
+    response = reverb_client_get(client, tmp_path)
+    data = response.data.decode('utf-8')
+
+    assert response.status_code == 200
+    assert 'data-xos-media-player="mock"' in data
+
+
+@patch('app.main.LABEL_TEMPLATE', 'reverb-digital-label.html')
 @patch('app.main.OVERRIDE_TITLE', 'My Override Title')
 def test_reverb_label_override_title(client, tmp_path):
     """OVERRIDE_TITLE replaces the playlist title."""
@@ -431,6 +443,20 @@ def test_mock_media_player_feeds_playback_sync():
 
 
 @patch('app.main.LABEL_TEMPLATE', 'lifelike.html')
+@patch('app.main.LABEL_MODE', 'playlist')
+@patch('app.main.XOS_MEDIA_PLAYER_ID', '8')
+@patch('app.main.HIDE_TIMER', True)
+def test_lifelike_label_hide_timer(client, tmp_path):
+    """HIDE_TIMER hides the timer, but the label still follows the player to rotate."""
+    with open('tests/data/playlist.json', 'r') as the_file:
+        (tmp_path / 'playlist_1.json').write_text(the_file.read())
+    with patch('app.main.CACHE_DIR', str(tmp_path) + '/'):
+        data = client.get('/').data.decode('utf-8')
+
+    assert 'playback-source="/api/playback-stream/" hide-timer' in data
+
+
+@patch('app.main.LABEL_TEMPLATE', 'lifelike.html')
 @patch('app.main.XOS_MEDIA_PLAYER_ID', None)
 @patch('app.main.MOCK_MEDIA_PLAYER', True)
 @patch('app.main.MOCK_VIDEO_SECONDS', 60)
@@ -559,19 +585,29 @@ def test_nightmare_room_runs_then_waits():
     assert room.snapshot() == {'mode': 'waiting'}
 
 
-def test_nightmare_room_acts_on_a_press_not_a_release():
+def test_osc_acts_on_a_press_not_a_release():
     """A TouchOSC button sends 1 on press and 0 on release: only the press counts."""
-    # pylint: disable=protected-access
+    pressed = []
+    handle = osc.on_press('/room/', {'close': lambda: pressed.append('close')})
+
+    handle('/room/close', 0.0)
+    assert not pressed
+
+    handle('/room/close', 1.0)
+    handle('/room/close')
+    assert pressed == ['close', 'close']
+
+
+def test_nightmare_room_listens_for_its_commands():
+    """The room hands its commands, under its prefix, to the OSC listener."""
     room = NightmareRoom(run_seconds=600, clock=FakeClock())
+    with patch('app.nightmare_room.osc.listen') as listen:
+        room.listen(9000, '/room/')
+    port, prefix, commands = listen.call_args.args
+    assert (port, prefix, sorted(commands)) == (9000, '/room/', sorted(COMMANDS))
 
-    room._on_command('/nightmare/close', 0.0)
-    assert room.snapshot() == {'mode': 'waiting'}
-
-    room._on_command('/nightmare/close', 1.0)
+    commands['close']()
     assert room.snapshot() == {'mode': 'closed'}
-
-    room._on_command('/nightmare/unavailable')
-    assert room.snapshot() == {'mode': 'unavailable'}
 
 
 @patch('app.main.LABEL_TEMPLATE', 'lifelike.html')

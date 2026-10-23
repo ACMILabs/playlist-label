@@ -1,10 +1,8 @@
-# Pin versions as wouldn't change without a rebuild anyway
-flask==3.1.3
-werkzeug==3.1.9
-requests==2.34.2
-kombu==5.6.2
-paho-mqtt==2.1.0
-peewee==4.5.3
-sentry-sdk[flask]==2.72.0
-segno==1.6.6
-python-osc==1.10.2
+flask
+requests
+kombu
+paho-mqtt>=2  # app/playback_sync.py uses the paho 2 callback api
+peewee
+sentry-sdk[flask]
+segno
+python-osc

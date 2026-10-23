@@ -158,6 +158,25 @@ describe("acmi-lifelike-label, normal", () => {
     expect(text(timer, ".acmi-timer__elapsed")).toBe("5:00");
     expect(text(timer, ".acmi-timer__line")).toBe("Starts again in 5 minutes");
   });
+
+  it("follows the player but draws no timer with hide-timer", () => {
+    jest.useFakeTimers();
+    const label = mount({
+      variant: "normal",
+      "playback-source": "/api/playback-stream/",
+      "hide-timer": "",
+    });
+
+    expect(FakeEventSource.last.url).toBe("/api/playback-stream/");
+    FakeEventSource.last.send({
+      duration: 600000,
+      playback_position: 0.5,
+      label_id: 51517,
+    });
+    jest.advanceTimersByTime(20);
+
+    expect(label.querySelector(".acmi-header__timer").hidden).toBe(true);
+  });
 });
 
 describe("acmi-lifelike-label, in a browser with a sanitizer", () => {

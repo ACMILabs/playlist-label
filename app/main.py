@@ -17,10 +17,10 @@ from playhouse.shortcuts import model_to_dict
 from segno import make_qr
 from sentry_sdk.integrations.flask import FlaskIntegration
 
-from app import dev_env
+from app import dev_env, osc
 from app.errors import HTTPError
 from app.mock_media_player import MockMediaPlayer
-from app.nightmare_room import NightmareRoom
+from app.nightmare_room import DEFAULT_OSC_ADDRESS_PREFIX, NightmareRoom
 from app.playback_sync import PlaybackSync
 
 # Development only: read config.env here, not in docker. See `app/dev_env.py`.
@@ -41,6 +41,7 @@ AMQP_PORT = os.getenv('AMQP_PORT')
 RABBITMQ_RETRY_SECONDS = int(os.getenv('RABBITMQ_RETRY_SECONDS', '2'))
 SENTRY_ID = os.getenv('SENTRY_ID')
 PROGRAMMING_MESSAGE = os.getenv('PROGRAMMING_MESSAGE', None)
+PROGRAMMING_URL = os.getenv('PROGRAMMING_URL', None)
 BALENA_APP_ID = os.getenv('BALENA_APP_ID')
 BALENA_SERVICE_NAME = os.getenv('BALENA_SERVICE_NAME')
 BALENA_SUPERVISOR_ADDRESS = os.getenv('BALENA_SUPERVISOR_ADDRESS')
@@ -54,13 +55,15 @@ OVERRIDE_DURATION = os.getenv('OVERRIDE_DURATION', '')
 OVERRIDE_TITLE = os.getenv('OVERRIDE_TITLE', '')
 QR_URL_OVERRIDE = os.getenv('QR_URL_OVERRIDE', '')
 # The nightmare room's run length, header text per mode (unset keeps the
-# label's own wording) and TouchOSC's UDP port. See `app/nightmare_room.py`.
+# label's own wording), and the UDP port and address prefix TouchOSC sends its
+# commands to. See `app/nightmare_room.py` and `app/osc.py`.
 NIGHTMARE_RUN_MINUTES = float(os.getenv('NIGHTMARE_RUN_MINUTES', '10'))
 NIGHTMARE_TEXT = {
     mode: os.getenv(f'NIGHTMARE_{mode.upper()}_TEXT', '')
     for mode in ('waiting', 'running', 'unavailable', 'closed')
 }
-OSC_PORT = int(os.getenv('OSC_PORT', '8000'))
+OSC_PORT = int(os.getenv('OSC_PORT', str(osc.DEFAULT_PORT)))
+OSC_ADDRESS_PREFIX = os.getenv('OSC_ADDRESS_PREFIX', DEFAULT_OSC_ADDRESS_PREFIX)
 # A stand-in media player, for testing without one. See `app/mock_media_player.py`.
 MOCK_MEDIA_PLAYER = os.getenv('MOCK_MEDIA_PLAYER', 'false').lower() == 'true'
 MOCK_VIDEO_SECONDS = int(os.getenv('MOCK_VIDEO_SECONDS', '60'))
@@ -90,8 +93,11 @@ LABEL_ROTATE = os.getenv('LABEL_ROTATE', 'normal').strip().lower()
 if LABEL_ROTATE not in ('normal', 'left', 'right', 'inverted'):
     print(f'[config] LABEL_ROTATE={LABEL_ROTATE!r} is not a rotation, ignoring it')
     LABEL_ROTATE = 'normal'
-LISTENING_ROOM_QR_CODE = "https://risingmelbourne.fillout.com/t/4qKipy8T3rus"
+LISTEING_ROOM_QR_CODE = "https://risingmelbourne.fillout.com/t/4qKipy8T3rus"
 CACHE_DIR = os.getenv('CACHE_DIR', '/data/')
+# How often the "Playlist not found" page reloads, and so asks XOS again.
+PLAYLIST_RETRY_SECONDS = 60
+last_playlist_fetch = None  # pylint: disable=invalid-name
 
 LABEL_TEMPLATE = os.getenv('LABEL_TEMPLATE', 'playlist.html')
 COLLECT_POSITION = os.getenv('COLLECT_POSITION', None)
@@ -109,12 +115,12 @@ sentry_sdk.init(
     integrations=[FlaskIntegration()]
 )
 AMQP_URL = f'amqp://{RABBITMQ_MEDIA_PLAYER_USER}:{RABBITMQ_MEDIA_PLAYER_PASS}'\
-           f'@{RABBITMQ_MQTT_HOST}:{AMQP_PORT}//'
+    f'@{RABBITMQ_MQTT_HOST}:{AMQP_PORT}//'
 QUEUE_NAME = f'mqtt-subscription-playback_{XOS_MEDIA_PLAYER_ID}'
 ROUTING_KEY = f'mediaplayer.{XOS_MEDIA_PLAYER_ID}'
-
 MEDIA_PLAYER_EXCHANGE = Exchange('amq.topic', 'direct', durable=True)
-PLAYBACK_QUEUE = Queue(QUEUE_NAME, exchange=MEDIA_PLAYER_EXCHANGE, routing_key=ROUTING_KEY)
+PLAYBACK_QUEUE = Queue(
+    QUEUE_NAME, exchange=MEDIA_PLAYER_EXCHANGE, routing_key=ROUTING_KEY)
 
 MQTT_TOPIC: str | None = None
 if XOS_MEDIA_PLAYER_ID:
@@ -131,8 +137,13 @@ PLAYLIST_QR_CODES = {
     )
     for lang_code in ["en", "zh-hans", "hi", "pa"]
 }
+QR_CODE_MEDIA_PLAYER = f'https://www.acmi.net.au/media-player/{XOS_MEDIA_PLAYER_ID}/'
+
+QR_CODE_LABEL_ONLY = (f'https://www.acmi.net.au/media-player'
+                      f'/{XOS_PLAYLIST_ID}/?type=label&playlist={XOS_PLAYLIST_ID}')
 
 app = Flask(__name__)  # pylint: disable=C0103
+
 CACHED_PLAYLIST_JSON = f'playlist_{XOS_PLAYLIST_ID}.json'
 db = SqliteDatabase('message.db')  # pylint: disable=C0103
 
@@ -173,10 +184,12 @@ class PlaylistLabel():
                 audio_buffer=body.get('audio_buffer', 0),
                 video_buffer=body.get('video_buffer', 0),
             )
+
             # pylint misreads peewee 4.5's `delete` descriptor as needing an instance.
             delete_records = Message.delete().where(  # pylint: disable=no-value-for-parameter
                 Message.datetime.not_in(
-                    Message.select(Message.datetime).order_by(Message.datetime.desc()).limit(5)
+                    Message.select(Message.datetime).order_by(
+                        Message.datetime.desc()).limit(5)
                 )
             )
             delete_records.execute()
@@ -189,28 +202,35 @@ class PlaylistLabel():
 
     def consume(self, conn):
         """Consume from the RabbitMQ queue."""
-        connection_errors = conn.connection_errors + (kombu.exceptions.OperationalError,)
+        connection_errors = conn.connection_errors + \
+            (kombu.exceptions.OperationalError,)
         try:
             conn.ensure_connection(max_retries=3)
             with conn.Consumer(PLAYBACK_QUEUE, callbacks=[self.process_media]):
+
                 while True:
                     try:
                         conn.drain_events(timeout=2)
-                        resolved_timeout = self.clear_error_history('media_player_timeout')
+                        resolved_timeout = self.clear_error_history(
+                            'media_player_timeout')
                         if resolved_timeout:
                             print(f'Automatically resolved: {resolved_timeout}. '
                                   'Now receiving messages.')
-                        resolved_conn = self.clear_error_history('rabbitmq_conn_error')
+                        resolved_conn = self.clear_error_history(
+                            'rabbitmq_conn_error')
                         if resolved_conn:
                             print(f'Automatically resolved: {resolved_conn}. '
                                   'Connection reestablished.')
                     except socket.timeout as exception:
-                        print(f'Stopped receiving messages from media player {XOS_MEDIA_PLAYER_ID}')
-                        self.send_error('media_player_timeout', exception, every=3600)
+                        print(
+                            f'Stopped receiving messages from media player {XOS_MEDIA_PLAYER_ID}')
+                        self.send_error('media_player_timeout',
+                                        exception, every=3600)
                         conn.heartbeat_check()
         except connection_errors as conn_error:
             print(f'Error connecting to RabbitMQ server: {conn_error}')
-            self.send_error('rabbitmq_conn_error', conn_error, on_rep=3, every=3600)
+            self.send_error('rabbitmq_conn_error',
+                            conn_error, on_rep=3, every=3600)
             print(f'Retrying in {RABBITMQ_RETRY_SECONDS} seconds')
             time.sleep(RABBITMQ_RETRY_SECONDS)
 
@@ -222,11 +242,7 @@ class PlaylistLabel():
 
     def send_error(self, error_name, error, on_rep=5, every=100, units='seconds'):
         # pylint: disable=too-many-arguments
-        """
-        Sends `error` to Sentry on its `on_rep`th report, then every `every`
-        `units` ('seconds' or 'instances') until `clear_error_history`, so
-        brief blips go unreported and a lasting fault does not flood Sentry.
-        """
+        """Rate-limited error reporting to Sentry."""
         try:
             error_history = self.errors_history[error_name]
         except KeyError:
@@ -249,7 +265,8 @@ class PlaylistLabel():
 
         # subsequent sendings go every `every` `units`
         if units == 'seconds':
-            time_since_last = datetime.datetime.now() - error_history['last_sent_time']
+            time_since_last = datetime.datetime.now(
+            ) - error_history['last_sent_time']
             if time_since_last.seconds >= every:
                 sentry_sdk.capture_exception(error)
                 error_history['last_sent_time'] = datetime.datetime.now()
@@ -304,11 +321,6 @@ class HasTapped(Model):  # pylint: disable=R0903
         database = db
 
 
-# How often the "Playlist not found" page reloads, and so asks XOS again.
-PLAYLIST_RETRY_SECONDS = 60
-last_playlist_fetch = None  # pylint: disable=invalid-name
-
-
 def fetch_missing_playlist():
     """
     Fetches the playlist, at most once every PLAYLIST_RETRY_SECONDS, so a label
@@ -325,17 +337,19 @@ def fetch_missing_playlist():
 
 @app.route('/')
 def playlist_label():
+    print(f'show caption: {XOS_MEDIA_PLAYER_ID is not None and HIDE_CAPTION is False}')
     json_data = {}
     try:
         with open(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}', encoding='utf-8') as json_file:
             json_data = json.load(json_file)
         if LABEL_MODE == 'listening-room':
             json_data.update(listening_room_json_additions(
-                qr_code_url=LISTENING_ROOM_QR_CODE,
+                qr_code_url=LISTEING_ROOM_QR_CODE,
                 mode_override=LISTENING_ROOM_MODE_OVERRIDE,
                 time_override=LISTENING_ROOM_TIME_OVERRIDE,
                 custom_event_start_time=LISTENING_ROOM_CUSTOM_EVENT_START_TIME,
                 parent_id=LISTENING_ROOM_PARENT_ID,
+
             ))
 
         if show_qr_code:
@@ -393,7 +407,8 @@ def playlist_label():
             offset_top_margin=OFFSET_TOP_MARGIN
         )
     except FileNotFoundError:
-        print(f'Couldn\'t open cached playlist JSON: {CACHE_DIR}{CACHED_PLAYLIST_JSON}')
+        print(
+            f'Couldn\'t open cached playlist JSON: {CACHE_DIR}{CACHED_PLAYLIST_JSON}')
         fetch_missing_playlist()
         if os.path.exists(f'{CACHE_DIR}{CACHED_PLAYLIST_JSON}'):
             return redirect(request.path)
@@ -421,7 +436,8 @@ def collect_item():
         tap_to_process.save()
 
     xos_tap = dict(request.get_json())
-    record = model_to_dict(Message.select().order_by(Message.datetime.desc()).get())
+    record = model_to_dict(Message.select().order_by(
+        Message.datetime.desc()).get())
     xos_tap['label'] = record.pop('label_id', None)
     xos_tap.setdefault('data', {})['playlist_info'] = record
     headers = {'Authorization': 'Token ' + AUTH_TOKEN}
@@ -542,8 +558,10 @@ def events():
 
 if __name__ == '__main__':
     db.create_tables([Message, HasTapped])
+
     try:
-        db.execute_sql('ALTER TABLE message ADD COLUMN duration INTEGER DEFAULT 0')
+        db.execute_sql(
+            'ALTER TABLE message ADD COLUMN duration INTEGER DEFAULT 0')
     except Exception:  # pylint: disable=broad-except
         pass  # column already exists
     HasTapped.create(has_tapped=0, tap_successful=0, tap_processing=0)
@@ -558,7 +576,7 @@ if __name__ == '__main__':
         # The room's mode comes from TouchOSC, not the media player.
         room = NightmareRoom(NIGHTMARE_RUN_MINUTES * 60)
         try:
-            room.listen(OSC_PORT)
+            room.listen(OSC_PORT, OSC_ADDRESS_PREFIX)
         except OSError as error:
             print(f'[osc] Could not listen on UDP {OSC_PORT}: {error}')
     if XOS_MEDIA_PLAYER_ID or MOCK_MEDIA_PLAYER:
@@ -581,7 +599,7 @@ if __name__ == '__main__':
                 else:
                     sync.start()
             elif XOS_MEDIA_PLAYER_ID:
-                playlistlabel = PlaylistLabel()
+                playlistlabel = PlaylistLabel()  # pylint: disable=C0103
                 Thread(target=playlistlabel.get_events).start()
             else:
                 print(f'[mock] MOCK_MEDIA_PLAYER does nothing for {LABEL_TEMPLATE}: '

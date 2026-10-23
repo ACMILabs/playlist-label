@@ -38,7 +38,7 @@ To show the lifelike label on a screen mounted on its side, set `LABEL_ROTATE` t
 
 ### The nightmare room
 
-With `LABEL_TEMPLATE=lifelike.html` and `LABEL_MODE=nightmare-room`, the label follows the room's mode instead of a media player. TouchOSC sets the mode with OSC messages to UDP port `OSC_PORT` (default `8000`):
+With `LABEL_TEMPLATE=lifelike.html` and `LABEL_MODE=nightmare-room`, the label follows the room's mode instead of a media player. TouchOSC sets the mode with OSC messages to UDP port `OSC_PORT` (default `9000`). Each address starts with `OSC_ADDRESS_PREFIX` (default `/nightmare/`):
 
 | Address | Mode | What the label shows |
 | --- | --- | --- |

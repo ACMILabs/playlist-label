@@ -22,4 +22,4 @@ services:
     ports:
      - 8081:8081
      # OSC from TouchOSC, for the nightmare room: keep it the same as OSC_PORT.
-     - 8000:8000/udp
+     - 9000:9000/udp

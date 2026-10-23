@@ -57,24 +57,24 @@
 }
 @font-face {
   font-family: FaktPro;
-  src: url("./FaktPro-Normal.otf") format("opentype");
+  src: url("../../FaktPro-Normal.otf") format("opentype");
 }
 
 @font-face {
   font-family: FaktPro;
   font-style: italic;
-  src: url("./FaktPro-NormalItalic.otf") format("opentype");
+  src: url("../../FaktPro-NormalItalic.otf") format("opentype");
 }
 
 @font-face {
   font-family: FaktPro;
   font-weight: bold;
-  src: url("./FaktPro-Bold.otf") format("opentype");
+  src: url("../../FaktPro-Bold.otf") format("opentype");
 }
 
 @font-face {
   font-family: FaktPro;
   font-weight: bold;
   font-style: italic;
-  src: url("./FaktPro-BoldItalic.otf") format("opentype");
+  src: url("../../FaktPro-BoldItalic.otf") format("opentype");
 }

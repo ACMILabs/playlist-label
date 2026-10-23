@@ -1232,6 +1232,8 @@ define("acmi-lifelike-label")
     variant: f.string("normal"),
     playbackSource: f.string(""),
     roomSource: f.string(""),
+    // HIDE_TIMER: the label still follows the player, to rotate, but draws no timer.
+    hideTimer: f.boolean(false),
     playlist: f.json(PlaylistSchema, null),
   }))
   .setup((c) => {
@@ -1343,9 +1345,10 @@ define("acmi-lifelike-label")
       // something the label is not showing.
       const offList = $playing.get() === -1 && $snapshot.get()?.labelId !== undefined;
       const timer = offList ? undefined : $timer.get();
-      label.timerRatio = timer?.ratio ?? null;
-      label.timerElapsed = timer?.elapsed ?? "";
-      label.timerLine = timerLine(variant, timer, $works.get());
+      const shown = c.props.$hideTimer.get() ? undefined : timer;
+      label.timerRatio = shown?.ratio ?? null;
+      label.timerElapsed = shown?.elapsed ?? "";
+      label.timerLine = timerLine(variant, shown, $works.get());
       if (variant === "playlist") label.secondsUntilNext = timer?.remainingSeconds ?? null;
       if (variant === "nightmare-room") {
         // Until the room says otherwise, it is waiting, as it starts.

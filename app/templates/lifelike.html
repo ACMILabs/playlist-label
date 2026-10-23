@@ -67,7 +67,8 @@
   <acmi-lifelike-label
     variant="{{ label_mode }}"
     {% if label_mode == 'nightmare-room' %}room-source="/api/room-stream/"
-    {%- elif (xos.media_player_id or mock_media_player) and not hide_timer %}playback-source="/api/playback-stream/"{% endif %}
+    {%- elif xos.media_player_id or mock_media_player %}playback-source="/api/playback-stream/"{% endif %}
+    {%- if hide_timer %} hide-timer{% endif %}
   >
 
     <script type="application/json" data-prop="playlist">

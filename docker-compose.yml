@@ -6,7 +6,8 @@ volumes:
 
 services:
   browser:
-    # Built locally to add socat and the debug script to the balena browser image.
+    # Built from ./browser rather than pulled from a registry so we can layer in
+    # socat and the debug startup script on top of the balena browser base image.
     build: ./browser
     container_name: browser
     privileged: true
@@ -18,13 +19,16 @@ services:
       ENABLE_GPU: "1"
       FORCE_VULKAN: "1"
       EXTRA_FLAGS: "--remote-allow-origins=*"
-      # Chrome DevTools Protocol (CDP) on this internal port; run_debug.sh
-      # proxies it out to 9222 when DEBUG=true.
+      # Tells the balena browser base image to enable the Chrome DevTools Protocol
+      # (CDP) on this internal port.  The debug startup script (run_debug.sh) then
+      # proxies it out to the external port 9222 when DEBUG=true.
       REMOTE_DEBUG_PORT: "35173"
     ports:
-      # CDP through the socat proxy, when DEBUG=true.
+      # Chrome DevTools Protocol — connect Chrome DevTools or Playwright here
+      # when DEBUG=true.  socat inside the container forwards 9222 → 35173.
       - "9222:9222"
-      # CDP directly, without the proxy.
+      # Direct CDP port (also exposed so tools that want the raw internal port
+      # can connect without going through the socat proxy).
       - "35173:35173"
       - "5011:5011"
 
@@ -32,12 +36,20 @@ services:
     container_name: book
     build: .
     ports:
-      - "8081:801"
-      - "8000:8000/udp"
+      - "8081:8081"
+      # OSC, for the nightmare room: keep it the same as OSC_PORT. A literal,
+      # as balena does not substitute variables in this file.
+      - "9000:9000/udp"
+    privileged: true
     volumes:
       - 'data:/data'
     environment:
+      - UDEV=1
       - TZ=Australia/Melbourne
-    # Unprivileged: scripts/pi.sh needs only the supervisor api, for the daily reboot.
     labels:
+      io.balena.features.kernel-modules: '1'
+      io.balena.features.firmware: '1'
+      io.balena.features.dbus: '1'
       io.balena.features.supervisor-api: '1'
+      io.balena.features.balena-api: '1'
+      io.balena.features.sysfs: '1'

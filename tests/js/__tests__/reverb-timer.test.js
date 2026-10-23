@@ -53,6 +53,24 @@ describe("acmi-reverb-timer", () => {
     });
   });
 
+  describe("Duration that is not a number", () => {
+    it("draws nothing, and keeps the clock running", () => {
+      let rafCallback;
+      jest.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+        rafCallback = cb;
+        return 42;
+      });
+
+      const elem = makeTimer();
+      elem.setAttribute("data-video-duration", "null");
+      rafCallback();
+
+      expect(elem.querySelector(".countdown").textContent).toBe("");
+      expect(elem.querySelector(".next-start-time").textContent).toBe("");
+      expect(window.requestAnimationFrame).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe("data-hidden attribute", () => {
     it("sets visibility hidden when data-hidden is present", () => {
       const elem = makeTimer();

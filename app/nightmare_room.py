@@ -1,36 +1,19 @@
-"""
-The nightmare room's mode, set from TouchOSC over OSC.
-
-The room is in one of four modes, shown on its label:
-
-- `waiting`: between runs; no timer. The room starts here, and a run ends here.
-- `running`: a run of NIGHTMARE_RUN_MINUTES, timed from `start`.
-- `unavailable`: off for now, not broken.
-- `closed`: no more runs today.
-
-Commands are OSC messages to /nightmare/<command>: `start` (during a run, it
-starts the run over), `wait`, `unavailable` and `close`. A TouchOSC button
-sends 1 on press and 0 on release; only the press counts.
-
-`/api/room-stream/` sends the mode to the label and, during a run, its length
-and position in the shape of the media player's playback events, so the label
-times a run as it times a video.
-
-To send a command without TouchOSC, from the machine the label runs on:
-
-    python -m app.nightmare_room start
-"""
+"""The nightmare room, which TouchOSC controls over OSC: see `app/osc.py`."""
+import functools
 import os
 import sys
 import threading
 import time
 
-from pythonosc.dispatcher import Dispatcher
-from pythonosc.osc_server import ThreadingOSCUDPServer
-from pythonosc.udp_client import SimpleUDPClient
+from app import osc
 
-ADDRESS = '/nightmare/'
+DEFAULT_OSC_ADDRESS_PREFIX = '/nightmare/'
 
+# Each command, after the address prefix, and the mode it puts the room in:
+# - waiting: between runs, with no timer. The room starts here, and a run ends here.
+# - running: a run of NIGHTMARE_RUN_MINUTES. `start` during a run starts it over.
+# - unavailable: off for now, not broken.
+# - closed: no more runs today.
 COMMANDS = {
     'start': 'running',
     'wait': 'waiting',
@@ -61,7 +44,11 @@ class NightmareRoom:
         return True
 
     def snapshot(self):
-        """The mode, and while a run is on, its length and how far through."""
+        """
+        The mode, and while a run is on, its length and how far through, in the
+        shape of the media player's playback events, so the label times a run
+        as it times a video.
+        """
         with self._changed:
             if self._mode == 'running':
                 elapsed = self._clock() - self._started
@@ -79,35 +66,21 @@ class NightmareRoom:
         with self._changed:
             self._changed.wait(timeout)
 
-    def listen(self, port):
-        """Hears commands over OSC on UDP `port`, in a thread of its own."""
-        dispatcher = Dispatcher()
-        for name in COMMANDS:
-            dispatcher.map(ADDRESS + name, self._on_command)
-        dispatcher.set_default_handler(self._on_other)
-        server = ThreadingOSCUDPServer(('0.0.0.0', port), dispatcher)
-        threading.Thread(target=server.serve_forever, daemon=True).start()
-        print(f'[osc] Listening for {ADDRESS}* on UDP {port}')
-        return server
-
-    def _on_command(self, address, *args):
-        # Ignore a button's release (0).
-        if args and not args[0]:
-            return
-        self.command(address[len(ADDRESS):])
-        print(f'[osc] {address}: {self.snapshot()["mode"]}')
-
-    @staticmethod
-    def _on_other(address, *_):
-        # TouchOSC sends its other controls too; only say so for ours.
-        if address.startswith(ADDRESS):
-            print(f'[osc] {address}: no such command')
+    def listen(self, port, prefix=DEFAULT_OSC_ADDRESS_PREFIX):
+        """Hears the room's commands over OSC on UDP `port`, in a thread of its own."""
+        return osc.listen(port, prefix, {
+            name: functools.partial(self.command, name) for name in COMMANDS
+        })
 
 
+# Sends a command without TouchOSC, from the machine the label runs on:
+#
+#     python -m app.nightmare_room start
 if __name__ == '__main__':
     from app import dev_env
 
     dev_env.load()
-    PORT = int(os.getenv('OSC_PORT', '8000'))
-    SimpleUDPClient('127.0.0.1', PORT).send_message(ADDRESS + sys.argv[1], 1)
-    print(f'Sent {ADDRESS}{sys.argv[1]} to UDP {PORT}')
+    PORT = int(os.getenv('OSC_PORT', str(osc.DEFAULT_PORT)))
+    ADDRESS = os.getenv('OSC_ADDRESS_PREFIX', DEFAULT_OSC_ADDRESS_PREFIX) + sys.argv[1]
+    osc.send(PORT, ADDRESS)
+    print(f'Sent {ADDRESS} to UDP {PORT}')

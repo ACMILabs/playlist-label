@@ -1,3 +1,4 @@
+// nanostores 1.5.4 (https://github.com/nanostores/nanostores), MIT licence..
 //#region task/index.js
 let tasks = 0;
 let taskId = 0;

@@ -1,3 +1,4 @@
+// nanotags 0.16.0 (https://github.com/psd-coder/nanotags), MIT licence.
 import { atom, effect } from "./nanostores.mjs";
 //#region src/utils.ts
 function invariant(condition, message) {
