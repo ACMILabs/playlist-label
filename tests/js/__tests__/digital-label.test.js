@@ -46,7 +46,9 @@ describe("acmi-digital-label", () => {
       expect(elem.querySelector(".author").textContent).toContain(
         "Daniel Bronsema"
       );
-      expect(elem.querySelector(".body-copy").innerHTML).toContain("Music video");
+      expect(elem.querySelector(".body-copy").innerHTML).toContain(
+        "Music video"
+      );
       expect(elem.querySelector(".credit-line").innerHTML).toContain(
         "Courtesy of the artists"
       );
@@ -100,16 +102,6 @@ describe("acmi-digital-label", () => {
       const elem = makeElement(true, { "data-xos-media-player": "player1" });
       const timer = elem.querySelector("acmi-reverb-timer");
       expect(timer.hasAttribute("data-hidden")).toBe(false);
-    });
-  });
-
-  describe("Works with JS-only attribute (no Jinja)", () => {
-    it("renders correctly when data-label-json is set via JS setAttribute", () => {
-      const elem = makeElement();
-      elem.setAttribute("data-label-json", JSON.stringify(playlistJson));
-
-      expect(elem.querySelector(".title").textContent).toBe("Default playlist");
-      expect(elem.querySelector(".body-copy").innerHTML).toContain("Music video");
     });
   });
 

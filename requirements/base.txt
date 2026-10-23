@@ -1,7 +1,8 @@
 flask
 requests
 kombu
-paho-mqtt
+paho-mqtt>=2  # app/playback_sync.py uses the paho 2 callback api
 peewee
 sentry-sdk[flask]
 segno
+python-osc

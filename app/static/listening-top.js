@@ -35,13 +35,7 @@ class ListeningRoomTop extends HTMLElement {
           this.#renderWithSubtitles({
             title: "LISTENING ROOM CLOSED",
             doorTimeText: this.#formatDoorTime(door),
-            recordingNotice: Temporal.PlainDate.from("2026-05-22").equals(
-              Temporal.Now.plainDateISO()
-            )
-              ? lastminuteChange
-              : filmed
-              ? FILMING_NOTICE
-              : RECORDING_NOTICE,
+            recordingNotice: this.#recordingNotice(filmed),
           })
         );
         break;
@@ -51,13 +45,7 @@ class ListeningRoomTop extends HTMLElement {
           this.#renderWithSubtitles({
             title: "SESSION WILL BEGIN SOON",
             doorTimeText: this.#formatDoorTime(door),
-            recordingNotice: Temporal.PlainDate.from("2026-05-22").equals(
-              Temporal.Now.plainDateISO()
-            )
-              ? lastminuteChange
-              : filmed
-              ? FILMING_NOTICE
-              : RECORDING_NOTICE,
+            recordingNotice: this.#recordingNotice(filmed),
             doors: true,
           })
         );
@@ -98,6 +86,16 @@ class ListeningRoomTop extends HTMLElement {
         <p class="lr-top-recording">${recordingNotice}</p>
       </div>
     `;
+  }
+
+  /** @param {boolean} filmed @returns {string} */
+  #recordingNotice(filmed) {
+    if (
+      Temporal.PlainDate.from("2026-05-22").equals(Temporal.Now.plainDateISO())
+    ) {
+      return lastminuteChange;
+    }
+    return filmed ? FILMING_NOTICE : RECORDING_NOTICE;
   }
 
   /** @param {Temporal.ZonedDateTime | null} dt @returns {string} */

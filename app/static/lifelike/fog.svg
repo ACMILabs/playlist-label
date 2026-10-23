@@ -1,0 +1,18 @@
+<!-- The nightmare room's fog: wisps of cloud, longer than they are tall,
+     drawn as an alpha mask (see `acmi-title::before` in style.css). It
+     tiles from side to side — `stitchTiles` makes the noise meet itself at
+     the edges — so a layer can drift one tile's width and start again
+     without a seam. Stretched to the size it is drawn at. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 300" preserveAspectRatio="none">
+  <filter id="fog" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.0035 0.012" numOctaves="4" seed="13" stitchTiles="stitch"/>
+    <!-- The noise's red as alpha, with the contrast turned up: clear where
+         it is low, solid where it is high. -->
+    <feColorMatrix type="matrix" values="
+      0 0 0 0 1
+      0 0 0 0 1
+      0 0 0 0 1
+      4 0 0 0 -1.9"/>
+  </filter>
+  <rect width="1080" height="300" filter="url(#fog)"/>
+</svg>

@@ -1,4 +1,6 @@
-FROM bh.cr/balenalabs/browser-aarch64
+# Pinned: from 2.12 balena publishes this block per device type, and v3 is a
+# different block (Wayland) that needs its own migration.
+FROM bh.cr/balenasolutions/browser-raspberrypi5/2.12.2
 
 COPY ./run_debug.sh /usr/source/app/
 

@@ -1,0 +1,592 @@
+@import url("./tokens.css");
+
+/* Styles for the lifelike labels. The custom elements render into the
+   light dom, so an element is styled by its tag (`acmi-title`) and its
+   parts by block__part classes. */
+
+[hidden] {
+  display: none !important;
+}
+
+
+
+acmi-lifelike-label {
+  display: contents;
+}
+
+acmi-single-work,
+acmi-playlist-work,
+acmi-nightmare-room {
+  display: block;
+  block-size: 100%;
+  container-type: size;
+  aspect-ratio: 2160 / 3840;
+}
+
+/* A word too long for its line (a url) breaks rather than running out
+   sideways, where nothing clips it. */
+.acmi-label {
+  block-size: 100%;
+  padding: var(--acmi-label-padding);
+  background: var(--acmi-bg);
+  color: var(--acmi-fg);
+  font-family: var(--acmi-font-body);
+  overflow-wrap: break-word;
+}
+
+
+.acmi-label__content {
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+  overflow-y: clip;
+}
+
+.acmi-label__fill {
+  position: relative;
+  flex: 1 1 0;
+  min-block-size: 0;
+}
+
+/* ---- Error screen ---- */
+
+acmi-error-screen {
+  display: grid;
+  place-items: center;
+  min-block-size: 100%;
+}
+
+.acmi-error-screen__message {
+  margin: 0;
+  text-align: center;
+}
+
+/* ---- Icon ---- */
+
+acmi-icon {
+  display: block;
+  flex: none;
+}
+
+acmi-icon > svg {
+  display: block;
+  inline-size: auto;
+  block-size: var(--acmi-icon-size, 1em);
+}
+
+/* ---- Timer ----
+
+   Tabular figures, so the time does not shift sideways in the ring as it
+   counts, and a number in the line fades into the next at the same width. */
+
+acmi-timer {
+  display: grid;
+  grid-template-areas: "ring" "line";
+  justify-items: center;
+  gap: var(--acmi-timer-gap);
+  inline-size: var(--acmi-timer-width);
+  font-variant-numeric: tabular-nums;
+}
+
+.acmi-timer__ring {
+  grid-area: ring;
+  inline-size: var(--acmi-timer-size);
+  block-size: var(--acmi-timer-size);
+  transform: rotate(-90deg);
+}
+
+.acmi-timer__track {
+  stroke: var(--acmi-timer-track);
+  stroke-width: var(--acmi-timer-ring-width);
+}
+
+/* The progress circle's `pathLength` is 1, so the ratio is the dash. */
+.acmi-timer__progress {
+  stroke: var(--acmi-fg);
+  stroke-width: var(--acmi-timer-ring-width);
+  stroke-dasharray: var(--acmi-timer-ratio, 0) 1;
+}
+
+.acmi-timer__elapsed {
+  grid-area: ring;
+  align-self: center;
+  margin: 0;
+  font-size: var(--acmi-timer-elapsed-size);
+  line-height: 1;
+  text-box: trim-both cap alphabetic;
+}
+
+
+.acmi-timer__line {
+  grid-area: line;
+  min-block-size: 2lh;
+  margin: 0;
+  text-align: center;
+  text-wrap: pretty;
+  font-size: var(--acmi-timer-line-size);
+  line-height: var(--acmi-timer-line-leading);
+}
+
+
+.acmi-timer__number {
+  display: inline-grid;
+  justify-items: center;
+}
+
+.acmi-timer__number > * {
+  grid-area: 1 / 1;
+  transition: opacity var(--acmi-caption-fade);
+}
+
+.acmi-timer__number > [data-leaving] {
+  opacity: 0;
+}
+
+@starting-style {
+  .acmi-timer__number > [data-arriving] {
+    opacity: 0;
+  }
+}
+
+/* ---- Title ---- */
+
+acmi-title {
+  display: block;
+  margin-block-end: var(--acmi-title-space-after);
+}
+
+.acmi-title__heading {
+  margin: 0;
+  font-family: var(--acmi-font-display);
+  font-size: var(--acmi-title-size);
+  line-height: var(--acmi-title-leading);
+}
+
+/* ---- Tombstone ---- */
+
+acmi-tombstone {
+  display: block;
+  margin-block-end: var(--acmi-tombstone-space-after);
+  font-size: var(--acmi-tombstone-size);
+  line-height: var(--acmi-tombstone-leading);
+  text-wrap-style: pretty;
+}
+
+.acmi-tombstone__credit,
+.acmi-tombstone__duration {
+  margin: 0;
+}
+
+
+.acmi-tombstone__credit > :first-child {
+  margin-block-start: 0;
+}
+
+.acmi-tombstone__credit > :last-child {
+  margin-block-end: 0;
+}
+
+/* ---- Description ---- */
+
+acmi-description {
+  display: block;
+  margin-block-end: var(--acmi-description-space-after);
+  font-size: var(--acmi-description-size);
+  line-height: var(--acmi-description-leading);
+  text-wrap: pretty;
+}
+
+acmi-description > :first-child {
+  margin-block-start: 0;
+}
+
+acmi-description > :last-child {
+  margin-block-end: 0;
+}
+
+/* ---- Additional info ---- */
+
+acmi-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--acmi-info-row-gap);
+}
+
+acmi-info-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--acmi-info-icon-gap);
+  font-size: var(--acmi-info-size);
+  line-height: var(--acmi-info-leading);
+}
+
+.acmi-info-entry__icon {
+  --acmi-icon-size: var(--acmi-info-icon-size);
+}
+
+/* Trimmed to the letters, so the row centres the icon on the text you see
+   rather than on its line box. */
+.acmi-info-entry__text {
+  text-box: trim-both cap alphabetic;
+}
+
+
+
+.acmi-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto 1fr;
+  column-gap: var(--acmi-header-gap);
+  row-gap: var(--acmi-header-gap);
+  align-items: start;
+  flex: none;
+  block-size: var(--acmi-header-height);
+}
+
+acmi-playlist-title {
+  display: block;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.acmi-playlist-title__text {
+  margin: 0;
+  font-family: var(--acmi-font-decorative);
+  font-size: var(--acmi-playlist-title-size);
+  line-height: var(--acmi-playlist-title-leading);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.acmi-header__timer {
+  grid-column: 2;
+  grid-row: 1 / -1;
+}
+
+
+acmi-qr-block {
+  --figure: var(--acmi-fg);
+  --ground: var(--acmi-bg);
+
+  display: flex;
+  align-items: center;
+  gap: var(--acmi-qr-gap);
+  margin-block-start: var(--acmi-qr-space-before);
+  font-size: var(--acmi-qr-info-size);
+  line-height: var(--acmi-leading-2);
+}
+
+.acmi-qr-block__code {
+  flex: none;
+  inline-size: var(--acmi-qr-size);
+  block-size: var(--acmi-qr-size);
+}
+
+.acmi-qr-block__code > svg {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.acmi-qr-block__info {
+  display: flex;
+  align-items: center;
+  gap: var(--acmi-qr-gap);
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.acmi-qr-block__icon {
+  --acmi-icon-size: var(--acmi-qr-icon-size);
+}
+
+/* Trimmed to the letters, as the info rows are. */
+.acmi-qr-block__text {
+  text-box: trim-both cap alphabetic;
+}
+
+/* ---- Work body ---- */
+
+acmi-work-body {
+  display: block;
+}
+
+/* ---- Single work ---- */
+
+.acmi-body-block {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-block-size: 0;
+}
+
+/* ---- Playlist ---- */
+
+acmi-playlist-entries {
+  display: flex;
+  flex-direction: column;
+  gap: var(--acmi-entry-gap);
+}
+
+/* ---- Playlist entry ----
+
+   The status across the top, the body left, the timer right. The entry
+   playing now has no timer (the header has it), so its body takes both
+   columns for the description. */
+
+acmi-playlist-entry {
+  display: grid;
+  grid-template-columns: 1fr var(--acmi-timer-width);
+  grid-template-areas:
+    "status status"
+    "body timer";
+  column-gap: var(--acmi-timer-gap);
+  align-items: start;
+}
+
+acmi-playlist-entry[data-kind="current"] {
+  grid-template-areas:
+    "status status"
+    "body body";
+}
+
+acmi-playlist-entry + acmi-playlist-entry {
+  padding-block-start: var(--acmi-entry-gap);
+  border-block-start: var(--acmi-rule-width) solid var(--acmi-rule);
+}
+
+
+acmi-playlist-entry:not([data-kind="current"]) {
+  color: var(--acmi-entry-upcoming-colour);
+}
+
+.acmi-playlist-entry__status {
+  grid-area: status;
+  margin: 0;
+  margin-block-end: var(--acmi-entry-status-space-after);
+  font-family: var(--acmi-font-decorative);
+  font-size: var(--acmi-entry-status-size);
+  line-height: var(--acmi-leading-2);
+  text-transform: uppercase;
+}
+
+.acmi-playlist-entry__body {
+  grid-area: body;
+}
+
+.acmi-playlist-entry__timer {
+  grid-area: timer;
+}
+
+
+acmi-playlist-entry .acmi-title__heading {
+  font-size: var(--acmi-entry-title-size);
+  line-height: var(--acmi-leading-1);
+}
+
+acmi-playlist-entry[data-kind="current"] :is(acmi-title, acmi-tombstone) {
+  margin-inline-end: calc(var(--acmi-timer-gap) + var(--acmi-timer-width));
+}
+
+acmi-playlist-entry:not([data-kind="current"]) acmi-tombstone {
+  margin-block-end: 0;
+}
+
+
+
+html:has(acmi-playlist-work) {
+  view-transition-name: none;
+}
+
+html:has(acmi-playlist-work)::view-transition {
+  clip-path: var(--acmi-transition-clip, none);
+}
+
+html:has(acmi-playlist-work)::view-transition-group(*) {
+  --acmi-moves-at: calc(
+    var(--acmi-rotation-fade) + var(--acmi-slot, 0) *
+      var(--acmi-rotation-stagger)
+  );
+  --acmi-arrives-at: calc(var(--acmi-moves-at) + var(--acmi-rotation-move));
+  --acmi-status-at: calc(var(--acmi-arrives-at) + var(--acmi-rotation-fade));
+
+  animation-delay: var(--acmi-moves-at);
+  animation-duration: var(--acmi-rotation-move);
+  animation-timing-function: var(--acmi-rotation-easing);
+}
+
+html:has(acmi-playlist-work)::view-transition-old(*):only-child {
+  animation-delay: 0s;
+  animation-duration: var(--acmi-rotation-fade);
+}
+
+html:has(acmi-playlist-work)::view-transition-new(*):only-child {
+  animation-delay: var(--acmi-arrives-at);
+  animation-duration: var(--acmi-rotation-fade);
+}
+
+html:has(acmi-playlist-work)::view-transition-new(*.acmi-status):only-child {
+  animation-delay: var(--acmi-status-at);
+}
+
+::view-transition-group(*.acmi-slot-0) {
+  --acmi-slot: 0;
+}
+::view-transition-group(*.acmi-slot-1) {
+  --acmi-slot: 1;
+}
+::view-transition-group(*.acmi-slot-2) {
+  --acmi-slot: 2;
+}
+::view-transition-group(*.acmi-slot-3) {
+  --acmi-slot: 3;
+}
+::view-transition-group(*.acmi-slot-4) {
+  --acmi-slot: 4;
+}
+::view-transition-group(*.acmi-slot-5) {
+  --acmi-slot: 5;
+}
+::view-transition-group(*.acmi-slot-6) {
+  --acmi-slot: 6;
+}
+::view-transition-group(*.acmi-slot-7) {
+  --acmi-slot: 7;
+}
+
+
+acmi-nightmare-room acmi-title {
+  position: relative;
+  margin-block-end: var(--acmi-nightmare-title-space-after);
+  padding-block: var(--acmi-nightmare-title-rule-gap);
+  border-block: var(--acmi-nightmare-title-rule-width) solid
+    var(--acmi-nightmare-title-rule);
+}
+
+/* Positioned and isolated to hold the pulsing glow (::after) behind it. */
+acmi-nightmare-room .acmi-title__heading {
+  position: relative;
+  isolation: isolate;
+  font-size: var(--acmi-nightmare-title-size);
+  color: var(--acmi-nightmare-title-colour);
+  text-align: center;
+  line-height: 0.8;
+  text-box: trim-both cap alphabetic;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  text-shadow: 0 0 var(--acmi-nightmare-glow) var(--acmi-nightmare-title-colour),
+    0 0 calc(3 * var(--acmi-nightmare-glow)) var(--acmi-nightmare-title-colour);
+}
+
+
+acmi-nightmare-room .acmi-title__heading::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  color: transparent;
+  text-box: trim-both cap alphabetic;
+  text-shadow: 0 0 var(--acmi-nightmare-glow-high)
+      var(--acmi-nightmare-title-colour),
+    0 0 calc(3 * var(--acmi-nightmare-glow-high))
+      var(--acmi-nightmare-title-colour);
+  opacity: 0;
+}
+
+acmi-nightmare-room[data-state="running"] .acmi-title__heading {
+  --acmi-nightmare-glow: var(--acmi-nightmare-glow-low);
+}
+
+acmi-nightmare-room[data-state="running"] .acmi-title__heading::after {
+  animation: acmi-nightmare-pulse var(--acmi-nightmare-pulse-duration)
+    ease-in-out infinite alternate;
+}
+
+@keyframes acmi-nightmare-pulse {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Fog across the title while a run is on: two layers, each twice the
+   label's width, so drifting by half loops seamlessly. The second is
+   flipped, takes half as long again, and swells out of step. It comes and
+   goes with the mode's crossfade. */
+acmi-nightmare-room[data-state="running"] acmi-title::before,
+acmi-nightmare-room[data-state="running"] acmi-title::after {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset-block: calc(-1 * var(--acmi-nightmare-fog-reach));
+  inset-inline-start: calc(-1 * var(--acmi-label-padding));
+  inline-size: calc(2 * (100% + 2 * var(--acmi-label-padding)));
+  background: var(--acmi-nightmare-fog-colour);
+  mask:
+    url("./fog.svg") 0 0 / 50% 100% repeat-x,
+    linear-gradient(transparent, #000 30%, #000 70%, transparent);
+  mask-composite: intersect;
+  pointer-events: none;
+  animation:
+    acmi-nightmare-fog-drift var(--acmi-nightmare-fog-drift) linear infinite,
+    acmi-nightmare-fog-swell var(--acmi-nightmare-fog-swell) ease-in-out
+      infinite alternate backwards;
+}
+
+acmi-nightmare-room[data-state="running"] acmi-title::after {
+  scale: 1 -1;
+  animation-duration: calc(1.5 * var(--acmi-nightmare-fog-drift)),
+    var(--acmi-nightmare-fog-swell);
+  animation-direction: reverse, alternate;
+  animation-delay: 0s, calc(0.5 * var(--acmi-nightmare-fog-swell));
+}
+
+@keyframes acmi-nightmare-fog-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes acmi-nightmare-fog-swell {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 0.9;
+  }
+}
+
+acmi-nightmare-info {
+  display: block;
+  margin-block-end: var(--acmi-nightmare-info-space-after);
+  padding: var(--acmi-nightmare-info-padding);
+  border: var(--acmi-nightmare-info-border-width) solid
+    var(--acmi-nightmare-info-border);
+  text-align: center;
+}
+
+.acmi-nightmare-info__text {
+  margin: 0;
+  font-family: var(--acmi-font-display);
+  font-size: var(--acmi-nightmare-info-size);
+  line-height: var(--acmi-nightmare-info-leading);
+  text-transform: uppercase;
+  text-wrap: balance;
+  text-box: trim-both cap alphabetic;
+}
+
+/* Unavailable or closed: the work fades, the room's info does not. */
+acmi-nightmare-room:is([data-state="unavailable"], [data-state="closed"])
+  :is(acmi-title, acmi-work-body) {
+  opacity: var(--acmi-nightmare-off-opacity);
+}
+
+/* A change of mode crossfades the whole label. */
+html:has(acmi-nightmare-room)::view-transition-group(root) {
+  animation-duration: var(--acmi-nightmare-fade);
+}
