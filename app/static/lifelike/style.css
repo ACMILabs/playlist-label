@@ -119,6 +119,7 @@ acmi-timer {
 
 .acmi-timer__line {
   grid-area: line;
+  justify-self: stretch;
   min-block-size: 2lh;
   margin: 0;
   text-align: center;
@@ -243,8 +244,9 @@ acmi-info-entry {
   block-size: var(--acmi-header-height);
 }
 
+/* Hidden for now. The band keeps its height, so the works do not move. */
 acmi-playlist-title {
-  display: block;
+  display: none;
   grid-column: 1;
   grid-row: 1;
 }
@@ -303,12 +305,28 @@ acmi-qr-block {
 /* Trimmed to the letters, as the info rows are. */
 .acmi-qr-block__text {
   text-box: trim-both cap alphabetic;
+  line-height: 1;
+  display: inline;
+  margin: 0;
 }
 
 /* ---- Work body ---- */
 
 acmi-work-body {
   display: block;
+}
+
+/* ---- Work status ----
+
+   "Now playing", "Up next", "Later": the line above a work. */
+
+.acmi-work-status {
+  margin: 0;
+  margin-block-end: var(--acmi-entry-status-space-after);
+  font-family: var(--acmi-font-decorative);
+  font-size: var(--acmi-entry-status-size);
+  line-height: var(--acmi-leading-2);
+  text-transform: uppercase;
 }
 
 /* ---- Single work ---- */
@@ -358,24 +376,30 @@ acmi-playlist-entry + acmi-playlist-entry {
 
 acmi-playlist-entry:not([data-kind="current"]) {
   color: var(--acmi-entry-upcoming-colour);
+
+  & .acmi-playlist-entry__status {
+    color: var(--acmi-fg-med);
+  }
 }
 
 .acmi-playlist-entry__status {
   grid-area: status;
-  margin: 0;
-  margin-block-end: var(--acmi-entry-status-space-after);
-  font-family: var(--acmi-font-decorative);
-  font-size: var(--acmi-entry-status-size);
-  line-height: var(--acmi-leading-2);
-  text-transform: uppercase;
 }
 
 .acmi-playlist-entry__body {
   grid-area: body;
 }
 
+/* A work not playing yet shows only when it starts. Its ring appears in the
+   header once it plays. */
 .acmi-playlist-entry__timer {
   grid-area: timer;
+  grid-template-areas: "line";
+  gap: 0;
+}
+
+.acmi-playlist-entry__timer .acmi-timer__ring {
+  display: none;
 }
 
 
@@ -384,12 +408,27 @@ acmi-playlist-entry .acmi-title__heading {
   line-height: var(--acmi-leading-1);
 }
 
+/* A work not playing yet has a smaller title: the same title, scaled down,
+   not set in a smaller size. It takes that much less of the width too, so it
+   breaks into the same lines as it will when it plays, and the rotation only
+   has to scale it up. `zoom`, not a transform, so the space it leaves
+   closes up. */
+acmi-playlist-entry:not([data-kind="current"]) acmi-title {
+  zoom: var(--acmi-entry-upcoming-title-scale);
+  inline-size: calc(100% * var(--acmi-entry-upcoming-title-scale));
+}
+
 acmi-playlist-entry[data-kind="current"] :is(acmi-title, acmi-tombstone) {
   margin-inline-end: calc(var(--acmi-timer-gap) + var(--acmi-timer-width));
 }
 
 acmi-playlist-entry:not([data-kind="current"]) acmi-tombstone {
   margin-block-end: 0;
+}
+
+acmi-playlist-entry acmi-tombstone {
+  font-size: calc( 0.98 * var(--acmi-text-4));
+  text-wrap: pretty;
 }
 
 
@@ -413,6 +452,18 @@ html:has(acmi-playlist-work)::view-transition-group(*) {
   animation-delay: var(--acmi-moves-at);
   animation-duration: var(--acmi-rotation-move);
   animation-timing-function: var(--acmi-rotation-easing);
+}
+
+/* The line moving up into the header changes its words on the way, and
+   crossfades from one to the other for the whole of the move. Each keeps its
+   own size, centred at the top of the moving box, so neither is stretched to
+   fit the other and both sit where the header's line will be. */
+html:has(acmi-playlist-work)::view-transition-old(*.acmi-header-line),
+html:has(acmi-playlist-work)::view-transition-new(*.acmi-header-line) {
+  inset-inline-start: 50%;
+  inline-size: auto;
+  block-size: auto;
+  translate: -50% 0;
 }
 
 html:has(acmi-playlist-work)::view-transition-old(*):only-child {

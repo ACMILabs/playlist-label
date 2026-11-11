@@ -432,8 +432,8 @@ define("acmi-info-block")
 /**
  * The timer: a ring, the time inside it, and a line under it. For the work
  * playing now the ring fills as it plays and the line is when it comes round
- * again; for one not yet started, the ring is empty and the line is when it
- * starts.
+ * again; for one not yet started, the playlist hides the ring and the line is
+ * when it starts.
  */
 define("acmi-timer")
   .withProps((f) => ({
@@ -480,10 +480,13 @@ define("acmi-qr-block")
   .setup((c) => {
     c.host.innerHTML = `
       <div class="acmi-qr-block__code" aria-hidden="true"></div>
-      <p class="acmi-qr-block__info">
-        <acmi-icon class="acmi-qr-block__icon" name="captions"></acmi-icon>
-        <span class="acmi-qr-block__text"></span>
-      </p>
+      <div class="acmi-qr-block__info">
+        <div class="acmi-icon-column">
+          <acmi-icon class="acmi-qr-block__icon" name="captions"></acmi-icon>
+          <acmi-icon class="acmi-qr-block__icon" name="translate"></acmi-icon>
+        </div>
+        <p class="acmi-qr-block__text"></p>
+      </div>
     `;
 
     const code = c.getElement(".acmi-qr-block__code");
@@ -589,9 +592,9 @@ const STAGGERED_SLOTS = 8;
 /**
  * One work in the playlist: its status, its body, and its timer. `current`
  * shows everything but the timer, which the label draws in its header;
- * `next` and `later` show the title and tombstone, with an empty ring and
- * when they start. The title and tombstone look the same in every kind, so
- * they can move up the list unchanged when the playlist rotates.
+ * `next` and `later` show the title and tombstone, and when they start. The
+ * tombstone looks the same in every kind and the title differs only in scale,
+ * so both can move up the list when the playlist rotates.
  *
  * `place` is the entry's slot in the list; not `slot`, a global attribute.
  */
@@ -610,7 +613,7 @@ define("acmi-playlist-entry")
   .setup((c) => {
     c.host.setAttribute("role", "listitem");
     c.host.innerHTML = `
-      <p class="acmi-playlist-entry__status"></p>
+      <p class="acmi-work-status acmi-playlist-entry__status"></p>
       <acmi-work-body class="acmi-playlist-entry__body"></acmi-work-body>
       <acmi-timer class="acmi-playlist-entry__timer" hidden></acmi-timer>
     `;
@@ -649,24 +652,25 @@ define("acmi-playlist-entry")
     );
 
     // Names for the rotation's view transition (see Rotating in style.css).
-    // The title, tombstone and timer are named by the work's key, so they
-    // move up the list with it; the timer's name is the one the header's
-    // timer takes when this work plays, so the ring carries on up into it.
+    // The title, tombstone and timer line are named by the work's key, so
+    // they move up the list with it; the line's name is the one the header's
+    // line takes when this work plays, so its start time moves up into it.
     // The status and the rest of the entry are named by key and slot, so
     // they fade rather than move; the status apart, as it goes first and
     // comes back last. The slot class staggers it all down the list.
     const title = c.getElement(body, "acmi-title");
     const tombstone = c.getElement(body, "acmi-tombstone");
+    const line = c.getElement(timer, ".acmi-timer__line");
     c.effect([c.props.$key, c.props.$kind, c.props.$place], (key, kind, place) => {
       const named = key !== null;
       c.host.style.viewTransitionName = named ? `acmi-entry-${key}-${place}` : "";
       status.style.viewTransitionName = named ? `acmi-status-${key}-${place}` : "";
       title.style.viewTransitionName = named ? `acmi-title-${key}` : "";
       tombstone.style.viewTransitionName = named ? `acmi-tombstone-${key}` : "";
-      timer.style.viewTransitionName = named && kind !== "current" ? `acmi-timer-${key}` : "";
+      line.style.viewTransitionName = named && kind !== "current" ? `acmi-timer-line-${key}` : "";
 
       const stagger = named ? `acmi-slot-${Math.min(place, STAGGERED_SLOTS - 1)}` : "";
-      for (const part of [c.host, title, tombstone, timer]) {
+      for (const part of [c.host, title, tombstone, line]) {
         part.style.viewTransitionClass = stagger;
       }
       status.style.viewTransitionClass = named ? `${stagger} acmi-status` : "";
@@ -755,8 +759,8 @@ define("acmi-playlist-entries")
  * server gives it other words — NIGHTMARE_WAITING_TEXT and the like.
  */
 const NIGHTMARE_TEXT = {
-  waiting: "Please wait here. The next run starts soon.",
-  running: "A run is in progress. The next one starts when it ends.",
+  waiting: "Please wait here. The next session starts soon.",
+  running: "A session is in progress. The next one starts when it ends.",
   unavailable: "The Nightmare Room is not running at the moment.",
   closed: "The Nightmare Room is closed for today.",
 };
@@ -861,8 +865,8 @@ const EMPTY_WORK = {
 };
 
 /**
- * A single work: the timer in the header band, then the body with the qr
- * code at its foot. Shows the first work it is given.
+ * A single work: the timer in the header band, then "Now playing" and the
+ * body, with the qr code at its foot. Shows the first work it is given.
  */
 define("acmi-single-work")
   .withProps((f) => ({
@@ -874,6 +878,7 @@ define("acmi-single-work")
       header: `<acmi-timer class="acmi-header__timer" hidden></acmi-timer>`,
       body: `
         <div class="acmi-body-block">
+          <p class="acmi-work-status" hidden></p>
           <acmi-work-body class="acmi-label__fill"></acmi-work-body>
           <acmi-qr-block hidden></acmi-qr-block>
         </div>
@@ -883,8 +888,14 @@ define("acmi-single-work")
     const timer = c.getElement("acmi-timer");
     const body = c.getElement("acmi-work-body");
     const qrBlock = c.getElement("acmi-qr-block");
+    const status = c.getElement(".acmi-work-status");
 
-    c.effect(works, (value) => setWork(body, value[0] ?? EMPTY_WORK));
+    setText(status, ENTRY_STATUS.current);
+    c.effect(works, (value) => {
+      const work = value[0] ?? EMPTY_WORK;
+      setWork(body, work);
+      status.hidden = !work.heading;
+    });
     c.effect(c.props.$qrSvg, (value) => {
       qrBlock.svg = value;
     });
@@ -927,12 +938,16 @@ define("acmi-playlist-work")
     c.effect(c.props.$works, (value) => {
       entries.works = value;
     });
-    // Named as the playing work's timer was in the list, so the rotation
-    // slides it up from there, in the first slot's turn.
+    // The line is named as the playing work's line was in the list, so the
+    // rotation slides it up from there, in the first slot's turn. The ring is
+    // only here, so it is named for this work alone: it fades out and back in.
+    const line = c.getElement(timer, ".acmi-timer__line");
     timer.style.viewTransitionClass = "acmi-slot-0";
+    line.style.viewTransitionClass = "acmi-slot-0 acmi-header-line";
     c.effect(works, (value) => {
       const key = value[0]?.key ?? null;
       timer.style.viewTransitionName = key === null ? "" : `acmi-timer-${key}`;
+      line.style.viewTransitionName = key === null ? "" : `acmi-timer-line-${key}`;
     });
     c.effect(c.props.$secondsUntilNext, (value) => {
       entries.secondsUntilNext = value;

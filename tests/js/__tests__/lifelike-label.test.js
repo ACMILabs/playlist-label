@@ -81,6 +81,8 @@ describe("acmi-lifelike-label, normal", () => {
     const heading = label.querySelector(".acmi-title__heading");
     expect(heading.innerHTML).toBe("Test pattern");
     expect(heading.dataset.text).toBe("Test pattern");
+    expect(text(label, ".acmi-work-status")).toBe("Now playing");
+    expect(label.querySelector(".acmi-work-status").hidden).toBe(false);
     expect(text(label, ".acmi-tombstone__credit")).toContain("Daniel Bronsema");
     expect(text(label, ".acmi-tombstone__duration")).toBe("Duration: 1 minute");
     expect(text(label, "acmi-description")).toContain(
@@ -275,7 +277,7 @@ describe("acmi-lifelike-label, playlist", () => {
       texts(label, ".acmi-playlist-entry__timer .acmi-timer__line")
     ).toEqual(["", "Starts in 1 minute", "Starts in 2 minutes"]);
     expect(text(label, ".acmi-header__timer .acmi-timer__line")).toBe(
-      "This work starts again in 3 minutes"
+      "This title will play again in 3 minutes"
     );
   });
 });
@@ -287,7 +289,7 @@ describe("acmi-lifelike-label, nightmare room", () => {
 
     expect(room.dataset.state).toBe("waiting");
     expect(text(label, ".acmi-nightmare-info__text")).toBe(
-      "Please wait here. The next run starts soon."
+      "Please wait here. The next session starts soon."
     );
     expect(label.querySelector(".acmi-tombstone__duration").hidden).toBe(true);
   });

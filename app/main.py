@@ -93,7 +93,7 @@ LABEL_ROTATE = os.getenv('LABEL_ROTATE', 'normal').strip().lower()
 if LABEL_ROTATE not in ('normal', 'left', 'right', 'inverted'):
     print(f'[config] LABEL_ROTATE={LABEL_ROTATE!r} is not a rotation, ignoring it')
     LABEL_ROTATE = 'normal'
-LISTEING_ROOM_QR_CODE = "https://risingmelbourne.fillout.com/t/4qKipy8T3rus"
+LISTENING_ROOM_QR_CODE = "https://risingmelbourne.fillout.com/t/4qKipy8T3rus"
 CACHE_DIR = os.getenv('CACHE_DIR', '/data/')
 # How often the "Playlist not found" page reloads, and so asks XOS again.
 PLAYLIST_RETRY_SECONDS = 60
@@ -289,8 +289,8 @@ def qr_svg(url, error='M'):
     """An inline SVG QR code for `url`, drawn in the page's --figure and --ground."""
     text = make_qr(url, error=error).svg_inline(dark="#aaa", light="#bbb", border=1,
                                                 draw_transparent=False, omitsize=True)
-    text = text.replace('#aaa', "var(--figure, black)")
-    return text.replace('#bbb', "var(--ground, white)")
+    text = text.replace('#aaa', "var(--ground, black)")
+    return text.replace('#bbb', "var(--figure, white)")
 
 
 def listening_room_json_additions(qr_code_url, mode_override, time_override,
@@ -344,7 +344,7 @@ def playlist_label():
             json_data = json.load(json_file)
         if LABEL_MODE == 'listening-room':
             json_data.update(listening_room_json_additions(
-                qr_code_url=LISTEING_ROOM_QR_CODE,
+                qr_code_url=LISTENING_ROOM_QR_CODE,
                 mode_override=LISTENING_ROOM_MODE_OVERRIDE,
                 time_override=LISTENING_ROOM_TIME_OVERRIDE,
                 custom_event_start_time=LISTENING_ROOM_CUSTOM_EVENT_START_TIME,

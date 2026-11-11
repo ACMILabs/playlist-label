@@ -26,7 +26,9 @@
 
   /* ---- Colour ---- */
   --acmi-fg-faint: color-mix(in oklch, var(--acmi-fg) 20%, var(--acmi-bg));
-  --acmi-fg-subtle: color-mix(in oklch, var(--acmi-fg) 85%, var(--acmi-bg));
+  --acmi-fg-subtle: color-mix(in oklch, var(--acmi-fg) 75%, var(--acmi-bg));
+  --acmi-fg-med: color-mix(in oklch, var(--acmi-fg) 95%, var(--acmi-bg));
+  --acmi-fg-semi: color-mix(in oklch, var(--acmi-fg) 50%, var(--acmi-bg));
 
   /* ---- Type families ---- */
   --acmi-font-body: "FaktPro", sans-serif;
@@ -56,7 +58,7 @@
 
   /* ---- Rules ---- */
   --acmi-rule-width: calc(4 * var(--acmi-px));
-  --acmi-rule: var(--acmi-fg-faint);
+  --acmi-rule: var(--acmi-fg-semi);
 }
 
 /* ---- What each block takes ---- */
@@ -78,7 +80,7 @@
      about 9.6 design pixels wide at 260. */
   --acmi-timer-ring-width: 4;
   --acmi-timer-track: var(--acmi-fg-faint);
-  --acmi-timer-gap: var(--acmi-space-3);
+  --acmi-timer-gap: var(--acmi-space-1);
   --acmi-timer-elapsed-size: var(--acmi-text-3);
   --acmi-timer-line-size: var(--acmi-text-2);
   --acmi-timer-line-leading: var(--acmi-leading-4);
@@ -105,13 +107,14 @@
   --acmi-qr-size: calc(172 * var(--acmi-px));
   --acmi-qr-info-size: var(--acmi-text-1);
   --acmi-qr-icon-size: calc(82 * var(--acmi-px));
-  --acmi-qr-gap: var(--acmi-space-2);
+  --acmi-qr-gap: var(--acmi-space-1);
   --acmi-qr-space-before: var(--acmi-space-4);
 
-  --acmi-entry-status-size: var(--acmi-text-3);
+  --acmi-entry-status-size: var(--acmi-text-4);
   --acmi-entry-status-space-after: var(--acmi-space-1);
-  --acmi-entry-gap: var(--acmi-space-3);
+  --acmi-entry-gap: calc(var(--acmi-space-3) / 2);
   --acmi-entry-title-size: var(--acmi-display-1);
+  --acmi-entry-upcoming-title-scale: 0.8;
   --acmi-entry-upcoming-colour: var(--acmi-fg-subtle);
 
   /* Rotating: see Rotating in style.css. */

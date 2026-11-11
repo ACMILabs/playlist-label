@@ -8,7 +8,7 @@ from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import ThreadingOSCUDPServer
 from pythonosc.udp_client import SimpleUDPClient
 
-DEFAULT_PORT = 9000
+DEFAULT_PORT = 8082
 
 
 def on_press(prefix, commands):

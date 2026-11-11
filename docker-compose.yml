@@ -39,7 +39,7 @@ services:
       - "8081:8081"
       # OSC, for the nightmare room: keep it the same as OSC_PORT. A literal,
       # as balena does not substitute variables in this file.
-      - "9000:9000/udp"
+      - "8082:8082/udp"
     privileged: true
     volumes:
       - 'data:/data'

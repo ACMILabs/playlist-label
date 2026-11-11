@@ -46,12 +46,12 @@ export function durationText(seconds) {
 }
 
 /**
- * When a work further down the playlist comes round: "Starts soon" inside
- * the last minute, and nothing when no time is known.
+ * When a work further down the playlist comes round: "Starts in less than a
+ * minute" inside the last minute, and nothing when no time is known.
  */
 export function startsInText(seconds) {
   if (!Number.isFinite(seconds)) return "";
-  if (seconds < 60) return "Starts soon";
+  if (seconds < 60) return "Starts in less than a minute";
   return `Starts in ${minutesText(seconds)}`;
 }
 
@@ -64,7 +64,7 @@ export function restartText(seconds) {
 /** The same line on a playlist, where "again" means after every other work. */
 export function loopText(seconds) {
   if (!Number.isFinite(seconds)) return "";
-  return `This work starts again in ${minutesText(seconds)}`;
+  return `This title will play again in ${minutesText(seconds)}`;
 }
 
 /** When a run in the nightmare room ends. */

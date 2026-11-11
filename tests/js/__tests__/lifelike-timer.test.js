@@ -28,15 +28,15 @@ describe("lifelike time text", () => {
     expect(durationText(NaN)).toBe("");
   });
 
-  it("says a work starts soon inside its last minute", () => {
+  it("says a work starts in less than a minute inside its last minute", () => {
     expect(startsInText(420)).toBe("Starts in 7 minutes");
-    expect(startsInText(59)).toBe("Starts soon");
+    expect(startsInText(59)).toBe("Starts in less than a minute");
     expect(startsInText(null)).toBe("");
   });
 
   it("writes the restart, loop and run-end lines", () => {
     expect(restartText(300)).toBe("Starts again in 5 minutes");
-    expect(loopText(600)).toBe("This work starts again in 10 minutes");
+    expect(loopText(600)).toBe("This title will play again in 10 minutes");
     expect(endsInText(90)).toBe("Ends in 1 minute");
     expect(restartText(Infinity)).toBe("");
   });
