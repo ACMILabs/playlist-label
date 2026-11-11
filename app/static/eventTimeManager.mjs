@@ -67,6 +67,8 @@ const getEvents = async () => {
   let offset = 0;
 
   while (events.length < numEvents && offset < numEvents) {
+    // One page at a time: the first page says how many there are.
+    // eslint-disable-next-line no-await-in-loop
     const result = await getEventPage(offset, LIMIT);
     if (result == null) {
       throw new Error("could not get events");
@@ -97,7 +99,7 @@ export default class EventTimeManager {
     const allEvents = await fetchEvents().catch(() => null);
 
     if (allEvents == null) {
-      console.log(`Couldn't get events from server, using cache`);
+      console.warn(`Couldn't get events from server, using cache`);
       const eventJSON = window.localStorage.getItem("reverb-events");
       if (eventJSON === null) {
         throw new Error("could not get events");
@@ -138,7 +140,12 @@ export default class EventTimeManager {
 /**
  * @param {Temporal.InstantLike} now
  * @param {EventEntry[]} events
- * @returns {{ mode: 'normal'|'closed'|'doors'|'eventRunning'; filmed: boolean; title: string | null; doorTime: Temporal.ZonedDateTime | null }}
+ * @returns {{
+ *   mode: 'normal'|'closed'|'doors'|'eventRunning';
+ *   filmed: boolean;
+ *   title: string | null;
+ *   doorTime: Temporal.ZonedDateTime | null;
+ * }}
  */
 export function getMode(now, events) {
   /** @type {'normal'|'closed'|'doors'|'eventRunning'} */
@@ -157,28 +164,25 @@ export function getMode(now, events) {
     );
     const endTime = event.time.add(eventDuration);
 
-    // eslint-disable-next-line no-undef
-    if (Temporal.Instant.compare(now, endTime) === 1) continue;
+    // From the sound check to the end of the event.
+    const inWindow =
+      Temporal.Instant.compare(now, endTime) !== 1 &&
+      Temporal.Instant.compare(now, soundCheck) !== -1;
 
-    // eslint-disable-next-line no-undef
-    if (Temporal.Instant.compare(now, soundCheck) === -1) continue;
+    if (inWindow) {
+      title = event.title;
+      filmed = false;
+      doorTime = doorsOpen;
 
-    title = event.title;
-    filmed = false;
-    doorTime = doorsOpen;
-
-    // eslint-disable-next-line no-undef
-    if (Temporal.Instant.compare(now, doorsOpen) === -1) {
-      mode = "closed";
+      if (Temporal.Instant.compare(now, doorsOpen) === -1) {
+        mode = "closed";
+      } else if (Temporal.Instant.compare(now, event.time) === -1) {
+        mode = "doors";
+      } else {
+        mode = "eventRunning";
+      }
       break;
     }
-    // eslint-disable-next-line no-undef
-    if (Temporal.Instant.compare(now, event.time) === -1) {
-      mode = "doors";
-      break;
-    }
-    mode = "eventRunning";
-    break;
   }
 
   return { mode, filmed, title, doorTime };
@@ -217,5 +221,5 @@ if (import.meta.main) {
     minute: 50,
     timeZone: "Australia/Melbourne",
   });
-  console.log(getMode(now, events));
+  console.info(getMode(now, events));
 }

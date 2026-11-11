@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+{# LABEL_FG_COLOUR and LABEL_BG_COLOUR, when set, replace the label's own
+   colours (see `@property` in tokens.css); the nightmare room's ground is
+   black unless LABEL_BG_COLOUR says otherwise. LABEL_ROTATE: see below. #}
+{%- if not bg_colour and label_mode == 'nightmare-room' %}
+  {%- set bg_colour = 'oklch(0% 0 none)' %}
+{%- endif %}
+<html lang="en"
+  {%- if label_rotate and label_rotate != 'normal' %} data-rotate="{{ label_rotate }}"{% endif %}
+  {%- if fg_colour or bg_colour %} style="
+    {%- if fg_colour %}--acmi-fg: {{ fg_colour }};{% endif %}
+    {%- if bg_colour %}--acmi-bg: {{ bg_colour }};{% endif %}"
+  {%- endif %}>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ playlist_json.title }}</title>
+  <link rel="stylesheet" href="/static/lifelike/style.css">
+  <style>
+    /* The label is the whole screen: its ground behind it while the script
+       loads, and never a scrollbar. */
+    html {
+      background: var(--acmi-bg);
+      overflow: clip;
+    }
+    body {
+      margin: 0;
+    }
+
+    /* LABEL_ROTATE turns the page on the gpu, as X turning the screen halves
+       the frame rate on a Pi 5 at 4K. `will-change` turns the whole layer
+       pixel for pixel, keeping text sharp. Absolute, not fixed: Chrome clips a
+       fixed body in a view transition, losing a sideways label's qr code. */
+    html[data-rotate] body {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+      will-change: transform;
+    }
+    html:is([data-rotate="right"], [data-rotate="left"]) body {
+      width: 100vh;
+      height: 100vw;
+    }
+    html[data-rotate="right"] body {
+      transform: translateX(100vw) rotate(90deg);
+    }
+    html[data-rotate="left"] body {
+      transform: translateY(100vh) rotate(-90deg);
+    }
+    html[data-rotate="inverted"] body {
+      width: 100vw;
+      height: 100vh;
+      transform: translate(100vw, 100vh) rotate(180deg);
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "nanotags": "/static/lifelike/vendor/nanotags.mjs",
+        "nanostores": "/static/lifelike/vendor/nanostores.mjs"
+      }
+    }
+  </script>
+</head>
+<body>
+  <acmi-lifelike-label
+    variant="{{ label_mode }}"
+    {% if label_mode == 'nightmare-room' %}room-source="/api/room-stream/"
+    {%- elif xos.media_player_id or mock_media_player %}playback-source="/api/playback-stream/"{% endif %}
+    {%- if hide_timer %} hide-timer{% endif %}
+  >
+
+    <script type="application/json" data-prop="playlist">
+      {{ playlist_json | tojson }}
+    </script>
+  </acmi-lifelike-label>
+  <script type="module" src="/static/lifelike/main.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# Kept out of every image built here (balena push and CI).
+# balena reads only this file, not .gitignore.
+
+# Local config: credentials. Devices get theirs from balena variables.
+config.env
+
+# Local state: the dev database, the dev playlist cache, data dumps.
+*.db
+data/
+dump-*.json
+
+# Local tools and caches.
+.git/
+.venv/
+node_modules/
+.pytest_cache/
+.vscode/
+**/__pycache__/
+**/.DS_Store

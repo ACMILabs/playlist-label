@@ -5,4 +5,5 @@ isort<5
 pylint
 pytest
 pytest-flask
+python-dotenv
 setuptools

@@ -11,7 +11,7 @@
   </head>
   <body style="--offset-top-margin: {{offset_top_margin}};">
     <acmi-mqtt-sync
-      {%- if xos.media_player_id %} data-xos-media-player="{{ xos.media_player_id }}"{% endif %}
+      {%- if xos.media_player_id or mock_media_player %} data-xos-media-player="{{ xos.media_player_id or 'mock' }}"{% endif %}
       {%- if override_duration %} data-override-duration="{{ override_duration }}"{% endif %}
       {%- if ignore_media_player %} data-ignore-media-player{% endif %}
     >

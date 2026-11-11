@@ -50,6 +50,68 @@ describe("acmi-mqtt-sync", () => {
     });
   });
 
+  describe("SSE message without a duration or position", () => {
+    it("leaves playbackSignal as it was", () => {
+      makeSync({ "data-xos-media-player": "123" });
+
+      const es = lastEventSource();
+      es.onmessage({
+        data: JSON.stringify({ duration: null, playback_position: 0.5 }),
+      });
+      es.onmessage({ data: JSON.stringify({ duration: 60000 }) });
+      es.onmessage({ data: "not json" });
+
+      expect(playbackSignal.value).toBeNull();
+    });
+  });
+
+  describe("SSE closed by an error response", () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+      global.EventSource.CLOSED = 2;
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it("opens the stream again after 5 seconds", () => {
+      makeSync({ "data-xos-media-player": "123" });
+      const es = lastEventSource();
+
+      es.readyState = 2;
+      es.onerror();
+      expect(global.EventSource).toHaveBeenCalledTimes(1);
+
+      jest.advanceTimersByTime(5000);
+      expect(global.EventSource).toHaveBeenCalledTimes(2);
+      expect(es.close).toHaveBeenCalled();
+    });
+
+    it("leaves a stream the browser is reconnecting itself", () => {
+      makeSync({ "data-xos-media-player": "123" });
+      const es = lastEventSource();
+
+      es.readyState = 0;
+      es.onerror();
+      jest.advanceTimersByTime(5000);
+
+      expect(global.EventSource).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not open it again once the element is removed", () => {
+      const elem = makeSync({ "data-xos-media-player": "123" });
+      const es = lastEventSource();
+
+      es.readyState = 2;
+      es.onerror();
+      document.body.removeChild(elem);
+      jest.advanceTimersByTime(5000);
+
+      expect(global.EventSource).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("Override duration sets playbackSignal without SSE", () => {
     it("writes playbackSignal from data-override-duration when no media player set", () => {
       makeSync({ "data-override-duration": "60000" });

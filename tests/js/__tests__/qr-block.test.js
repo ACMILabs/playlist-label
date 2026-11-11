@@ -3,6 +3,15 @@
  */
 import "../../../app/static/qr-block.js";
 
+// `data-qr-svg` is a json object of one inline svg per language, as
+// `app/main.py` writes `qr_text`.
+const QR_CODES = JSON.stringify({
+  en: "<svg>en</svg>",
+  "zh-hans": "<svg>zh-hans</svg>",
+  pa: "<svg>pa</svg>",
+  hi: "<svg>hi</svg>",
+});
+
 beforeEach(() => {
   document.body.innerHTML = "";
 });
@@ -28,16 +37,19 @@ describe("acmi-qr-block", () => {
   });
 
   describe("Visible when data-qr-svg is non-empty", () => {
-    it("is visible and renders SVG when data-qr-svg is set", () => {
-      const elem = makeQR({ "data-qr-svg": "<svg>test</svg>" });
+    it("is visible and renders one SVG per language when data-qr-svg is set", () => {
+      const elem = makeQR({ "data-qr-svg": QR_CODES });
       expect(elem.style.display).not.toBe("none");
-      expect(elem.innerHTML).toContain("<svg>test</svg>");
+      const cards = [...elem.querySelectorAll(".qr-card")];
+      expect(
+        cards.map((card) => card.querySelector("svg").textContent)
+      ).toEqual(["en", "zh-hans", "pa", "hi"]);
     });
   });
 
   describe("Language strip renders alongside QR SVG", () => {
     it("renders English, 简体字, ਪੰਜਾਬੀ, हिन्दी text", () => {
-      const elem = makeQR({ "data-qr-svg": "<svg>qr</svg>" });
+      const elem = makeQR({ "data-qr-svg": QR_CODES });
       const text = elem.innerHTML;
       expect(text).toContain("English");
       expect(text).toContain("简体字");
@@ -49,7 +61,7 @@ describe("acmi-qr-block", () => {
   describe("Caption icon visible when data-show-caption-icon is set", () => {
     it("renders caption SVG and 'and captions' text when attribute is present", () => {
       const elem = makeQR({
-        "data-qr-svg": "<svg>qr</svg>",
+        "data-qr-svg": QR_CODES,
         "data-show-caption-icon": "",
       });
       expect(elem.innerHTML).toContain("and captions");
@@ -59,7 +71,7 @@ describe("acmi-qr-block", () => {
 
   describe("Caption icon absent when data-show-caption-icon is not set", () => {
     it("does not render caption SVG when attribute is absent", () => {
-      const elem = makeQR({ "data-qr-svg": "<svg>qr</svg>" });
+      const elem = makeQR({ "data-qr-svg": QR_CODES });
       expect(elem.innerHTML).not.toContain("and captions");
       expect(elem.innerHTML).not.toContain("M54.2,129.94");
     });
@@ -67,7 +79,7 @@ describe("acmi-qr-block", () => {
 
   describe("Reactivity", () => {
     it("hides when data-qr-svg is removed", () => {
-      const elem = makeQR({ "data-qr-svg": "<svg>qr</svg>" });
+      const elem = makeQR({ "data-qr-svg": QR_CODES });
       expect(elem.style.display).not.toBe("none");
       elem.removeAttribute("data-qr-svg");
       expect(elem.style.display).toBe("none");

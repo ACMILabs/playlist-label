@@ -6,3 +6,5 @@ frontends/react/constellations/node_modules/**
 frontends/static/**
 venv/**
 app/static/libs/**
+app/static/temporal.js
+app/static/lifelike/vendor/**

@@ -2,18 +2,19 @@ import json
 import threading
 import time
 
-import paho.mqtt.client as mqtt
+import paho.mqtt.client as paho_mqtt
 
 
-class PlaybackSync:
+class PlaybackSync:  # pylint: disable=too-many-instance-attributes
     """
     Owns the MQTT connection, playback state, and SSE client tracking.
     Callers use wait() to block until a new playback message arrives.
     """
 
-    def __init__(self, host, port, user, password, topic, retry_seconds=2):
+    def __init__(  # pylint: disable=too-many-arguments
+            self, host, port, user, password, topic, retry_seconds=2):
         self._host = host
-        self._port = int(port)
+        self._port = port
         self._user = user
         self._password = password
         self._topic = topic
@@ -26,14 +27,21 @@ class PlaybackSync:
         self._clients_lock = threading.Lock()
         self._count = 0
         self._sse_count = 0
+        self._uses_mqtt = False
+        self._connected = False
 
-    def start(self):
-        """Start the MQTT and log threads."""
-        threading.Thread(target=self._mqtt_thread, daemon=True).start()
+    def start(self, mqtt=True):
+        """
+        Start the log thread, and the MQTT thread unless something else calls
+        receive() — the mock media player, say.
+        """
+        self._uses_mqtt = mqtt
+        if mqtt:
+            threading.Thread(target=self._mqtt_thread, daemon=True).start()
         threading.Thread(target=self._log_thread, daemon=True).start()
 
     def receive(self, payload: bytes):
-        """Handle a raw MQTT payload. Public seam for tests."""
+        """Handle a raw MQTT payload."""
         try:
             body = json.loads(payload.decode())
             with self._lock:
@@ -67,27 +75,37 @@ class PlaybackSync:
         return _ClientContext(self, client_ip)
 
     def _mqtt_thread(self):
-        client = mqtt.Client()
+        try:
+            port = int(self._port)
+        except (TypeError, ValueError):
+            print(f'[mqtt] RABBITMQ_MQTT_PORT={self._port!r} is not a port number, not connecting')
+            return
+        client = paho_mqtt.Client(paho_mqtt.CallbackAPIVersion.VERSION2)
         client.username_pw_set(self._user, self._password)
         client.on_connect = self._on_connect
         client.on_disconnect = self._on_disconnect
         client.on_message = self._on_mqtt_message
         client.reconnect_delay_set(min_delay=self._retry_seconds, max_delay=60)
-        print(f'[mqtt] Connecting to {self._host}:{self._port}...')
-        client.connect_async(self._host, self._port)
-        client.loop_forever()
+        print(f'[mqtt] Connecting to {self._host}:{port}...')
+        client.connect_async(self._host, port)
+        # Keep retrying the first connection: the device can start before its network.
+        client.loop_forever(retry_first_connection=True)
 
-    def _on_connect(self, client, userdata, flags, rc):  # pylint: disable=unused-argument
-        if rc == 0:
-            print(f'[mqtt] Connected to {self._host}:{self._port}')
-            client.subscribe(self._topic)
-            print(f'[mqtt] Subscribed to {self._topic}')
-        else:
-            print(f'[mqtt] Connection refused (rc={rc}) — check credentials and host')
+    def _on_connect(  # pylint: disable=unused-argument
+            self, client, userdata, flags, reason_code, properties):
+        if reason_code.is_failure:
+            print(f'[mqtt] Connection refused ({reason_code}) — check credentials and host')
+            return
+        self._connected = True
+        print(f'[mqtt] Connected to {self._host}:{self._port}')
+        client.subscribe(self._topic)
+        print(f'[mqtt] Subscribed to {self._topic}')
 
-    def _on_disconnect(self, client, userdata, rc):  # pylint: disable=unused-argument
-        if rc != 0:
-            print(f'[mqtt] Unexpected disconnect (rc={rc}), will auto-reconnect')
+    def _on_disconnect(  # pylint: disable=unused-argument
+            self, client, userdata, flags, reason_code, properties):
+        self._connected = False
+        if reason_code.is_failure:
+            print(f'[mqtt] Unexpected disconnect ({reason_code}), will auto-reconnect')
 
     def _on_mqtt_message(self, client, userdata, msg):  # pylint: disable=unused-argument
         self.receive(msg.payload)
@@ -109,6 +127,8 @@ class PlaybackSync:
                     f'| duration={body.get("duration")} '
                     f'| playback_position={body.get("playback_position")}'
                 )
+            elif self._uses_mqtt and not self._connected:
+                print('[mqtt] No messages received: not connected to the broker')
             else:
                 print('[mqtt] No messages received')
 
